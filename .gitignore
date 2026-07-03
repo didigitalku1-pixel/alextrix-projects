@@ -1,0 +1,89 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Next.js
+.next/
+out/
+
+# Bun
+bun.lockb
+
+# Production
+build/
+dist/
+
+# Environment
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Large data files (too big for GitHub - 2.1GB)
+# Individual item JSON/HTML files are excluded, but manifest and metadata are included
+download/aura_library/components/
+download/aura_library/templates/
+download/aura_library/assets/
+download/aura_library/skills/
+
+# Session/credentials (never commit)
+download/aura_library/_meta/session.json
+download/aura_library/_meta/artifact_progress.json
+
+# Upload folder (user screenshots)
+upload/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Logs
+*.log
+dev.log
+server.log
+
+# Cache
+.cache/
+.turbo/
+
+# Vercel
+.vercel
+
+# Build artifacts
+*.tsbuildinfo
+
+# System scaffold (not part of user project)
+skills/
+.zscripts/
+examples/
+prisma/
+mini-services/*/node_modules/
+
+# PID files
+*.pid
+
+# Database
+db/
+
+# Duplicate data in public/
+public/data/
+
+# Progress files (regenerated)
+download/aura_library/_meta/progress.json
+download/aura_library/_meta/assets_progress.json
+download/aura_library/_meta/artifact_progress.json
+download/aura_library/_meta/*.log
+download/aura_library/_meta/generator_stdout*.log
+.env*
+mini-services/*/node_modules/
+
+# Large ZIP files (download separately)
+download/*.zip
