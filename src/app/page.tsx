@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { useSearchParams } from "next/navigation";
 
 type ItemType = "template" | "component" | "asset" | "skill";
 type TabType = "templates" | "components" | "assets" | "skills" | "design-md" | "learn" | "progress";
@@ -33,10 +32,38 @@ interface Stats {
   premium: number;
 }
 
-interface TagInfo {
-  tag: string;
-  count: number;
-}
+const PAGE_INFO: Record<string, { eyebrow: string; title: string; desc: string; pulseTitle: string }> = {
+  templates: {
+    eyebrow: "Landing Page Templates",
+    title: "HTML, CSS, and React landing page templates",
+    desc: "Browse reusable Aura landing page templates for SaaS, portfolio, ecommerce, and AI websites. Remix designs visually, edit templates in Aura, and export HTML, CSS, or React.",
+    pulseTitle: "Template Pulse",
+  },
+  components: {
+    eyebrow: "UI Components",
+    title: "Reusable HTML, CSS, and React components",
+    desc: "Browse reusable Aura UI components — hero sections, navigation, cards, forms, and more. Copy HTML or React code directly, or remix in Aura to customize.",
+    pulseTitle: "Component Pulse",
+  },
+  assets: {
+    eyebrow: "Stock Assets",
+    title: "High-quality stock images and visual assets",
+    desc: "Browse thousands of curated stock photos, illustrations, and visual assets for your designs. Filter by color, resolution, and category.",
+    pulseTitle: "Asset Pulse",
+  },
+  skills: {
+    eyebrow: "AI Skills",
+    title: "AI agent skills and prompt templates",
+    desc: "Browse AI agent skills — pre-configured prompt templates for design, coding, content creation, and more. Copy and use with any AI model.",
+    pulseTitle: "Skill Pulse",
+  },
+  "design-md": {
+    eyebrow: "Design Systems",
+    title: "Design system specifications and documentation",
+    desc: "Browse design systems with complete DESIGN.md specifications, color tokens, typography, and component documentation.",
+    pulseTitle: "Design Pulse",
+  },
+};
 
 export default function Home() {
   const [tab, setTab] = useState<TabType>("templates");
@@ -52,8 +79,9 @@ export default function Home() {
   const [totalPages, setTotalPages] = useState(0);
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState<Stats | null>(null);
-  const [tags, setTags] = useState<TagInfo[]>([]);
+  const [tags, setTags] = useState<{ tag: string; count: number }[]>([]);
   const [debouncedQ, setDebouncedQ] = useState("");
+  const [showFilters, setShowFilters] = useState(false);
 
   // Theme
   useEffect(() => {
@@ -82,12 +110,10 @@ export default function Home() {
 
   // Load items
   const loadItems = useCallback(async () => {
-    if (tab === "learn" || tab === "progress" || tab === "design-md") return;
+    if (tab === "learn" || tab === "progress") return;
     setLoading(true);
     const apiType = tab === "templates" ? "template" : tab === "components" ? "component" : tab === "assets" ? "asset" : "skill";
-    const params = new URLSearchParams({
-      type: apiType, sort, page: String(page), limit: "24",
-    });
+    const params = new URLSearchParams({ type: apiType, sort, page: String(page), limit: "24" });
     if (tag) params.set("tag", tag);
     if (debouncedQ) params.set("q", debouncedQ);
     if (premium) params.set("premium", "true");
@@ -114,66 +140,64 @@ export default function Home() {
     return String(n || 0);
   };
 
-  const typeBadge = (type: ItemType) => {
-    const map: Record<string, { cls: string; label: string }> = {
-      template: { cls: "badge-template", label: "Template" },
-      component: { cls: "badge-component", label: "Component" },
-      asset: { cls: "badge-asset", label: "Asset" },
-      skill: { cls: "badge-skill", label: "Skill" },
-    };
-    const m = map[type] || map.template;
-    return <span className={`badge ${m.cls}`}>{m.label}</span>;
-  };
-
   const tabs: { id: TabType; label: string; count?: string }[] = [
     { id: "templates", label: "Templates", count: stats?.templates?.toLocaleString() },
     { id: "components", label: "Components", count: stats?.components?.toLocaleString() },
     { id: "assets", label: "Assets", count: stats?.assets?.toLocaleString() },
     { id: "skills", label: "Skills", count: stats?.skills?.toLocaleString() },
-    { id: "design-md", label: "Design Systems" },
+    { id: "design-md", label: "DESIGN.MD" },
     { id: "learn", label: "Learn" },
     { id: "progress", label: "Progress" },
   ];
 
+  const info = PAGE_INFO[tab] || PAGE_INFO.templates;
+  const pulseItems = tab === "templates" ? [
+    { label: "Free", count: stats?.templates ? Math.floor(stats.templates * 0.95) : 0, color: "#10b981" },
+    { label: "Pro", count: 496, color: "#f59e0b" },
+    { label: "Paid", count: 58, color: "#a855f7" },
+  ] : [
+    { label: "All", count: stats ? (stats as any)[tab === "design-md" ? "templates" : tab] || 0 : 0, color: "#3b82f6" },
+  ];
+
   return (
     <div className="app">
-      {/* Top Nav */}
-      <nav className="topnav">
-        <div className="topnav-logo">
-          <div className="topnav-logo-icon">A</div>
-          <span>Aura Library</span>
-        </div>
-        <div className="topnav-tabs">
-          {tabs.map(t => (
-            <button
-              key={t.id}
-              className={`topnav-tab ${t.id === tab ? "active" : ""}`}
-              onClick={() => setTab(t.id)}
-            >
-              {t.label}
-              {t.count && <span className="topnav-tab-count">{t.count}</span>}
+      {/* Header */}
+      <header className="header">
+        <div className="header-inner">
+          <div className="header-left">
+            <a href="/" className="header-logo">
+              <div className="header-logo-icon">A</div>
+            </a>
+          </div>
+          <nav className="header-nav">
+            {tabs.map(t => (
+              <button
+                key={t.id}
+                className={`header-tab ${t.id === tab ? "active" : ""}`}
+                onClick={() => setTab(t.id)}
+              >
+                {t.label}{t.count && <span style={{ opacity: 0.6, marginLeft: 4, fontSize: 10 }}>{t.count}</span>}
+              </button>
+            ))}
+          </nav>
+          <div className="header-right">
+            <div className="header-search">
+              <span className="header-search-icon">🔍</span>
+              <input
+                type="text"
+                className="header-search-input"
+                placeholder="Search..."
+                value={q}
+                onChange={e => setQ(e.target.value)}
+              />
+              {q && <button className="header-search-clear" onClick={() => setQ("")}>✕</button>}
+            </div>
+            <button className="header-icon-btn" onClick={() => setDark(!dark)}>
+              {dark ? "☀️" : "🌙"}
             </button>
-          ))}
+          </div>
         </div>
-        <div className="topnav-search">
-          <span className="topnav-search-icon">🔍</span>
-          <input
-            type="text"
-            className="topnav-search-input"
-            placeholder="Search..."
-            value={q}
-            onChange={e => setQ(e.target.value)}
-          />
-          {q && (
-            <button className="topnav-search-clear" onClick={() => setQ("")}>✕</button>
-          )}
-        </div>
-        <div className="topnav-actions">
-          <button className="topnav-icon-btn" onClick={() => setDark(!dark)}>
-            {dark ? "☀️" : "🌙"}
-          </button>
-        </div>
-      </nav>
+      </header>
 
       {/* Content */}
       {tab === "learn" ? (
@@ -183,192 +207,169 @@ export default function Home() {
       ) : tab === "design-md" ? (
         <DesignSystemsView />
       ) : (
-        <div className="body">
-          {/* Sidebar */}
-          <aside className="sidebar">
-            <div className="sidebar-content">
-              <section className="sidebar-section">
-                <h3>Sort by</h3>
-                <div className="sidebar-grid sidebar-grid-2">
-                  {(["views", "forks", "recent", "az"] as const).map(s => (
-                    <button
-                      key={s}
-                      className={`sidebar-btn ${sort === s ? "active" : ""}`}
-                      onClick={() => setSort(s)}
-                    >
-                      {s === "views" ? "Most viewed" : s === "forks" ? "Most forked" : s === "recent" ? "Recent" : "A → Z"}
-                    </button>
+        <main className="main">
+          <div className="main-content">
+            {/* Hero */}
+            <div className="hero">
+              <div className="hero-text">
+                <p className="hero-eyebrow">{info.eyebrow}</p>
+                <h1 className="hero-title">{info.title}</h1>
+                <p className="hero-desc">{info.desc}</p>
+              </div>
+              <div className="pulse-box">
+                <p className="pulse-title">{info.pulseTitle}</p>
+                <div>
+                  {pulseItems.map(p => (
+                    <div key={p.label} className="pulse-item">
+                      <span className="pulse-item-label">
+                        <span className="pulse-item-dot" style={{ background: p.color }}></span>
+                        {p.label}
+                      </span>
+                      <span className="pulse-item-count">{p.count.toLocaleString()}</span>
+                    </div>
                   ))}
                 </div>
-              </section>
-              <div className="sidebar-separator" />
-              <section className="sidebar-section">
-                <h3>Filter</h3>
-                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              </div>
+            </div>
+
+            {/* Filter chips */}
+            {(tag || premium || featured) && (
+              <div className="filter-chips">
+                {tag && <span className="chip" onClick={() => setTag(null)}>#{tag} ✕</span>}
+                {premium && <span className="chip" onClick={() => setPremium(false)}>Premium ✕</span>}
+                {featured && <span className="chip" onClick={() => setFeatured(false)}>Featured ✕</span>}
+              </div>
+            )}
+
+            {/* Sort + result info */}
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16, flexWrap: "wrap", gap: 12 }}>
+              <div style={{ fontSize: 13, color: "hsl(var(--muted-foreground))" }}>
+                {loading ? "Loading..." : <><strong style={{ color: "hsl(var(--foreground))" }}>{total.toLocaleString()}</strong> items{page > 1 && <span style={{ marginLeft: 8, fontSize: 12 }}>· Page {page} of {totalPages}</span>}</>}
+              </div>
+              <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
+                {(["views", "forks", "recent", "az"] as const).map(s => (
                   <button
-                    className={`sidebar-toggle ${premium ? "active" : ""}`}
-                    onClick={() => setPremium(!premium)}
+                    key={s}
+                    className={`pulse-item ${sort === s ? "active" : ""}`}
+                    style={{ padding: "4px 10px", fontSize: 12, marginBottom: 0 }}
+                    onClick={() => setSort(s)}
                   >
-                    <span style={{ color: "var(--amber)" }}>★</span> Premium only
+                    {s === "views" ? "Popular" : s === "forks" ? "Most forked" : s === "recent" ? "Recent" : "A → Z"}
                   </button>
-                  <button
-                    className={`sidebar-toggle ${featured ? "active" : ""}`}
-                    onClick={() => setFeatured(!featured)}
-                  >
-                    <span style={{ color: "var(--blue)" }}>★</span> Featured only
-                  </button>
-                </div>
-              </section>
-              <div className="sidebar-separator" />
-              <section className="sidebar-section">
-                <div className="sidebar-section-header">
-                  <h3>Tags</h3>
-                  {tag && <button className="sidebar-clear" onClick={() => setTag(null)}>Clear</button>}
-                </div>
-                <div className="sidebar-tags-wrap">
+                ))}
+                <button
+                  className={`pulse-item ${premium ? "active" : ""}`}
+                  style={{ padding: "4px 10px", fontSize: 12, marginBottom: 0 }}
+                  onClick={() => setPremium(!premium)}
+                >
+                  ★ Premium
+                </button>
+                <button
+                  className={`pulse-item ${featured ? "active" : ""}`}
+                  style={{ padding: "4px 10px", fontSize: 12, marginBottom: 0 }}
+                  onClick={() => setFeatured(!featured)}
+                >
+                  ★ Featured
+                </button>
+                <button
+                  className="pulse-item"
+                  style={{ padding: "4px 10px", fontSize: 12, marginBottom: 0 }}
+                  onClick={() => setShowFilters(!showFilters)}
+                >
+                  🏷️ Tags
+                </button>
+              </div>
+            </div>
+
+            {/* Tag filter (collapsible) */}
+            {showFilters && (
+              <div style={{ marginBottom: 16, padding: 16, background: "hsl(var(--background))", border: "1px solid hsl(var(--border))", borderRadius: 12 }}>
+                <div style={{ fontSize: 11, textTransform: "uppercase", color: "hsl(var(--muted-foreground))", marginBottom: 8, letterSpacing: "0.05em" }}>Tags</div>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
                   {tags.map(t => (
                     <button
                       key={t.tag}
-                      className={`sidebar-tag ${tag === t.tag ? "active" : ""}`}
+                      className={`tag-pill ${tag === t.tag ? "active" : ""}`}
+                      style={{
+                        padding: "4px 10px",
+                        borderRadius: 999,
+                        fontSize: 12,
+                        cursor: "pointer",
+                        border: "1px solid hsl(var(--border))",
+                        background: tag === t.tag ? "hsl(var(--primary))" : "transparent",
+                        color: tag === t.tag ? "hsl(var(--primary-foreground))" : "hsl(var(--muted-foreground))",
+                      }}
                       onClick={() => setTag(tag === t.tag ? null : t.tag)}
                     >
-                      <span>{t.tag}</span>
-                      <span className="sidebar-tag-count">{t.count}</span>
+                      {t.tag} <span style={{ opacity: 0.6 }}>{t.count}</span>
                     </button>
                   ))}
                 </div>
-              </section>
-            </div>
-          </aside>
-
-          {/* Main */}
-          <main className="main">
-            <div className="main-content">
-              <div className="result-info">
-                {loading ? (
-                  "Loading..."
-                ) : (
-                  <>
-                    <strong>{total.toLocaleString()}</strong> items
-                    {page > 1 && (
-                      <span style={{ marginLeft: 8, fontSize: 12 }}>
-                        · Page {page} of {totalPages}
-                      </span>
-                    )}
-                    {(tag || premium || featured) && (
-                      <span style={{ marginLeft: 12, display: "flex", gap: 6 }}>
-                        {tag && <span className="chip" onClick={() => setTag(null)}>#{tag} ✕</span>}
-                        {premium && <span className="chip chip-amber" onClick={() => setPremium(false)}>Premium ✕</span>}
-                        {featured && <span className="chip chip-blue" onClick={() => setFeatured(false)}>Featured ✕</span>}
-                      </span>
-                    )}
-                  </>
-                )}
               </div>
+            )}
 
-              {loading ? (
-                <div className="grid">
-                  {Array.from({ length: 24 }).map((_, i) => (
-                    <div key={i} className="skeleton" />
-                  ))}
-                </div>
-              ) : items.length === 0 ? (
-                <div className="empty">
-                  <div className="empty-icon">📭</div>
-                  <p className="empty-title">No items found</p>
-                  <p className="empty-desc">Try adjusting your filters or search query.</p>
-                  <button className="btn btn-outline" style={{ marginTop: 16 }} onClick={resetFilters}>
-                    Reset filters
-                  </button>
-                </div>
-              ) : (
-                <div className="grid">
-                  {items.map(item => (
-                    <a
-                      key={`${item.type}-${item.id}`}
-                      className="card"
-                      href={`/detail/${item.type}/${item.type === "skill" ? item.file : item.id}`}
-                    >
-                      <div className="card-image-wrap">
-                        {item.image ? (
-                          <img
-                            src={item.image}
-                            alt={item.title}
-                            loading="lazy"
-                            className="card-image"
-                            onError={e => {
-                              const t = e.target as HTMLImageElement;
-                              t.style.display = "none";
-                              const p = t.parentElement;
-                              if (p && !p.querySelector(".card-image-placeholder")) {
-                                const d = document.createElement("div");
-                                d.className = "card-image-placeholder";
-                                d.textContent = "No preview";
-                                p.appendChild(d);
-                              }
-                            }}
-                          />
-                        ) : (
-                          <div className="card-image-placeholder">No preview</div>
-                        )}
-                        <div className="card-badge-row">
-                          {item.premium && <span className="badge badge-pro">Pro</span>}
-                          {item.featured && <span className="badge badge-featured">★</span>}
+            {/* Grid */}
+            {loading ? (
+              <div className="grid">
+                {Array.from({ length: 24 }).map((_, i) => <div key={i} className="skeleton" />)}
+              </div>
+            ) : items.length === 0 ? (
+              <div className="empty">
+                <div className="empty-icon">📭</div>
+                <p className="empty-title">No items found</p>
+                <p className="empty-desc">Try adjusting your filters or search query.</p>
+                <button className="btn btn-outline" style={{ marginTop: 16 }} onClick={resetFilters}>Reset filters</button>
+              </div>
+            ) : (
+              <div className="grid">
+                {items.map(item => (
+                  <a
+                    key={`${item.type}-${item.id}`}
+                    className="card"
+                    href={`/detail/${item.type}/${item.type === "skill" ? item.file : item.id}`}
+                  >
+                    <div className="card-image-wrap">
+                      {item.image ? (
+                        <img
+                          src={item.image}
+                          alt={item.title}
+                          loading="lazy"
+                          className="card-image"
+                        />
+                      ) : (
+                        <div className="card-image-placeholder">No preview</div>
+                      )}
+                      <div className="card-overlay"></div>
+                      {item.premium && <span className="card-badge badge-pro">PRO</span>}
+                      {(item.type === "template" || item.type === "component") && (
+                        <div className="card-actions">
+                          <span className="card-action-btn">📄 DESIGN.md</span>
+                          <span className="card-action-btn">✨ Copy</span>
                         </div>
-                        <div className="card-badge-row-right">
-                          {typeBadge(item.type)}
-                        </div>
+                      )}
+                    </div>
+                    <div className="card-footer">
+                      <h3 className="card-title" title={item.title}>{item.title}</h3>
+                      <div className="card-stats">
+                        <span className="card-stat">👁 {formatCount(item.views)}</span>
+                        {item.forks > 0 && <span className="card-stat">⑂ {formatCount(item.forks)}</span>}
                       </div>
-                      <div className="card-body">
-                        <h3 className="card-title" title={item.title}>{item.title}</h3>
-                        {item.desc && <p className="card-desc">{item.desc}</p>}
-                        {item.tags && item.tags.length > 0 && (
-                          <div className="card-tags">
-                            {item.tags.slice(0, 3).map(t => (
-                              <span key={t} className="badge badge-outline">{t}</span>
-                            ))}
-                            {item.tags.length > 3 && (
-                              <span className="card-tag-more">+{item.tags.length - 3}</span>
-                            )}
-                          </div>
-                        )}
-                        <div className="card-stats">
-                          <span className="card-stat">👁 {formatCount(item.views)}</span>
-                          {item.forks > 0 && <span className="card-stat">⑂ {formatCount(item.forks)}</span>}
-                          <span className="card-stat card-stat-right">
-                            {item.code_chars > 0 ? `${formatCount(item.code_chars)}c` : item.type}
-                          </span>
-                        </div>
-                      </div>
-                    </a>
-                  ))}
-                </div>
-              )}
+                    </div>
+                  </a>
+                ))}
+              </div>
+            )}
 
-              {totalPages > 1 && (
-                <div className="pagination">
-                  <button
-                    className="btn btn-outline btn-sm"
-                    disabled={page <= 1}
-                    onClick={() => setPage(p => Math.max(1, p - 1))}
-                  >
-                    Previous
-                  </button>
-                  <span style={{ fontSize: 13, color: "var(--fg-muted)" }}>
-                    {page} / {totalPages}
-                  </span>
-                  <button
-                    className="btn btn-outline btn-sm"
-                    disabled={page >= totalPages}
-                    onClick={() => setPage(p => Math.min(totalPages, p + 1))}
-                  >
-                    Next
-                  </button>
-                </div>
-              )}
-            </div>
-          </main>
-        </div>
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div className="pagination">
+                <button className="btn btn-outline btn-sm" disabled={page <= 1} onClick={() => setPage(p => Math.max(1, p - 1))}>Previous</button>
+                <span style={{ fontSize: 13, color: "hsl(var(--muted-foreground))" }}>{page} / {totalPages}</span>
+                <button className="btn btn-outline btn-sm" disabled={page >= totalPages} onClick={() => setPage(p => Math.min(totalPages, p + 1))}>Next</button>
+              </div>
+            )}
+          </div>
+        </main>
       )}
     </div>
   );
@@ -384,10 +385,7 @@ function LearnView() {
     setLoading(true);
     fetch(`/api/learn?page=${activePage}`)
       .then(r => r.json())
-      .then(d => {
-        setContent(d.content || "Konten belum tersedia.");
-        setLoading(false);
-      })
+      .then(d => { setContent(d.content || "Konten belum tersedia."); setLoading(false); })
       .catch(() => setLoading(false));
   }, [activePage]);
 
@@ -404,28 +402,29 @@ function LearnView() {
   ];
 
   return (
-    <div style={{ display: "flex", maxWidth: 1280, margin: "0 auto", padding: 24 }}>
-      <aside className="learn-sidebar">
-        <h3 style={{ fontSize: 11, fontWeight: 600, textTransform: "uppercase", color: "var(--fg-muted)", marginBottom: 8, padding: "0 12px" }}>Learn</h3>
-        {learnPages.map(p => (
-          <a
-            key={p.id}
-            className={p.id === activePage ? "active" : ""}
-            onClick={e => { e.preventDefault(); setActivePage(p.id); }}
-            href="#"
-          >
-            {p.label}
-          </a>
-        ))}
-      </aside>
-      <main style={{ flex: 1, minWidth: 0, paddingLeft: 32 }}>
-        {loading ? (
-          <div className="loading-spinner"><div className="spinner" /></div>
-        ) : (
-          <div className="markdown" dangerouslySetInnerHTML={{ __html: renderMarkdown(content) }} />
-        )}
-      </main>
-    </div>
+    <main className="main">
+      <div className="learn-layout">
+        <aside className="learn-sidebar">
+          <h3>Learn</h3>
+          {learnPages.map(p => (
+            <a
+              key={p.id}
+              className={p.id === activePage ? "active" : ""}
+              onClick={e => { e.preventDefault(); setActivePage(p.id); }}
+            >
+              {p.label}
+            </a>
+          ))}
+        </aside>
+        <div className="learn-content">
+          {loading ? (
+            <div className="loading-spinner"><div className="spinner" /></div>
+          ) : (
+            <div className="markdown" dangerouslySetInnerHTML={{ __html: renderMarkdown(content) }} />
+          )}
+        </div>
+      </div>
+    </main>
   );
 }
 
@@ -435,10 +434,7 @@ function ProgressView() {
 
   useEffect(() => {
     const fetch2 = () => {
-      fetch("/api/progress")
-        .then(r => r.json())
-        .then(setData)
-        .catch(() => {});
+      fetch("/api/progress").then(r => r.json()).then(setData).catch(() => {});
     };
     fetch2();
     const interval = setInterval(fetch2, 10000);
@@ -468,17 +464,17 @@ function ProgressView() {
           </div>
           <div className="progress-stat-card">
             <div className="progress-stat-label">Cached</div>
-            <div className="progress-stat-value" style={{ color: "var(--emerald)" }}>{cached.toLocaleString()}</div>
+            <div className="progress-stat-value" style={{ color: "#10b981" }}>{cached.toLocaleString()}</div>
             <div className="progress-stat-sub">Reused from cache</div>
           </div>
           <div className="progress-stat-card">
             <div className="progress-stat-label">Fresh Generated</div>
-            <div className="progress-stat-value" style={{ color: "var(--blue)" }}>{fresh.toLocaleString()}</div>
+            <div className="progress-stat-value" style={{ color: "#3b82f6" }}>{fresh.toLocaleString()}</div>
             <div className="progress-stat-sub">New from Edge Function</div>
           </div>
           <div className="progress-stat-card">
             <div className="progress-stat-label">Errors (403 Premium)</div>
-            <div className="progress-stat-value" style={{ color: "var(--red)" }}>{errors.toLocaleString()}</div>
+            <div className="progress-stat-value" style={{ color: "#ef4444" }}>{errors.toLocaleString()}</div>
             <div className="progress-stat-sub">Skipped (premium content)</div>
           </div>
         </div>
@@ -487,15 +483,12 @@ function ProgressView() {
           <div className="progress-log">
             {data?.log?.length ? (
               data.log.map((line: string, i: number) => (
-                <div
-                  key={i}
-                  className={`progress-log-line ${line.includes("ERROR") ? "error" : line.includes("✓") ? "success" : ""}`}
-                >
+                <div key={i} className={`progress-log-line ${line.includes("ERROR") ? "error" : line.includes("✓") ? "success" : ""}`}>
                   {line}
                 </div>
               ))
             ) : (
-              <div style={{ color: "var(--fg-muted)" }}>No log entries yet</div>
+              <div style={{ color: "#888" }}>No log entries yet</div>
             )}
           </div>
         </div>
@@ -520,10 +513,9 @@ function DesignSystemsView() {
     <main className="main">
       <div className="main-content">
         <div style={{ marginBottom: 32 }}>
-          <h1 style={{ fontSize: 32, fontWeight: 700, marginBottom: 8 }}>Design Systems</h1>
-          <p style={{ color: "var(--fg-muted)", fontSize: 16 }}>
-            Featured template collections with complete design specifications, AI prompts, and HTML code.
-          </p>
+          <p className="hero-eyebrow">Design Systems</p>
+          <h1 className="hero-title">Design system specifications and documentation</h1>
+          <p className="hero-desc">Browse design systems with complete DESIGN.md specifications, color tokens, typography, and component documentation.</p>
         </div>
         {loading ? (
           <div className="grid">
@@ -532,35 +524,23 @@ function DesignSystemsView() {
         ) : (
           <div style={{ display: "flex", flexDirection: "column", gap: 32 }}>
             {items.map(item => (
-              <a
-                key={item.id}
-                className="card"
-                href={`/detail/template/${item.id}`}
-                style={{ maxWidth: "none" }}
-              >
+              <a key={item.id} className="card" href={`/detail/template/${item.id}`} style={{ maxWidth: "none" }}>
                 <div className="card-image-wrap" style={{ aspectRatio: "21 / 9" }}>
-                  {item.image ? (
-                    <img src={item.image} alt={item.title} className="card-image" />
-                  ) : (
-                    <div className="card-image-placeholder">No preview</div>
-                  )}
-                  <div className="card-badge-row">
-                    {item.premium && <span className="badge badge-pro">Pro</span>}
-                    {item.featured && <span className="badge badge-featured">★ Featured</span>}
-                  </div>
+                  {item.image ? <img src={item.image} alt={item.title} className="card-image" /> : <div className="card-image-placeholder">No preview</div>}
+                  {item.premium && <span className="card-badge badge-pro">PRO</span>}
                 </div>
-                <div className="card-body" style={{ padding: 20 }}>
+                <div className="card-footer" style={{ padding: 20 }}>
                   <h2 style={{ fontSize: 20, fontWeight: 600, marginBottom: 8 }}>{item.title}</h2>
-                  {item.desc && <p style={{ color: "var(--fg-muted)", fontSize: 14, marginBottom: 12 }}>{item.desc}</p>}
-                  <div style={{ display: "flex", alignItems: "center", gap: 16, fontSize: 13, color: "var(--fg-muted)" }}>
+                  {item.desc && <p style={{ color: "hsl(var(--muted-foreground))", fontSize: 14, marginBottom: 12 }}>{item.desc}</p>}
+                  <div style={{ display: "flex", alignItems: "center", gap: 16, fontSize: 13, color: "hsl(var(--muted-foreground))" }}>
                     {item.username && <span>by {item.username.slice(0, 20)}</span>}
                     <span>👁 {item.views.toLocaleString()} views</span>
                     {item.forks > 0 && <span>⑂ {item.forks.toLocaleString()}</span>}
                     {item.created_at && <span>{new Date(item.created_at).toLocaleDateString()}</span>}
                   </div>
                   {item.tags && item.tags.length > 0 && (
-                    <div className="card-tags" style={{ marginTop: 12 }}>
-                      {item.tags.slice(0, 8).map(t => <span key={t} className="badge badge-outline">{t}</span>)}
+                    <div style={{ marginTop: 12, display: "flex", flexWrap: "wrap", gap: 4 }}>
+                      {item.tags.slice(0, 8).map(t => <span key={t} className="tag-pill">{t}</span>)}
                     </div>
                   )}
                 </div>
