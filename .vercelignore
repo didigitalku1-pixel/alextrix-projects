@@ -23,3 +23,5 @@ scripts/generator_burst.sh
 scripts/generator_daemon.sh
 scripts/keep-dev-alive.sh
 scripts/run_generator.sh
+download/*.zip
+download/full-source.zip
