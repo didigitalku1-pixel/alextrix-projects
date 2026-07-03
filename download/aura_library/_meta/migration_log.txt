@@ -1,0 +1,6 @@
+/home/z/my-project/scripts/migrate_final.py:22: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  ts = datetime.utcnow().strftime("%H:%M:%S")
+[23:29:17] ==================================================
+[23:29:17] MIGRATION: aura.build → user's Supabase
+[23:29:17] ==================================================
+[23:29:17] Fetching shared_code...
