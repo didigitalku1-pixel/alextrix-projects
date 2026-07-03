@@ -1,0 +1,7 @@
+Initializing ZAI...
+Found 9 markdown files to improve
+
+  [how-to-prompt] Source too short, skipping
+  [custom-domain] Already improved (7689 chars), skipping
+  [seo-settings] Already improved (12815 chars), skipping
+  [introduction] Rewriting to natural Indonesian (12,045 chars)...
