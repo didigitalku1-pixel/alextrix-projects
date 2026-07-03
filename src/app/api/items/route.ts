@@ -70,7 +70,7 @@ async function getManifest() {
 
 const TABLE_MAP: Record<string, { table: string; select: string }> = {
   template: {
-    table: "shared_code",
+    table: process.env.USER_SUPABASE_URL ? "templates" : "shared_code",
     select: "id,slug,title,description,code,tags,image_url,views,forks,premium,featured,username,created_at",
   },
   component: {
