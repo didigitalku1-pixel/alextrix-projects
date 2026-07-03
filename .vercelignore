@@ -4,8 +4,6 @@ download/aura_library/templates/
 download/aura_library/assets/
 download/aura_library/skills/
 download/aura_library/_meta/
-download/aura_library/learn/_raw/
-download/aura_library/learn/extracted/
 node_modules/
 .next/
 upload/
