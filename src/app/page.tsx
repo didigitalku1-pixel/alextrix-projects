@@ -335,6 +335,18 @@ export default function Home() {
                           alt={item.title}
                           loading="lazy"
                           className="card-image"
+                          referrerPolicy="no-referrer"
+                          onError={(e) => {
+                            const t = e.target as HTMLImageElement;
+                            t.style.display = "none";
+                            const p = t.parentElement;
+                            if (p && !p.querySelector(".card-image-placeholder")) {
+                              const d = document.createElement("div");
+                              d.className = "card-image-placeholder";
+                              d.textContent = "No preview";
+                              p.appendChild(d);
+                            }
+                          }}
                         />
                       ) : (
                         <div className="card-image-placeholder">No preview</div>
