@@ -1,6 +1,6 @@
 "use client";
 
-import { use, useState, useEffect } from "react";
+import { use, useState, useEffect, useCallback } from "react";
 
 export default function DetailPage({
   params,
@@ -11,43 +11,66 @@ export default function DetailPage({
   const [item, setItem] = useState<any>(null);
   const [tab, setTab] = useState<"preview" | "design" | "prompt" | "code">("preview");
   const [content, setContent] = useState<string>("");
+  const [contentStatus, setContentStatus] = useState<"loading" | "loaded" | "error" | "notfound">("loading");
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
+  const [dark, setDark] = useState(false);
 
+  // Theme
   useEffect(() => {
+    const saved = localStorage.getItem("aura-theme");
+    if (saved === "dark") setDark(true);
+  }, []);
+  useEffect(() => {
+    document.documentElement.classList.toggle("dark", dark);
+  }, [dark]);
+
+  // Fetch item metadata
+  useEffect(() => {
+    setLoading(true);
+    setItem(null);
     fetch(`/api/item/${type}/${id}`)
-      .then(r => r.json())
+      .then(r => {
+        if (!r.ok) throw new Error("Failed");
+        return r.json();
+      })
       .then(d => { setItem(d); setLoading(false); })
-      .catch(() => setLoading(false));
+      .catch(() => { setLoading(false); });
   }, [type, id]);
 
-  useEffect(() => {
+  // Fetch tab content
+  const loadTabContent = useCallback(async () => {
     if (!item) return;
+    setContentStatus("loading");
     setContent("");
-    setTab("preview");
-  }, [item]);
+
+    const artifact = tab === "preview" || tab === "code" ? "code" : tab === "design" ? "design_md" : "recreation_prompt";
+
+    try {
+      const r = await fetch(`/api/item-file?type=${item.type}&file=${item.file}&artifact=${artifact}`);
+      if (r.status === 404) {
+        setContentStatus("notfound");
+        return;
+      }
+      if (!r.ok) {
+        setContentStatus("error");
+        return;
+      }
+      const text = await r.text();
+      if (!text || text.length < 10) {
+        setContentStatus("notfound");
+        return;
+      }
+      setContent(text);
+      setContentStatus("loaded");
+    } catch {
+      setContentStatus("error");
+    }
+  }, [item, tab]);
 
   useEffect(() => {
-    if (!item) return;
-    setContent("");
-    const loadTab = async () => {
-      if (tab === "preview" || tab === "code") {
-        const r = await fetch(`/api/item-file?type=${item.type}&file=${item.file}&artifact=code`);
-        if (r.ok) {
-          const text = await r.text();
-          setContent(text);
-        }
-      } else {
-        const artifact = tab === "design" ? "design_md" : "recreation_prompt";
-        const r = await fetch(`/api/item-file?type=${item.type}&file=${item.file}&artifact=${artifact}`);
-        if (r.ok) {
-          const text = await r.text();
-          setContent(text);
-        }
-      }
-    };
-    loadTab();
-  }, [tab, item]);
+    if (item) loadTabContent();
+  }, [item, tab, loadTabContent]);
 
   const copy = async () => {
     try {
@@ -60,13 +83,8 @@ export default function DetailPage({
   if (loading) {
     return (
       <div className="app">
-        <nav className="topnav">
-          <div className="topnav-logo">
-            <div className="topnav-logo-icon">A</div>
-            <span>Aura Library</span>
-          </div>
-        </nav>
-        <div className="loading-spinner"><div className="spinner" /></div>
+        <header className="header"><div className="header-inner"><div className="header-left"><div className="header-logo-icon">A</div></div></div></header>
+        <main className="main"><div className="loading-spinner"><div className="spinner" /></div></main>
       </div>
     );
   }
@@ -74,17 +92,14 @@ export default function DetailPage({
   if (!item) {
     return (
       <div className="app">
-        <nav className="topnav">
-          <div className="topnav-logo">
-            <div className="topnav-logo-icon">A</div>
-            <span>Aura Library</span>
+        <header className="header"><div className="header-inner"><div className="header-left"><a href="/"><div className="header-logo-icon">A</div></a></div></div></header>
+        <main className="main">
+          <div className="empty">
+            <div className="empty-icon">🔍</div>
+            <p className="empty-title">Item not found</p>
+            <a href="/" className="btn btn-outline" style={{ marginTop: 16 }}>← Back to Library</a>
           </div>
-        </nav>
-        <div className="empty">
-          <div className="empty-icon">🔍</div>
-          <p className="empty-title">Item not found</p>
-          <a href="/" className="btn btn-outline" style={{ marginTop: 16 }}>← Back to Library</a>
-        </div>
+        </main>
       </div>
     );
   }
@@ -96,23 +111,33 @@ export default function DetailPage({
     return String(n || 0);
   };
 
+  const tabs: { id: typeof tab; label: string; show: boolean }[] = [
+    { id: "preview", label: "👁 Preview", show: true },
+    { id: "design", label: "📄 DESIGN.md", show: item.type === "template" },
+    { id: "prompt", label: "✨ Copy Prompt", show: item.type === "template" },
+    { id: "code", label: "</> Code", show: item.has_code || item.code_chars > 0 },
+  ];
+
   return (
     <div className="app">
-      {/* Top Nav */}
-      <nav className="topnav">
-        <div className="topnav-logo">
-          <div className="topnav-logo-icon">A</div>
-          <span>Aura Library</span>
+      {/* Header */}
+      <header className="header">
+        <div className="header-inner">
+          <div className="header-left">
+            <a href="/" className="header-logo">
+              <div className="header-logo-icon">A</div>
+            </a>
+          </div>
+          <nav className="header-nav">
+            <a href="/" className="header-tab active">{typeLabel.toUpperCase()}</a>
+          </nav>
+          <div className="header-right">
+            <button className="header-icon-btn" onClick={() => setDark(!dark)}>
+              {dark ? "☀️" : "🌙"}
+            </button>
+          </div>
         </div>
-        <div className="topnav-tabs">
-          <a href="/" className="topnav-tab">{typeLabel}</a>
-        </div>
-        <div className="topnav-actions">
-          <button className="topnav-icon-btn" onClick={() => document.documentElement.classList.toggle("dark")}>
-            🌙
-          </button>
-        </div>
-      </nav>
+      </header>
 
       {/* Detail Page */}
       <main className="main">
@@ -127,7 +152,7 @@ export default function DetailPage({
             </div>
             <h1 className="detail-title">{item.title}</h1>
             {item.desc && (
-              <p style={{ color: "var(--fg-muted)", fontSize: 14, marginBottom: 12 }}>{item.desc}</p>
+              <p className="detail-desc">{item.desc}</p>
             )}
             <div className="detail-meta">
               {item.username && <span className="detail-meta-item">by {item.username.slice(0, 20)}</span>}
@@ -137,51 +162,31 @@ export default function DetailPage({
               {item.created_at && (
                 <span className="detail-meta-item">{new Date(item.created_at).toLocaleDateString()}</span>
               )}
-              {item.premium && <span className="badge badge-pro">Pro</span>}
-              {item.featured && <span className="badge badge-featured">Featured</span>}
+              {item.premium && <span className="badge badge-pro">PRO</span>}
+              {item.featured && <span className="badge badge-featured">★ Featured</span>}
             </div>
           </div>
 
           {/* Tabs */}
           <div className="detail-tabs">
-            <button
-              className={`detail-tab ${tab === "preview" ? "active" : ""}`}
-              onClick={() => setTab("preview")}
-            >
-              👁 Preview
-            </button>
-            {item.type === "template" && (
+            {tabs.filter(t => t.show).map(t => (
               <button
-                className={`detail-tab ${tab === "design" ? "active" : ""}`}
-                onClick={() => setTab("design")}
+                key={t.id}
+                className={`detail-tab ${tab === t.id ? "active" : ""}`}
+                onClick={() => setTab(t.id)}
               >
-                📄 DESIGN.md
+                {t.label}
               </button>
-            )}
-            {item.type === "template" && (
-              <button
-                className={`detail-tab ${tab === "prompt" ? "active" : ""}`}
-                onClick={() => setTab("prompt")}
-              >
-                ✨ Copy Prompt
-              </button>
-            )}
-            {item.has_code && (
-              <button
-                className={`detail-tab ${tab === "code" ? "active" : ""}`}
-                onClick={() => setTab("code")}
-              >
-                &lt;/&gt; Code
-              </button>
-            )}
+            ))}
           </div>
 
           {/* Tab Content */}
           <div className="detail-tab-panel">
-            {!content && tab === "preview" && (
+            {contentStatus === "loading" && (
               <div className="loading-spinner"><div className="spinner" /></div>
             )}
-            {content && tab === "preview" && (
+
+            {contentStatus === "loaded" && tab === "preview" && (
               <iframe
                 srcDoc={content}
                 title="Preview"
@@ -189,7 +194,8 @@ export default function DetailPage({
                 className="preview-pane"
               />
             )}
-            {content && tab === "code" && (
+
+            {contentStatus === "loaded" && tab === "code" && (
               <div className="code-pane-wrap">
                 <button className="copy-btn" onClick={copy}>
                   {copied ? "✓ Copied!" : "Copy HTML"}
@@ -197,19 +203,21 @@ export default function DetailPage({
                 <pre className="code-pane"><code>{content}</code></pre>
               </div>
             )}
-            {content && tab === "design" && (
-              <div className="code-pane-wrap" style={{ background: "var(--bg)" }}>
+
+            {contentStatus === "loaded" && tab === "design" && (
+              <div className="code-pane-wrap" style={{ background: "hsl(var(--background))" }}>
                 <button className="copy-btn" onClick={copy}>
                   {copied ? "✓ Copied!" : "Copy DESIGN.md"}
                 </button>
                 <div
                   className="markdown"
-                  style={{ background: "var(--bg)" }}
+                  style={{ background: "hsl(var(--background))" }}
                   dangerouslySetInnerHTML={{ __html: renderMarkdown(content) }}
                 />
               </div>
             )}
-            {content && tab === "prompt" && (
+
+            {contentStatus === "loaded" && tab === "prompt" && (
               <div className="code-pane-wrap">
                 <button className="copy-btn" onClick={copy}>
                   {copied ? "✓ Copied!" : "Copy Prompt"}
@@ -217,22 +225,31 @@ export default function DetailPage({
                 <pre className="code-pane"><code>{content}</code></pre>
               </div>
             )}
-            {!content && tab !== "preview" && (
+
+            {contentStatus === "notfound" && (
               <div className="artifact-empty">
                 <div className="artifact-empty-content">
                   <div style={{ fontSize: 40 }}>⚠️</div>
-                  <h3>Artifact not generated yet</h3>
+                  <h3>{tab === "design" ? "DESIGN.md not generated yet" : tab === "prompt" ? "Copy Prompt not generated yet" : "Content not available"}</h3>
                   <p>
-                    This <code>{tab === "design" ? "design_md" : "recreation_prompt"}</code> needs to be
-                    generated via Aura's Edge Function.
+                    {tab === "design" || tab === "prompt"
+                      ? "This artifact is generated via Aura's Edge Function. Check the Progress tab for generation status."
+                      : "The code for this item is not available."}
                   </p>
-                  <p style={{ fontSize: 12, marginTop: 12 }}>
-                    File expected at:{" "}
-                    <code>
-                      {item.type === "component" ? "components" : "templates"}/{item.file}.
-                      {tab === "design" ? "design.md" : "prompt.md"}
-                    </code>
-                  </p>
+                  {tab === "design" || tab === "prompt" ? (
+                    <a href="/" className="btn btn-outline btn-sm" style={{ marginTop: 16 }}>View Progress →</a>
+                  ) : null}
+                </div>
+              </div>
+            )}
+
+            {contentStatus === "error" && (
+              <div className="artifact-empty">
+                <div className="artifact-empty-content">
+                  <div style={{ fontSize: 40 }}>❌</div>
+                  <h3>Failed to load</h3>
+                  <p>There was an error fetching this content. Please try again.</p>
+                  <button className="btn btn-outline btn-sm" style={{ marginTop: 16 }} onClick={loadTabContent}>Retry</button>
                 </div>
               </div>
             )}
@@ -242,9 +259,9 @@ export default function DetailPage({
           {item.tags && item.tags.length > 0 && (
             <div style={{ marginTop: 32 }}>
               <h3 style={{ fontSize: 14, fontWeight: 600, marginBottom: 12 }}>Tags</h3>
-              <div className="card-tags">
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
                 {item.tags.map((t: string) => (
-                  <span key={t} className="badge badge-outline">{t}</span>
+                  <span key={t} className="tag-pill">{t}</span>
                 ))}
               </div>
             </div>
