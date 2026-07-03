@@ -30,6 +30,21 @@ async function getCount(table: string): Promise<number> {
   }
 }
 
+// Skills table requires auth - use known count from manifest or hardcoded
+async function getSkillsCount(): Promise<number> {
+  // Skills table requires auth, so we can't count via anon API
+  // Use the count from our scraped data
+  try {
+    const { promises: fs } = await import("fs");
+    const path = await import("path");
+    const skillsDir = path.join(process.cwd(), "download", "aura_library", "skills");
+    const files = await fs.readdir(skillsDir);
+    return files.filter(f => f.endsWith(".json")).length;
+  } catch {
+    return 118; // Known count from scraping
+  }
+}
+
 async function getTopTags(): Promise<[string, number][]> {
   try {
     // Fetch tags from shared_code (templates) - sample to get tag counts
@@ -69,7 +84,7 @@ export async function GET() {
       getCount("shared_code"),
       getCount("components"),
       getCount("assets"),
-      getCount("skills"),
+      getSkillsCount(),
       getTopTags(),
     ]);
 

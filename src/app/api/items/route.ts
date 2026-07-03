@@ -149,6 +149,36 @@ export async function GET(req: NextRequest) {
       });
     }
 
+    // For assets: fetch from Supabase too
+    if (type === "asset") {
+      const config = TABLE_MAP[type];
+      let query = `${SUPA_URL}/rest/v1/${config.table}?select=${config.select}`;
+      let orderCol = "views";
+      let ascending = false;
+      if (sort === "recent") orderCol = "created_at";
+      else if (sort === "az") { orderCol = "title"; ascending = true; }
+      query += `&order=${orderCol}.${ascending ? "asc" : "desc"}`;
+      if (q) query += `&title=ilike.*${encodeURIComponent(q)}*`;
+      const start = (page - 1) * limit;
+      const end = start + limit - 1;
+      const r = await fetch(query, {
+        headers: { apikey: ANON_KEY, Authorization: `Bearer ${ANON_KEY}`, Range: `${start}-${end}`, Prefer: "count=exact" },
+      });
+      if (r.ok) {
+        const data = await r.json();
+        const cr = r.headers.get("content-range") || "";
+        const total = cr.includes("/") ? parseInt(cr.split("/").pop() || "0", 10) : data.length;
+        const items = data.map((item: any) => normalizeItem(item, type));
+        return NextResponse.json({ items, total, page, totalPages: Math.ceil(total / limit), limit });
+      }
+      return await getFromManifest(type, sort, tag, q, premium, featured, page, limit);
+    }
+
+    // For skills: fetch from manifest (skills table requires auth)
+    if (type === "skill") {
+      return await getFromManifest(type, sort, tag, q, premium, featured, page, limit);
+    }
+
     // For assets and skills: use manifest (they're in lite manifest)
     return await getFromManifest(type, sort, tag, q, premium, featured, page, limit);
   } catch (e: any) {
