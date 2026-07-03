@@ -8,6 +8,44 @@ const ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsI
 export const dynamic = "force-dynamic";
 export const maxDuration = 30;
 
+// Cache for access token (for skills auth)
+let _accessToken: string | null = null;
+let _tokenTime = 0;
+
+async function getAccessTokenForSkills(): Promise<string | null> {
+  const now = Date.now();
+  if (_accessToken && now - _tokenTime < 300000) return _accessToken;
+
+  // Try filesystem session (local)
+  try {
+    const sessionPath = path.join(process.cwd(), "download", "aura_library", "_meta", "session.json");
+    const raw = await fs.readFile(sessionPath, "utf-8");
+    const session = JSON.parse(raw);
+    _accessToken = session.access_token;
+    _tokenTime = now;
+    return _accessToken;
+  } catch {}
+
+  // Try env var (Vercel)
+  const refreshToken = process.env.AURA_REFRESH_TOKEN;
+  if (!refreshToken) return null;
+
+  try {
+    const r = await fetch(`${SUPA_URL}/auth/v1/token?grant_type=refresh_token`, {
+      method: "POST",
+      headers: { apikey: ANON_KEY, "Content-Type": "application/json" },
+      body: JSON.stringify({ refresh_token: refreshToken }),
+    });
+    if (!r.ok) return null;
+    const data = await r.json();
+    _accessToken = data.access_token;
+    _tokenTime = now;
+    return _accessToken;
+  } catch {
+    return null;
+  }
+}
+
 // Cache manifest
 let _manifestCache: any = null;
 
@@ -174,8 +212,37 @@ export async function GET(req: NextRequest) {
       return await getFromManifest(type, sort, tag, q, premium, featured, page, limit);
     }
 
-    // For skills: fetch from manifest (skills table requires auth)
+    // For skills: fetch from Supabase with auth token
     if (type === "skill") {
+      const accessToken = await getAccessTokenForSkills();
+      if (accessToken) {
+        let query = `${SUPA_URL}/rest/v1/skills?select=id,title,description,content,tags,views,forks,premium,featured,created_at`;
+        let orderCol = "views";
+        let ascending = false;
+        if (sort === "forks") orderCol = "forks";
+        else if (sort === "recent") orderCol = "created_at";
+        else if (sort === "az") { orderCol = "title"; ascending = true; }
+        query += `&order=${orderCol}.${ascending ? "asc" : "desc"}`;
+        if (q) query += `&title=ilike.*${encodeURIComponent(q)}*`;
+        const start = (page - 1) * limit;
+        const end = start + limit - 1;
+        const r = await fetch(query, {
+          headers: {
+            apikey: ANON_KEY,
+            Authorization: `Bearer ${accessToken}`,
+            Range: `${start}-${end}`,
+            Prefer: "count=exact",
+          },
+        });
+        if (r.ok) {
+          const data = await r.json();
+          const cr = r.headers.get("content-range") || "";
+          const total = cr.includes("/") ? parseInt(cr.split("/").pop() || "0", 10) : data.length;
+          const items = data.map((item: any) => normalizeItem(item, type));
+          return NextResponse.json({ items, total, page, totalPages: Math.ceil(total / limit), limit });
+        }
+      }
+      // Fallback to manifest
       return await getFromManifest(type, sort, tag, q, premium, featured, page, limit);
     }
 

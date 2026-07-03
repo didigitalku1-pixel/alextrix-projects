@@ -8,6 +8,44 @@ const ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsI
 export const dynamic = "force-dynamic";
 export const maxDuration = 30;
 
+// Cache for access token
+let _accessToken: string | null = null;
+let _tokenTime = 0;
+
+async function getAccessToken(): Promise<string | null> {
+  const now = Date.now();
+  if (_accessToken && now - _tokenTime < 300000) return _accessToken;
+
+  // Try filesystem session (local)
+  try {
+    const sessionPath = path.join(process.cwd(), "download", "aura_library", "_meta", "session.json");
+    const raw = await fs.readFile(sessionPath, "utf-8");
+    const session = JSON.parse(raw);
+    _accessToken = session.access_token;
+    _tokenTime = now;
+    return _accessToken;
+  } catch {}
+
+  // Try env var (Vercel) - refresh token to get access token
+  const refreshToken = process.env.AURA_REFRESH_TOKEN;
+  if (!refreshToken) return null;
+
+  try {
+    const r = await fetch(`${SUPA_URL}/auth/v1/token?grant_type=refresh_token`, {
+      method: "POST",
+      headers: { apikey: ANON_KEY, "Content-Type": "application/json" },
+      body: JSON.stringify({ refresh_token: refreshToken }),
+    });
+    if (!r.ok) return null;
+    const data = await r.json();
+    _accessToken = data.access_token;
+    _tokenTime = now;
+    return _accessToken;
+  } catch {
+    return null;
+  }
+}
+
 export async function GET(
   _req: NextRequest,
   { params }: { params: Promise<{ type: string; id: string }> }
@@ -16,7 +54,7 @@ export async function GET(
   const decodedId = decodeURIComponent(id);
 
   try {
-    // First try to get from manifest (fast, cached)
+    // First try manifest
     const manifestPath = path.join(process.cwd(), "download", "aura_library", "manifest-lite.json");
     const manifestPath2 = path.join(process.cwd(), "download", "aura_library", "manifest.json");
     let manifest: any = null;
@@ -31,11 +69,30 @@ export async function GET(
     }
 
     if (manifest) {
-      // Find item in manifest
       const item = manifest.items.find(
         (i: any) => i.type === type && String(i.id) === String(decodedId)
       );
       if (item) {
+        // For skills, also fetch content from Supabase
+        if (type === "skill") {
+          const accessToken = await getAccessToken();
+          if (accessToken) {
+            try {
+              const skillId = decodedId.includes("_") ? decodedId.split("_").pop() : decodedId;
+              const r = await fetch(
+                `${SUPA_URL}/rest/v1/skills?select=content& id=eq.${encodeURIComponent(skillId)}&limit=1`,
+                { headers: { apikey: ANON_KEY, Authorization: `Bearer ${accessToken}` } }
+              );
+              if (r.ok) {
+                const data = await r.json();
+                if (data && data.length > 0) {
+                  item.content = data[0].content || "";
+                  item.has_content = !!data[0].content;
+                }
+              }
+            } catch {}
+          }
+        }
         return NextResponse.json(item);
       }
     }
@@ -43,6 +100,8 @@ export async function GET(
     // Fallback: fetch from Supabase
     let table: string;
     let filter: string;
+    let needsAuth = false;
+
     if (type === "template") {
       table = "shared_code";
       filter = `id=eq.${decodedId}`;
@@ -54,7 +113,8 @@ export async function GET(
       filter = `id=eq.${decodedId}`;
     } else if (type === "skill") {
       table = "skills";
-      filter = `id=eq.${encodeURIComponent(decodedId.split("_").pop() || decodedId)}`;
+      filter = `id=eq.${encodeURIComponent(decodedId.includes("_") ? decodedId.split("_").pop() : decodedId)}`;
+      needsAuth = true;
     } else {
       return NextResponse.json({ error: "Invalid type" }, { status: 400 });
     }
@@ -65,9 +125,22 @@ export async function GET(
       ? "id,slug,title,description,keywords,image_1600w,image_800w,image_320w,views,media_type,resolution,colors,created_at"
       : "id,slug,title,description,code,tags,image_url,views,forks,premium,featured,username,created_at";
 
+    const headers: Record<string, string> = {
+      apikey: ANON_KEY,
+      Authorization: `Bearer ${ANON_KEY}`,
+    };
+
+    // Skills need auth token
+    if (needsAuth) {
+      const accessToken = await getAccessToken();
+      if (accessToken) {
+        headers.Authorization = `Bearer ${accessToken}`;
+      }
+    }
+
     const r = await fetch(
       `${SUPA_URL}/rest/v1/${table}?select=${select}&${filter}&limit=1`,
-      { headers: { apikey: ANON_KEY, Authorization: `Bearer ${ANON_KEY}` } }
+      { headers }
     );
 
     if (!r.ok) {
@@ -80,7 +153,6 @@ export async function GET(
     }
 
     const raw = data[0];
-    // Normalize to manifest format
     const item: any = {
       id: raw.id,
       type,
@@ -99,6 +171,13 @@ export async function GET(
       code_chars: (raw.code || "").length,
       file: `${String(raw.id).padStart(type === "asset" ? 8 : 6, "0")}_${raw.slug || raw.id}`,
     };
+
+    // For skills, add content info
+    if (type === "skill") {
+      item.content = raw.content || "";
+      item.has_content = !!raw.content;
+      item.content_chars = (raw.content || "").length;
+    }
 
     return NextResponse.json(item);
   } catch (e: any) {
