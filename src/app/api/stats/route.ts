@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 
-const SUPA_URL = "https://hoirqrkdgbmvpwutwuwj.supabase.co";
-const ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhvaXJxcmtkZ2JtdnB3dXR3dXdqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDM2Nzc2NTAsImV4cCI6MjA1OTI1MzY1MH0._UsCSHsTELn7m54tOhX3ySm67WEhcyHAPbuxEQZsl3c";
+const SUPA_URL = process.env.USER_SUPABASE_URL || "https://hoirqrkdgbmvpwutwuwj.supabase.co";
+const ANON_KEY = process.env.USER_SUPABASE_ANON_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhvaXJxcmtkZ2JtdnB3dXR3dXdqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDM2Nzc2NTAsImV4cCI6MjA1OTI1MzY1MH0._UsCSHsTELn7m54tOhX3ySm67WEhcyHAPbuxEQZsl3c";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 30;
@@ -81,7 +81,7 @@ export async function GET() {
 
     // Fetch real counts from Supabase in parallel
     const [templates, components, assets, skills, topTags] = await Promise.all([
-      getCount("shared_code"),
+      getCount(process.env.USER_SUPABASE_URL ? "templates" : "shared_code"),
       getCount("components"),
       getCount("assets"),
       getSkillsCount(),
