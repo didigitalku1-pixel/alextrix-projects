@@ -16,12 +16,45 @@ async function getSession() {
   const now = Date.now();
   if (_sessionCache && now - _sessionTime < 300000) return _sessionCache;
 
+  // Try filesystem first (local Bun server)
   try {
     const sessionPath = path.join(process.cwd(), "download", "aura_library", "_meta", "session.json");
     const raw = await fs.readFile(sessionPath, "utf-8");
     _sessionCache = JSON.parse(raw);
     _sessionTime = now;
     return _sessionCache;
+  } catch {
+    // Filesystem not available (Vercel) - use env var
+  }
+
+  // Use env var (Vercel deployment)
+  const refreshToken = process.env.AURA_REFRESH_TOKEN;
+  if (!refreshToken) return null;
+
+  // Refresh token to get access token
+  const session = await refreshTokenInternal(refreshToken);
+  if (session) {
+    _sessionCache = session;
+    _sessionTime = now;
+  }
+  return session;
+}
+
+async function refreshTokenInternal(refreshToken: string) {
+  try {
+    const r = await fetch(`${SUPA_URL}/auth/v1/token?grant_type=refresh_token`, {
+      method: "POST",
+      headers: { apikey: ANON_KEY, "Content-Type": "application/json" },
+      body: JSON.stringify({ refresh_token: refreshToken }),
+    });
+    if (!r.ok) return null;
+    const data = await r.json();
+    return {
+      access_token: data.access_token,
+      refresh_token: data.refresh_token,
+      expires_at: data.expires_at,
+      user: { id: data.user?.id, email: data.user?.email },
+    };
   } catch {
     return null;
   }
