@@ -54,6 +54,21 @@ export async function GET(
   const decodedId = decodeURIComponent(id);
 
   try {
+    // For skills: use skills-manifest.json (has all 118 skills with content)
+    if (type === "skill") {
+      try {
+        const skillsPath = path.join(process.cwd(), "download", "aura_library", "skills-manifest.json");
+        const raw = await fs.readFile(skillsPath, "utf-8");
+        const skillsManifest = JSON.parse(raw);
+        const skill = skillsManifest.items?.find(
+          (i: any) => i.file === decodedId || i.id === decodedId || String(i.id) === String(decodedId)
+        );
+        if (skill) {
+          return NextResponse.json(skill);
+        }
+      } catch {}
+    }
+
     // First try manifest
     const manifestPath = path.join(process.cwd(), "download", "aura_library", "manifest-lite.json");
     const manifestPath2 = path.join(process.cwd(), "download", "aura_library", "manifest.json");

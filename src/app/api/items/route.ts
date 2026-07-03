@@ -212,42 +212,56 @@ export async function GET(req: NextRequest) {
       return await getFromManifest(type, sort, tag, q, premium, featured, page, limit);
     }
 
-    // For skills: fetch from Supabase with auth token
+    // For skills: use skills-manifest.json (has all 118 skills with content)
     if (type === "skill") {
-      const accessToken = await getAccessTokenForSkills();
-      if (accessToken) {
-        let query = `${SUPA_URL}/rest/v1/skills?select=id,title,description,content,tags,views,forks,premium,featured,created_at`;
-        let orderCol = "views";
-        let ascending = false;
-        if (sort === "forks") orderCol = "forks";
-        else if (sort === "recent") orderCol = "created_at";
-        else if (sort === "az") { orderCol = "title"; ascending = true; }
-        query += `&order=${orderCol}.${ascending ? "asc" : "desc"}`;
-        if (q) query += `&title=ilike.*${encodeURIComponent(q)}*`;
-        const start = (page - 1) * limit;
-        const end = start + limit - 1;
-        const r = await fetch(query, {
-          headers: {
-            apikey: ANON_KEY,
-            Authorization: `Bearer ${accessToken}`,
-            Range: `${start}-${end}`,
-            Prefer: "count=exact",
-          },
-        });
-        if (r.ok) {
-          const data = await r.json();
-          const cr = r.headers.get("content-range") || "";
-          const total = cr.includes("/") ? parseInt(cr.split("/").pop() || "0", 10) : data.length;
-          const items = data.map((item: any) => normalizeItem(item, type));
-          return NextResponse.json({ items, total, page, totalPages: Math.ceil(total / limit), limit });
+      try {
+        const skillsPath = path.join(process.cwd(), "download", "aura_library", "skills-manifest.json");
+        const raw = await fs.readFile(skillsPath, "utf-8");
+        const skillsManifest = JSON.parse(raw);
+        let skillItems = skillsManifest.items || [];
+
+        // Apply filters
+        if (q) {
+          const ql = q.toLowerCase();
+          skillItems = skillItems.filter((i: any) =>
+            i.title.toLowerCase().includes(ql) || (i.desc || "").toLowerCase().includes(ql)
+          );
         }
+
+        // Sort
+        switch (sort) {
+          case "forks":
+            skillItems = [...skillItems].sort((a: any, b: any) => b.forks - a.forks);
+            break;
+          case "recent":
+            skillItems = [...skillItems].sort((a: any, b: any) =>
+              new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime()
+            );
+            break;
+          case "az":
+            skillItems = [...skillItems].sort((a: any, b: any) => a.title.localeCompare(b.title));
+            break;
+          default:
+            skillItems = [...skillItems].sort((a: any, b: any) => b.views - a.views);
+        }
+
+        const total = skillItems.length;
+        const start = (page - 1) * limit;
+        const paged = skillItems.slice(start, start + limit);
+
+        return NextResponse.json({
+          items: paged,
+          total,
+          page,
+          totalPages: Math.ceil(total / limit),
+          limit,
+        });
+      } catch {
+        return await getFromManifest(type, sort, tag, q, premium, featured, page, limit);
       }
-      // Fallback to manifest
-      return await getFromManifest(type, sort, tag, q, premium, featured, page, limit);
     }
 
-    // For assets and skills: use manifest (they're in lite manifest)
-    return await getFromManifest(type, sort, tag, q, premium, featured, page, limit);
+    // Fallback to manifest
   } catch (e: any) {
     // Fallback to manifest
     return await getFromManifest(type, sort, tag, q, premium, featured, page, limit);
