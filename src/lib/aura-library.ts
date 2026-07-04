@@ -2,7 +2,7 @@ import { promises as fs } from "fs";
 import path from "path";
 import { unstable_cache } from "next/cache";
 
-const LIBRARY_DIR = "/home/z/my-project/download/aura_library";
+const LIBRARY_DIR = process.env.AURA_LIBRARY_DIR || path.join(process.cwd(), "download", "aura_library");
 const MANIFEST_PATH = path.join(LIBRARY_DIR, "manifest.json");
 const STATS_PATH = path.join(LIBRARY_DIR, "_meta", "stats.json");
 

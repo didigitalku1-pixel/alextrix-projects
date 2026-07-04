@@ -14,7 +14,7 @@ from pathlib import Path
 from datetime import datetime
 from collections import Counter
 
-DOWNLOAD_DIR = Path("/home/z/my-project/download/aura_library")
+DOWNLOAD_DIR = Path(os.environ.get("AURA_LIBRARY_DIR") or Path(__file__).resolve().parent.parent / "download" / "aura_library")
 MANIFEST_FILE = DOWNLOAD_DIR / "manifest.json"
 STATS_FILE = DOWNLOAD_DIR / "_meta" / "stats.json"
 
