@@ -1,6 +1,49 @@
 "use client";
 
-import { use, useState, useEffect, useCallback } from "react";
+import { use, useState, useEffect, useCallback, useRef } from "react";
+
+/**
+ * Injects an auto-resize script into the iframe's srcDoc HTML.
+ * The script measures the actual content height (after fonts/images load)
+ * and posts it to the parent window via postMessage.
+ *
+ * This solves the bug where component previews were truncated because the
+ * iframe had a fixed `height: 700px` but the content was often >2000px tall.
+ */
+function withAutoResize(html: string): string {
+  const script = `<script>(function(){
+    var send = function(){
+      var h = Math.max(
+        document.body ? document.body.scrollHeight : 0,
+        document.documentElement ? document.documentElement.scrollHeight : 0
+      );
+      try { parent.postMessage({ source: 'aura-preview', height: h }, '*'); } catch (e) {}
+    };
+    if (document.readyState === 'complete' || document.readyState === 'interactive') {
+      send();
+    } else {
+      document.addEventListener('DOMContentLoaded', send);
+    }
+    window.addEventListener('load', send);
+    // Re-measure after a beat (in case fonts/images change layout)
+    setTimeout(send, 100);
+    setTimeout(send, 500);
+    setTimeout(send, 1500);
+    // Observe DOM mutations (animations, dynamic content)
+    if (typeof MutationObserver !== 'undefined' && document.body) {
+      new MutationObserver(function(){ send(); }).observe(document.body, { childList: true, subtree: true, attributes: true });
+    }
+    // Observe resize (responsive components)
+    if (typeof ResizeObserver !== 'undefined' && document.body) {
+      new ResizeObserver(function(){ send(); }).observe(document.body);
+    }
+  })();</script>`;
+  // Inject before </body> if present, else append
+  if (/<\/body>/i.test(html)) {
+    return html.replace(/<\/body>/i, script + "</body>");
+  }
+  return html + script;
+}
 
 export default function SlugDetail({
   params,
@@ -17,6 +60,26 @@ export default function SlugDetail({
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
   const [dark, setDark] = useState(false);
+  const [iframeHeight, setIframeHeight] = useState<number>(600); // sensible default
+  const iframeRef = useRef<HTMLIFrameElement>(null);
+
+  // Listen for height messages from the iframe (auto-resize)
+  useEffect(() => {
+    const handler = (e: MessageEvent) => {
+      if (e.data && e.data.source === "aura-preview" && typeof e.data.height === "number") {
+        // Min 300px, max 4000px (no viewport clamp — let user scroll page for very tall content)
+        const next = Math.max(300, Math.min(e.data.height + 20, 4000));
+        setIframeHeight(next);
+      }
+    };
+    window.addEventListener("message", handler);
+    return () => window.removeEventListener("message", handler);
+  }, []);
+
+  // Reset iframe height when content changes (new tab/item)
+  useEffect(() => {
+    setIframeHeight(600);
+  }, [content, tab]);
 
   useEffect(() => {
     const saved = localStorage.getItem("aura-theme");
@@ -141,7 +204,15 @@ export default function SlugDetail({
           <div className="detail-tab-panel">
             {contentStatus === "loading" && <div className="loading-spinner"><div className="spinner" /></div>}
             {contentStatus === "loaded" && tab === "preview" && (
-              <iframe srcDoc={content} title="Preview" sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals" className="preview-pane" />
+              <iframe
+                ref={iframeRef}
+                srcDoc={withAutoResize(content)}
+                title="Preview"
+                sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals"
+                className="preview-pane"
+                style={{ height: `${iframeHeight}px`, transition: "height 0.2s ease-out" }}
+                loading="eager"
+              />
             )}
             {contentStatus === "loaded" && tab === "code" && (
               <div className="code-pane-wrap">

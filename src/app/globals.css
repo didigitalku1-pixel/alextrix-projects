@@ -578,11 +578,14 @@ img { display: block; max-width: 100%; }
 
 /* === Preview iframe === */
 .preview-pane {
-  height: 700px;
   width: 100%;
+  /* Height is set dynamically via inline style based on content */
+  min-height: 300px;
   background: white;
   border: 1px solid hsl(var(--border));
   border-radius: 12px;
+  box-shadow: 0 4px 24px -8px hsl(var(--foreground) / 0.1);
+  overflow: hidden;
 }
 
 /* === Code pane === */
