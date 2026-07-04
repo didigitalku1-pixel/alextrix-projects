@@ -212,6 +212,7 @@ export default function SlugDetail({
             <a href="/?tab=assets" className="header-tab">ASSETS</a>
             <a href="/?tab=skills" className="header-tab">SKILLS</a>
             <a href="/design-systems" className="header-tab">DESIGN.MD</a>
+            <a href="/learn/introduction" className="header-tab">LEARN</a>
             <a href="/" className="header-tab">PRICING</a>
           </nav>
           <div className="header-right">

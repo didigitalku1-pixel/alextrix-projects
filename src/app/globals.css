@@ -1911,3 +1911,11 @@ img { display: block; max-width: 100%; }
     gap: 32px;
   }
 }
+
+/* === Learn page — full-page iframe (100% aura.build identity) === */
+.learn-iframe {
+  width: 100%;
+  height: calc(100vh - 64px);
+  border: none;
+  display: block;
+}

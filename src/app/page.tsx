@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback, useMemo, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
 type ItemType = "template" | "component" | "asset" | "skill";
-type TabType = "templates" | "components" | "assets" | "skills" | "design-md" | "progress";
+type TabType = "templates" | "components" | "assets" | "skills" | "design-md" | "learn" | "progress";
 
 interface Item {
   id: string | number;
@@ -81,7 +81,7 @@ function HomeInner() {
   // Initialize state from URL params (one-time read on mount)
   const [tab, setTabState] = useState<TabType>(() => {
     const t = searchParams.get("tab") as TabType;
-    return ["templates", "components", "assets", "skills", "design-md", "progress"].includes(t || "")
+    return ["templates", "components", "assets", "skills", "design-md", "learn", "progress"].includes(t || "")
       ? t!
       : "templates";
   });
@@ -109,7 +109,7 @@ function HomeInner() {
 
   // Sync all state → URL (replace history to avoid back/forward spam)
   useEffect(() => {
-    if (tab === "progress" || tab === "design-md") {
+    if (tab === "learn" || tab === "progress" || tab === "design-md") {
       // These tabs have their own routes; don't pollute URL
       return;
     }
@@ -153,7 +153,7 @@ function HomeInner() {
 
   // Load items
   const loadItems = useCallback(async () => {
-    if (tab === "progress") return;
+    if (tab === "learn" || tab === "progress") return;
     setLoading(true);
     const apiType = tab === "templates" ? "template" : tab === "components" ? "component" : tab === "assets" ? "asset" : "skill";
     const params = new URLSearchParams({ type: apiType, sort, page: String(page), limit: "24" });
@@ -189,6 +189,7 @@ function HomeInner() {
     { id: "assets", label: "Assets", count: stats?.assets?.toLocaleString() },
     { id: "skills", label: "Skills", count: stats?.skills?.toLocaleString() },
     { id: "design-md", label: "DESIGN.MD", href: "/design-systems" },
+    { id: "learn", label: "Learn", href: "/learn/introduction" },
     { id: "progress", label: "Progress" },
   ];
 
