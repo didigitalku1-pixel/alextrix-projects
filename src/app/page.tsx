@@ -337,11 +337,10 @@ export default function Home() {
                     <div className="card-image-wrap">
                       {item.image ? (
                         <img
-                          src={item.image}
+                          src={`/api/image?url=${encodeURIComponent(item.image)}`}
                           alt={item.title}
                           loading="lazy"
                           className="card-image"
-                          referrerPolicy="no-referrer"
                           onError={(e) => {
                             const t = e.target as HTMLImageElement;
                             t.style.display = "none";

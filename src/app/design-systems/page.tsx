@@ -123,8 +123,7 @@ export default function DesignSystemsPage() {
                 <a key={item.id} className="card" href={`/design-systems/${item.slug}`}>
                   <div className="card-image-wrap">
                     {item.image ? (
-                      <img src={item.image} alt={item.title} loading="lazy" className="card-image"
-                        referrerPolicy="no-referrer"
+                      <img src={`/api/image?url=${encodeURIComponent(item.image)}`} alt={item.title} loading="lazy" className="card-image"
                         onError={(e) => {
                           const t = e.target as HTMLImageElement;
                           t.style.display = "none";
