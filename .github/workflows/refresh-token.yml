@@ -1,0 +1,109 @@
+name: Auto-Refresh Aura Token
+
+# Cron: jalan tiap 12 jam (07:00 dan 19:00 UTC = 14:00 dan 02:00 WIB)
+# Mencegah access_token expired (>1 jam) dengan cara pre-refresh sebelum scraper daily jalan.
+# Supabase rotates refresh_token on every use → workflow otomatis update secret
+# dengan token baru supaya next run bisa refresh lagi.
+#
+# Juga runnable manual dari Actions tab.
+
+on:
+  schedule:
+    - cron: "0 7,19 * * *"  # 07:00 dan 19:00 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: aura-token-refresh
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install pynacl (untuk encrypt GitHub secret)
+        run: |
+          python -m pip install --upgrade pip
+          pip install pynacl
+
+      - name: Refresh Aura access token & update secret
+        env:
+          AURA_REFRESH_TOKEN: ${{ secrets.AURA_REFRESH_TOKEN }}
+          AURA_PAT: ${{ secrets.AURA_PAT }}
+        run: |
+          set -euo pipefail
+          echo "🔄 Refreshing Aura access token (auto-refresh cron)..."
+          echo "   Time: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          echo "   Old refresh token: ${AURA_REFRESH_TOKEN:0:10}..."
+          
+          # Call Supabase refresh endpoint
+          RESPONSE=$(curl -sS -X POST \
+            "https://hoirqrkdgbmvpwutwuwj.supabase.co/auth/v1/token?grant_type=refresh_token" \
+            -H "apikey: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhvaXJxcmtkZ2JtdnB3dXR3dXdqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDM2Nzc2NTAsImV4cCI6MjA1OTI1MzY1MH0._UsCSHsTELn7m54tOhX3ySm67WEhcyHAPbuxEQZsl3c" \
+            -H "Content-Type: application/json" \
+            -d "{\"refresh_token\": \"${AURA_REFRESH_TOKEN}\"}")
+          
+          # Parse response
+          NEW_ACCESS=$(echo "$RESPONSE" | python3 -c "import json,sys; d=json.load(sys.stdin); print(d.get('access_token',''))")
+          NEW_REFRESH=$(echo "$RESPONSE" | python3 -c "import json,sys; d=json.load(sys.stdin); print(d.get('refresh_token',''))")
+          USER_EMAIL=$(echo "$RESPONSE" | python3 -c "import json,sys; d=json.load(sys.stdin); print(d.get('user',{}).get('email',''))")
+          EXPIRES_AT=$(echo "$RESPONSE" | python3 -c "import json,sys; d=json.load(sys.stdin); print(d.get('expires_at',''))")
+          
+          if [ -z "$NEW_ACCESS" ] || [ -z "$NEW_REFRESH" ]; then
+            echo "::error::Failed to refresh token. Response: $RESPONSE"
+            echo "::error::Refresh token may be expired (valid 30 days from last extraction)."
+            echo "::error::Re-extract session: login to aura.build → F12 → paste scripts/extract_session_v2.js"
+            echo "::error::Then update AURA_REFRESH_TOKEN GitHub secret with new refresh_token."
+            exit 1
+          fi
+          
+          echo "✅ Token refreshed for $USER_EMAIL"
+          echo "   New access token: ${NEW_ACCESS:0:50}..."
+          echo "   New refresh token: ${NEW_REFRESH:0:10}..."
+          echo "   Expires at: $(date -u -d @${EXPIRES_AT} +%Y-%m-%dT%H:%M:%SZ 2>/dev/null || echo $EXPIRES_AT)"
+          
+          # Update GitHub secret dengan rotated refresh_token
+          # Pakai AURA_PAT (PAT dengan repo scope) karena GITHUB_TOKEN default tidak bisa write secrets
+          if [ -n "$AURA_PAT" ]; then
+            echo ""
+            echo "🔐 Updating AURA_REFRESH_TOKEN secret dengan rotated token..."
+            GITHUB_TOKEN="$AURA_PAT" python3 scripts/set-github-secrets.py \
+              didigitalku1-pixel/web-library \
+              AURA_REFRESH_TOKEN="$NEW_REFRESH"
+            echo "✅ Secret updated. Next refresh akan pakai token baru."
+          else
+            echo "::warning::AURA_PAT secret tidak ditemukan. Tidak bisa update AURA_REFRESH_TOKEN secret."
+            echo "::warning::Set AURA_PAT secret (Personal Access Token dengan repo scope) untuk auto-rotate."
+          fi
+          
+          # Summary untuk Actions UI
+          echo ""
+          echo "## Token Refresh Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **User:** $USER_EMAIL" >> $GITHUB_STEP_SUMMARY
+          echo "- **Expires at:** $(date -u -d @${EXPIRES_AT} +%Y-%m-%dT%H:%M:%SZ 2>/dev/null || echo $EXPIRES_AT)" >> $GITHUB_STEP_SUMMARY
+          echo "- **Refresh token:** rotated & updated ke GitHub secret" >> $GITHUB_STEP_SUMMARY
+          echo "- **Next refresh:** dalam 12 jam (cron 07:00/19:00 UTC)" >> $GITHUB_STEP_SUMMARY
+
+      - name: Notify on failure
+        if: failure()
+        run: |
+          echo "::warning::Auto-refresh token failed."
+          echo "::warning::Jika refresh_token expired (>30 hari), perlu re-extract manual:"
+          echo "::warning::  1. Login ke https://www.aura.build/ dengan Google"
+          echo "::warning::  2. F12 → Console → paste scripts/extract_session_v2.js"
+          echo "::warning::  3. Update AURA_REFRESH_TOKEN GitHub secret dengan refresh_token baru"
+          echo "::warning::URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
