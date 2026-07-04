@@ -127,4 +127,49 @@ describe("Page routing", () => {
       expect(r.status).toBeLessThan(500);
     });
   });
+
+  describe("skills routes (REGRESSION: was 404 for all 118 skills)", () => {
+    // This test prevents the bug we just fixed: .gitignore 'skills/' pattern
+    // was silently excluding src/app/skills/ route folder from git.
+    // Test with a few real skill files from the manifest.
+    const TEST_SKILL_FILES = [
+      "ui-design-system_1b637f50",
+      "tailwind-design-system-v4_a28a06d1",
+      "three_js-animation_3542b46c",
+      "copywriting_3f5d009a",
+      "web-interface-guidelines_77b75b55",
+    ];
+
+    for (const file of TEST_SKILL_FILES) {
+      it(`/skills/${file} returns 200 (was 404 before route fix)`, async () => {
+        if (skipIfOffline()) return;
+        const r = await fetch(`${BASE_URL}/skills/${file}`);
+        expect(r.status, `Expected 200 for /skills/${file}, got ${r.status}`).toBe(200);
+      });
+    }
+
+    it("skills page renders with correct title (not 404)", async () => {
+      if (skipIfOffline()) return;
+      const r = await fetch(`${BASE_URL}/skills/ui-design-system_1b637f50`);
+      const html = await r.text();
+      // Page should have the app's title (not Next.js default 404 title)
+      expect(html).toContain("Aura Library");
+      // Status 200 already verified above; this test confirms the page is
+      // actually rendered (not a 404 fallback)
+    });
+
+    it("skills route file exists in src/app/skills/", async () => {
+      // Regression test: ensures the route file is actually committed to git
+      // (was being silently ignored by .gitignore 'skills/' pattern before)
+      const { promises: fs } = await import("fs");
+      const path = await import("path");
+      const routePath = path.join(process.cwd(), "src", "app", "skills", "[slug]", "page.tsx");
+      try {
+        const stat = await fs.stat(routePath);
+        expect(stat.isFile(), `${routePath} should be a file`).toBe(true);
+      } catch (e: any) {
+        throw new Error(`Skills route file missing: ${routePath}. Check .gitignore for unanchored 'skills/' pattern.`);
+      }
+    });
+  });
 });
