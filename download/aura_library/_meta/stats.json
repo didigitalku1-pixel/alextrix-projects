@@ -1,12 +1,213 @@
 {
-  "generated_at": "2026-07-04T10:01:33.111118Z",
-  "total_items": 0,
-  "components": 0,
-  "templates": 0,
-  "with_code": 0,
-  "premium": 0,
-  "featured": 0,
-  "with_image": 0,
-  "top_tags": [],
-  "total_code_chars": 0
+  "generated_at": "2026-07-04T10:05:29.439623Z",
+  "total_items": 24279,
+  "components": 2829,
+  "templates": 21450,
+  "with_code": 24279,
+  "premium": 851,
+  "featured": 7771,
+  "with_image": 24255,
+  "top_tags": [
+    [
+      "Landing Page",
+      15771
+    ],
+    [
+      "Minimal",
+      13060
+    ],
+    [
+      "Clean",
+      12451
+    ],
+    [
+      "Brand",
+      11912
+    ],
+    [
+      "Technology",
+      11124
+    ],
+    [
+      "Large Type",
+      9793
+    ],
+    [
+      "Services",
+      8975
+    ],
+    [
+      "Dark",
+      8301
+    ],
+    [
+      "Gradient",
+      7509
+    ],
+    [
+      "Portfolio",
+      3041
+    ],
+    [
+      "Futuristic",
+      2463
+    ],
+    [
+      "tailwind",
+      1918
+    ],
+    [
+      "Animated",
+      1878
+    ],
+    [
+      "Health",
+      1812
+    ],
+    [
+      "responsive",
+      1670
+    ],
+    [
+      "Dashboard",
+      1631
+    ],
+    [
+      "Business",
+      1506
+    ],
+    [
+      "SaaS",
+      1407
+    ],
+    [
+      "Tailwind CSS",
+      1396
+    ],
+    [
+      "Grid",
+      1263
+    ],
+    [
+      "Art & Design",
+      1241
+    ],
+    [
+      "E-commerce",
+      1227
+    ],
+    [
+      "Education",
+      1003
+    ],
+    [
+      "animated",
+      980
+    ],
+    [
+      "section",
+      797
+    ],
+    [
+      "interactive",
+      749
+    ],
+    [
+      "Food",
+      706
+    ],
+    [
+      "Colorful",
+      704
+    ],
+    [
+      "AI",
+      701
+    ],
+    [
+      "Real Estate",
+      633
+    ],
+    [
+      "Entertainment",
+      621
+    ],
+    [
+      "Responsive Design",
+      593
+    ],
+    [
+      "card",
+      552
+    ],
+    [
+      "cta",
+      525
+    ],
+    [
+      "Travel",
+      496
+    ],
+    [
+      "Features",
+      470
+    ],
+    [
+      "3D",
+      470
+    ],
+    [
+      "Responsive",
+      461
+    ],
+    [
+      "Animation",
+      427
+    ],
+    [
+      "Hero",
+      426
+    ],
+    [
+      "dashboard",
+      413
+    ],
+    [
+      "Fashion",
+      384
+    ],
+    [
+      "hero",
+      372
+    ],
+    [
+      "Testimonials",
+      365
+    ],
+    [
+      "Pricing",
+      354
+    ],
+    [
+      "feature",
+      345
+    ],
+    [
+      "gradient",
+      334
+    ],
+    [
+      "Analytics",
+      329
+    ],
+    [
+      "dark",
+      311
+    ],
+    [
+      "grid",
+      285
+    ]
+  ],
+  "total_code_chars": 926495703
 }
