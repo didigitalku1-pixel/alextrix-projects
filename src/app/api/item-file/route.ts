@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
+import { promises as fs } from "fs";
+import path from "path";
 
 // USER's Supabase — 100% independent from aura.build
 const SUPA_URL = process.env.USER_SUPABASE_URL || "https://njgtmqwyabfknyktuwzc.supabase.co";
@@ -58,9 +60,18 @@ export async function GET(req: NextRequest) {
 
     // === Skill content: fetch from user's Supabase ===
     if (artifact === "content" && type === "skill") {
-      const skillId = file.split("_").pop() || file;
+      // Look up full UUID from skills-manifest.json
+      let fullSkillId = file;
+      try {
+        const skillsPath = path.join(process.cwd(), "download", "aura_library", "skills-manifest.json");
+        const raw = await fs.readFile(skillsPath, "utf-8");
+        const skillsManifest = JSON.parse(raw);
+        const skill = skillsManifest.items?.find((i: any) => i.file === file || i.id === file);
+        if (skill) fullSkillId = skill.id;
+      } catch {}
+
       const r = await fetch(
-        `${SUPA_URL}/rest/v1/skills?select=content&id=eq.${encodeURIComponent(skillId)}&limit=1`,
+        `${SUPA_URL}/rest/v1/skills?select=content&id=eq.${encodeURIComponent(fullSkillId)}&limit=1`,
         { headers: { apikey: SUPA_KEY, Authorization: `Bearer ${SUPA_KEY}` } }
       );
       if (!r.ok) return NextResponse.json({ error: "Failed", available: false }, { status: 502 });

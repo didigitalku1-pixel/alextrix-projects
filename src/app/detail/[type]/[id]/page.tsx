@@ -9,7 +9,7 @@ export default function DetailPage({
 }) {
   const { type, id } = use(params);
   const [item, setItem] = useState<any>(null);
-  const [tab, setTab] = useState<"preview" | "design" | "prompt" | "code">("preview");
+  const [tab, setTab] = useState<"preview" | "design" | "prompt" | "code" | "content">("preview");
   const [content, setContent] = useState<string>("");
   const [contentStatus, setContentStatus] = useState<"loading" | "loaded" | "error" | "notfound">("loading");
   const [loading, setLoading] = useState(true);
@@ -34,7 +34,13 @@ export default function DetailPage({
         if (!r.ok) throw new Error("Failed");
         return r.json();
       })
-      .then(d => { setItem(d); setLoading(false); })
+      .then(d => {
+        setItem(d);
+        // For skills, default to "content" tab
+        if (d.type === "skill") setTab("content");
+        else setTab("preview");
+        setLoading(false);
+      })
       .catch(() => { setLoading(false); });
   }, [type, id]);
 
@@ -44,7 +50,12 @@ export default function DetailPage({
     setContentStatus("loading");
     setContent("");
 
-    const artifact = tab === "preview" || tab === "code" ? "code" : tab === "design" ? "design_md" : "recreation_prompt";
+    // Map tab to artifact
+    let artifact = "code";
+    if (tab === "design") artifact = "design_md";
+    else if (tab === "prompt") artifact = "recreation_prompt";
+    else if (tab === "content") artifact = "content";
+    else artifact = "code"; // preview or code
 
     try {
       const r = await fetch(`/api/item-file?type=${item.type}&file=${item.file}&artifact=${artifact}`);
@@ -112,10 +123,11 @@ export default function DetailPage({
   };
 
   const tabs: { id: typeof tab; label: string; show: boolean }[] = [
-    { id: "preview", label: "👁 Preview", show: true },
+    { id: "preview", label: "👁 Preview", show: item.type !== "skill" },
     { id: "design", label: "📄 DESIGN.md", show: item.type === "template" },
     { id: "prompt", label: "✨ Copy Prompt", show: item.type === "template" },
-    { id: "code", label: "</> Code", show: item.has_code || item.code_chars > 0 },
+    { id: "code", label: "</> Code", show: (item.type === "template" || item.type === "component") && (item.has_code || item.code_chars > 0) },
+    { id: "content", label: "📄 Content", show: item.type === "skill" },
   ];
 
   return (
@@ -223,6 +235,19 @@ export default function DetailPage({
                   {copied ? "✓ Copied!" : "Copy Prompt"}
                 </button>
                 <pre className="code-pane"><code>{content}</code></pre>
+              </div>
+            )}
+
+            {contentStatus === "loaded" && tab === "content" && (
+              <div className="code-pane-wrap" style={{ background: "hsl(var(--background))" }}>
+                <button className="copy-btn" onClick={copy}>
+                  {copied ? "✓ Copied!" : "Copy Content"}
+                </button>
+                <div
+                  className="markdown"
+                  style={{ background: "hsl(var(--background))" }}
+                  dangerouslySetInnerHTML={{ __html: renderMarkdown(content) }}
+                />
               </div>
             )}
 
