@@ -120,9 +120,9 @@ export async function GET(req: NextRequest) {
       else if (sort === "az") { orderCol = "title"; ascending = true; }
       query += `&order=${orderCol}.${ascending ? "asc" : "desc"}`;
 
-      // Tag filter (JSONB contains)
+      // Tag filter (JSONB array contains) — values must be JSON-quoted strings
       if (tag) {
-        query += `&tags=cs.{${encodeURIComponent(tag)}}`;
+        query += `&tags=cs.${encodeURIComponent(JSON.stringify([tag]))}`;
       }
 
       // Boolean filters
@@ -170,7 +170,7 @@ export async function GET(req: NextRequest) {
       query += `&order=${orderCol}.${ascending ? "asc" : "desc"}`;
       if (featured) query += `&featured=is.true`;
       if (premium) query += `&premium=is.true`;
-      if (tag) query += `&keywords=cs.{${encodeURIComponent(tag)}}`;
+      if (tag) query += `&keywords=cs.${encodeURIComponent(JSON.stringify([tag]))}`;
       if (q && q.trim()) {
         query += `&${buildSearchOr(q.trim(), config.textCols)}`;
       }

@@ -1,14 +1,12 @@
 "use client";
 
 import { use, useState, useEffect, useCallback, useRef } from "react";
+import Link from "next/link";
 
 /**
  * Injects an auto-resize script into the iframe's srcDoc HTML.
  * The script measures the actual content height (after fonts/images load)
  * and posts it to the parent window via postMessage.
- *
- * This solves the bug where component previews were truncated because the
- * iframe had a fixed `height: 700px` but the content was often >2000px tall.
  */
 function withAutoResize(html: string): string {
   const script = `<script>(function(){
@@ -25,25 +23,41 @@ function withAutoResize(html: string): string {
       document.addEventListener('DOMContentLoaded', send);
     }
     window.addEventListener('load', send);
-    // Re-measure after a beat (in case fonts/images change layout)
     setTimeout(send, 100);
     setTimeout(send, 500);
     setTimeout(send, 1500);
-    // Observe DOM mutations (animations, dynamic content)
     if (typeof MutationObserver !== 'undefined' && document.body) {
       new MutationObserver(function(){ send(); }).observe(document.body, { childList: true, subtree: true, attributes: true });
     }
-    // Observe resize (responsive components)
     if (typeof ResizeObserver !== 'undefined' && document.body) {
       new ResizeObserver(function(){ send(); }).observe(document.body);
     }
   })();</script>`;
-  // Inject before </body> if present, else append
   if (/<\/body>/i.test(html)) {
     return html.replace(/<\/body>/i, script + "</body>");
   }
   return html + script;
 }
+
+function formatCount(n: number): string {
+  if (n >= 1_000_000) return (n / 1_000_000).toFixed(1) + "M";
+  if (n >= 1_000) return (n / 1_000).toFixed(1) + "k";
+  return String(n || 0);
+}
+
+function formatDate(iso: string | null): string {
+  if (!iso) return "";
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return "";
+  return d.toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" });
+}
+
+const TYPE_LABEL: Record<string, { singular: string; plural: string; title: string }> = {
+  template: { singular: "template", plural: "templates", title: "Landing Page Templates" },
+  component: { singular: "component", plural: "components", title: "UI Components" },
+  asset: { singular: "asset", plural: "assets", title: "Stock Assets" },
+  skill: { singular: "skill", plural: "skills", title: "AI Skills" },
+};
 
 export default function SlugDetail({
   params,
@@ -60,14 +74,14 @@ export default function SlugDetail({
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
   const [dark, setDark] = useState(false);
-  const [iframeHeight, setIframeHeight] = useState<number>(600); // sensible default
+  const [iframeHeight, setIframeHeight] = useState<number>(600);
+  const [related, setRelated] = useState<{ moreFromAuthor: any[]; related: any[] }>({ moreFromAuthor: [], related: [] });
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
   // Listen for height messages from the iframe (auto-resize)
   useEffect(() => {
     const handler = (e: MessageEvent) => {
       if (e.data && e.data.source === "aura-preview" && typeof e.data.height === "number") {
-        // Min 300px, max 4000px (no viewport clamp — let user scroll page for very tall content)
         const next = Math.max(300, Math.min(e.data.height + 20, 4000));
         setIframeHeight(next);
       }
@@ -76,22 +90,23 @@ export default function SlugDetail({
     return () => window.removeEventListener("message", handler);
   }, []);
 
-  // Reset iframe height when content changes (new tab/item)
-  useEffect(() => {
-    setIframeHeight(600);
-  }, [content, tab]);
+  useEffect(() => { setIframeHeight(600); }, [content, tab]);
 
+  // Theme
   useEffect(() => {
     const saved = localStorage.getItem("aura-theme");
     if (saved === "dark") setDark(true);
   }, []);
   useEffect(() => {
     document.documentElement.classList.toggle("dark", dark);
+    localStorage.setItem("aura-theme", dark ? "dark" : "light");
   }, [dark]);
 
+  // Fetch item metadata
   useEffect(() => {
     setLoading(true);
     setItem(null);
+    setRelated({ moreFromAuthor: [], related: [] });
     fetch(`/api/item/${type}/${slug}`)
       .then(r => { if (!r.ok) throw new Error("Failed"); return r.json(); })
       .then(d => {
@@ -103,6 +118,21 @@ export default function SlugDetail({
       .catch(() => { setLoading(false); });
   }, [type, slug]);
 
+  // Fetch related items (for templates/components/assets, not skills)
+  useEffect(() => {
+    if (!item || item.type === "skill") return;
+    const author = item.username || item.created_by;
+    const tag = item.tags?.[0];
+    const params = new URLSearchParams();
+    if (author) params.set("author", author);
+    if (tag) params.set("tag", tag);
+    fetch(`/api/related/${item.type}s/${item.id}?${params}`)
+      .then(r => r.json())
+      .then(d => setRelated({ moreFromAuthor: d.moreFromAuthor || [], related: d.related || [] }))
+      .catch(() => {});
+  }, [item]);
+
+  // Fetch tab content
   const loadTabContent = useCallback(async () => {
     if (!item) return;
     setContentStatus("loading");
@@ -122,9 +152,7 @@ export default function SlugDetail({
     } catch { setContentStatus("error"); }
   }, [item, tab]);
 
-  useEffect(() => {
-    if (item) loadTabContent();
-  }, [item, tab, loadTabContent]);
+  useEffect(() => { if (item) loadTabContent(); }, [item, tab, loadTabContent]);
 
   const copy = async () => {
     try { await navigator.clipboard.writeText(content); setCopied(true); setTimeout(() => setCopied(false), 2000); } catch {}
@@ -144,25 +172,20 @@ export default function SlugDetail({
     </div>
   );
 
-  const typeLabel = item.type.charAt(0).toUpperCase() + item.type.slice(1) + "s";
-  const backUrl = `/?tab=${item.type}s`;
+  const typeLabel = TYPE_LABEL[item.type] || TYPE_LABEL.template;
+  const pluralRoute = typeLabel.plural;
+  const backUrl = `/?tab=${pluralRoute}`;
+  const firstTag = item.tags?.[0];
 
-  const tabs: { id: typeof tab; label: string; show: boolean }[] = [
-    { id: "preview", label: "👁 Preview", show: item.type !== "skill" },
-    { id: "design", label: "📄 DESIGN.md", show: item.type === "template" },
-    { id: "prompt", label: "✨ Copy Prompt", show: item.type === "template" },
-    { id: "code", label: "</> Code", show: (item.type === "template" || item.type === "component") && (item.has_code || item.code_chars > 0) },
-    { id: "content", label: "📄 Content", show: item.type === "skill" },
+  const tabs: { id: typeof tab; label: string; icon: string; show: boolean }[] = [
+    { id: "preview", label: "Preview", icon: "👁", show: item.type !== "skill" },
+    { id: "code", label: "Code", icon: "</>", show: (item.type === "template" || item.type === "component") && (item.has_code || item.code_chars > 0) },
+    { id: "design", label: "DESIGN.md", icon: "📄", show: item.type === "template" },
+    { id: "prompt", label: "Copy Prompt", icon: "✨", show: item.type === "template" },
+    { id: "content", label: "Content", icon: "📄", show: item.type === "skill" },
   ];
 
-  const navTabs = [
-    { id: "templates", label: "Templates", href: "/?tab=templates" },
-    { id: "components", label: "Components", href: "/?tab=components" },
-    { id: "assets", label: "Assets", href: "/?tab=assets" },
-    { id: "skills", label: "Skills", href: "/?tab=skills" },
-    { id: "design-md", label: "DESIGN.MD", href: "/design-systems" },
-    { id: "learn", label: "Learn", href: "/learn" },
-  ];
+  const visibleTabs = tabs.filter(t => t.show);
 
   return (
     <div className="app">
@@ -170,100 +193,261 @@ export default function SlugDetail({
         <div className="header-inner">
           <a href="/" className="header-logo"><div className="header-logo-icon">A</div></a>
           <nav className="header-nav">
-            {navTabs.map(t => (
-              <a key={t.id} href={t.href} className={`header-tab ${t.id === item.type + "s" ? "active" : ""}`}>{t.label}</a>
-            ))}
+            <a href="/?tab=templates" className="header-tab">TEMPLATES</a>
+            <a href="/?tab=components" className="header-tab">COMPONENTS</a>
+            <a href="/?tab=assets" className="header-tab">ASSETS</a>
+            <a href="/?tab=skills" className="header-tab">SKILLS</a>
+            <a href="/design-systems" className="header-tab">DESIGN.MD</a>
+            <a href="/learn" className="header-tab">LEARN</a>
           </nav>
           <div className="header-right">
             <button className="header-icon-btn" onClick={() => setDark(!dark)}>{dark ? "☀️" : "🌙"}</button>
           </div>
         </div>
       </header>
-      <main className="main">
-        <div className="detail-page">
-          <a href={backUrl} className="detail-back">← Back to {typeLabel}</a>
-          <div className="detail-header">
-            <div className="detail-breadcrumb">{typeLabel} {item.tags?.length > 0 ? `• ${item.tags[0]}` : ""}</div>
-            <h1 className="detail-title">{item.title}</h1>
-            {item.desc && <p className="detail-desc">{item.desc}</p>}
-            <div className="detail-meta">
-              {item.username && <span className="detail-meta-item">by {item.username.slice(0, 20)}</span>}
-              <span className="detail-meta-item">👁 {item.views?.toLocaleString() || 0}</span>
-              {item.forks > 0 && <span className="detail-meta-item">⑂ {item.forks.toLocaleString()}</span>}
-              <span className="detail-meta-item">📝 {(item.code_chars || 0).toLocaleString()} chars</span>
-              {item.created_at && <span className="detail-meta-item">{new Date(item.created_at).toLocaleDateString()}</span>}
-              {item.premium && <span className="badge badge-pro">PRO</span>}
-              {item.featured && <span className="badge badge-featured">★ Featured</span>}
-            </div>
-          </div>
-          <div className="detail-tabs">
-            {tabs.filter(t => t.show).map(t => (
-              <button key={t.id} className={`detail-tab ${tab === t.id ? "active" : ""}`} onClick={() => setTab(t.id)}>{t.label}</button>
-            ))}
-          </div>
-          <div className="detail-tab-panel">
-            {contentStatus === "loading" && <div className="loading-spinner"><div className="spinner" /></div>}
-            {contentStatus === "loaded" && tab === "preview" && (
-              <iframe
-                ref={iframeRef}
-                srcDoc={withAutoResize(content)}
-                title="Preview"
-                sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals"
-                className="preview-pane"
-                style={{ height: `${iframeHeight}px`, transition: "height 0.2s ease-out" }}
-                loading="eager"
-              />
-            )}
-            {contentStatus === "loaded" && tab === "code" && (
-              <div className="code-pane-wrap">
-                <button className="copy-btn" onClick={copy}>{copied ? "✓ Copied!" : "Copy HTML"}</button>
-                <pre className="code-pane"><code>{content}</code></pre>
-              </div>
-            )}
-            {contentStatus === "loaded" && tab === "design" && (
-              <div className="code-pane-wrap" style={{ background: "hsl(var(--background))" }}>
-                <button className="copy-btn" onClick={copy}>{copied ? "✓ Copied!" : "Copy DESIGN.md"}</button>
-                <div className="markdown" style={{ background: "hsl(var(--background))" }} dangerouslySetInnerHTML={{ __html: renderMarkdown(content) }} />
-              </div>
-            )}
-            {contentStatus === "loaded" && tab === "prompt" && (
-              <div className="code-pane-wrap">
-                <button className="copy-btn" onClick={copy}>{copied ? "✓ Copied!" : "Copy Prompt"}</button>
-                <pre className="code-pane"><code>{content}</code></pre>
-              </div>
-            )}
-            {contentStatus === "loaded" && tab === "content" && (
-              <div className="code-pane-wrap" style={{ background: "hsl(var(--background))" }}>
-                <button className="copy-btn" onClick={copy}>{copied ? "✓ Copied!" : "Copy Content"}</button>
-                <div className="markdown" style={{ background: "hsl(var(--background))" }} dangerouslySetInnerHTML={{ __html: renderMarkdown(content) }} />
-              </div>
-            )}
-            {contentStatus === "notfound" && (
-              <div className="artifact-empty"><div className="artifact-empty-content">
-                <div style={{ fontSize: 40 }}>⚠️</div>
-                <h3>{tab === "design" ? "DESIGN.md not generated yet" : tab === "prompt" ? "Copy Prompt not generated yet" : "Content not available"}</h3>
-                <p>{tab === "design" || tab === "prompt" ? "This artifact is being generated in the background." : ""}</p>
-              </div></div>
-            )}
-            {contentStatus === "error" && (
-              <div className="artifact-empty"><div className="artifact-empty-content">
-                <div style={{ fontSize: 40 }}>❌</div>
-                <h3>Failed to load</h3>
-                <button className="btn btn-outline btn-sm" style={{ marginTop: 16 }} onClick={loadTabContent}>Retry</button>
-              </div></div>
-            )}
-          </div>
-          {item.tags?.length > 0 && (
-            <div style={{ marginTop: 32 }}>
-              <h3 style={{ fontSize: 14, fontWeight: 600, marginBottom: 12 }}>Tags</h3>
-              <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-                {item.tags.map((t: string) => <span key={t} className="tag-pill">{t}</span>)}
+
+      <main className="main detail-main">
+        <div className="detail-container">
+          {/* === Header section (title, breadcrumb, author, stats, CTA) === */}
+          <div className="detail-hero">
+            <div className="detail-hero-left">
+              {/* Breadcrumb */}
+              <nav className="detail-breadcrumb-nav">
+                <Link href={`/?tab=${pluralRoute}`}>{typeLabel.title} in HTML / TailwindCSS</Link>
+                {firstTag && (
+                  <>
+                    <span className="breadcrumb-sep">•</span>
+                    <Link href={`/?tab=${pluralRoute}&tag=${encodeURIComponent(firstTag)}`}>{firstTag}</Link>
+                  </>
+                )}
+              </nav>
+              {/* Title */}
+              <h1 className="detail-h1">{item.title}</h1>
+              {/* Meta row: author + views + remixes + pro badge */}
+              <div className="detail-meta-row">
+                {item.username && (
+                  <span className="detail-author">
+                    <span className="detail-author-avatar">
+                      {(item.username || "?").slice(0, 2).toUpperCase()}
+                    </span>
+                    <span className="detail-author-name">by {(item.username || "").slice(0, 20)}</span>
+                  </span>
+                )}
+                <span className="detail-stat">👁 {formatCount(item.views)} views</span>
+                {item.forks > 0 && <span className="detail-stat">⑂ {formatCount(item.forks)} remixes</span>}
+                {item.premium && <span className="detail-stat">👑 Pro</span>}
+                {item.featured && <span className="detail-stat">★ Featured</span>}
+                {item.created_at && <span className="detail-stat">📅 {formatDate(item.created_at)}</span>}
+                {item.code_chars > 0 && <span className="detail-stat">📝 {formatCount(item.code_chars)} chars</span>}
               </div>
             </div>
+            <div className="detail-hero-right">
+              {item.premium && (
+                <a href="/" className="btn-pro">
+                  Upgrade to Pro
+                  <span style={{ marginLeft: 6 }}>→</span>
+                </a>
+              )}
+            </div>
+          </div>
+
+          {/* === Preview section (browser-style chrome with tabs) === */}
+          <div className="preview-frame">
+            {/* Browser chrome */}
+            <div className="preview-chrome">
+              <div className="preview-traffic-lights">
+                <span className="traffic-light red" />
+                <span className="traffic-light yellow" />
+                <span className="traffic-light green" />
+              </div>
+              <div className="preview-tabs">
+                {visibleTabs.map(t => (
+                  <button
+                    key={t.id}
+                    className={`preview-tab ${tab === t.id ? "active" : ""}`}
+                    onClick={() => setTab(t.id)}
+                  >
+                    <span className="preview-tab-icon">{t.icon}</span>
+                    {t.label}
+                  </button>
+                ))}
+              </div>
+              {contentStatus === "loaded" && (tab === "code" || tab === "design" || tab === "prompt" || tab === "content") && (
+                <button className="preview-copy-btn" onClick={copy}>
+                  {copied ? "✓ Copied!" : "Copy"}
+                </button>
+              )}
+            </div>
+
+            {/* Content area */}
+            <div className="preview-content">
+              {contentStatus === "loading" && <div className="loading-spinner"><div className="spinner" /></div>}
+
+              {contentStatus === "loaded" && tab === "preview" && (
+                <iframe
+                  ref={iframeRef}
+                  srcDoc={withAutoResize(content)}
+                  title="Preview"
+                  sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals"
+                  className="preview-iframe"
+                  style={{ height: `${iframeHeight}px`, transition: "height 0.2s ease-out" }}
+                  loading="eager"
+                />
+              )}
+
+              {contentStatus === "loaded" && tab === "code" && (
+                <pre className="code-viewer"><code>{content}</code></pre>
+              )}
+
+              {contentStatus === "loaded" && tab === "design" && (
+                <div className="markdown-viewer" dangerouslySetInnerHTML={{ __html: renderMarkdown(content) }} />
+              )}
+
+              {contentStatus === "loaded" && tab === "prompt" && (
+                <pre className="code-viewer"><code>{content}</code></pre>
+              )}
+
+              {contentStatus === "loaded" && tab === "content" && (
+                <div className="markdown-viewer" dangerouslySetInnerHTML={{ __html: renderMarkdown(content) }} />
+              )}
+
+              {contentStatus === "notfound" && (
+                <div className="artifact-empty">
+                  <div style={{ fontSize: 40 }}>⚠️</div>
+                  <h3>{tab === "design" ? "DESIGN.md not generated yet" : tab === "prompt" ? "Copy Prompt not generated yet" : "Content not available"}</h3>
+                  <p>{tab === "design" || tab === "prompt" ? "This artifact is being generated in the background." : ""}</p>
+                </div>
+              )}
+
+              {contentStatus === "error" && (
+                <div className="artifact-empty">
+                  <div style={{ fontSize: 40 }}>❌</div>
+                  <h3>Failed to load</h3>
+                  <button className="btn btn-outline btn-sm" style={{ marginTop: 16 }} onClick={loadTabContent}>Retry</button>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* === About section (description + tags) === */}
+          <section className="detail-section">
+            <div className="about-grid">
+              <div className="about-left">
+                <h2 className="about-h2">About</h2>
+                {item.desc ? (
+                  <p className="about-desc">{item.desc}</p>
+                ) : (
+                  <p className="about-desc about-desc-muted">No description available.</p>
+                )}
+                {item.tags && item.tags.length > 0 && (
+                  <div className="about-tags">
+                    {item.tags.map((t: string) => (
+                      <Link
+                        key={t}
+                        href={`/?tab=${pluralRoute}&tag=${encodeURIComponent(t)}`}
+                        className="about-tag"
+                      >
+                        {t}
+                      </Link>
+                    ))}
+                  </div>
+                )}
+              </div>
+              <div className="about-right">
+                <h3 className="about-h3">Author</h3>
+                <div className="about-author-card">
+                  <div className="about-author-avatar">
+                    {(item.username || "?").slice(0, 2).toUpperCase()}
+                  </div>
+                  <div>
+                    <div className="about-author-name">{(item.username || "Anonymous").slice(0, 30)}</div>
+                    <div className="about-author-sub">Creator</div>
+                  </div>
+                </div>
+                <h3 className="about-h3" style={{ marginTop: 24 }}>Stats</h3>
+                <div className="about-stats">
+                  <div className="about-stat-row"><span>Views</span><span>{formatCount(item.views)}</span></div>
+                  {item.forks > 0 && <div className="about-stat-row"><span>Remixes</span><span>{formatCount(item.forks)}</span></div>}
+                  <div className="about-stat-row"><span>Code size</span><span>{formatCount(item.code_chars)} chars</span></div>
+                  {item.created_at && <div className="about-stat-row"><span>Created</span><span>{formatDate(item.created_at)}</span></div>}
+                </div>
+              </div>
+            </div>
+          </section>
+
+          {/* === More from Author === */}
+          {related.moreFromAuthor.length > 0 && (
+            <section className="detail-section">
+              <div className="related-header">
+                <h2 className="related-h2">More from {(item.username || "Author").slice(0, 20)}</h2>
+                <Link href={`/?tab=${pluralRoute}`} className="related-view-all">View all →</Link>
+              </div>
+              <div className="related-grid">
+                {related.moreFromAuthor.map((r: any) => (
+                  <RelatedCard key={r.id} item={r} />
+                ))}
+              </div>
+            </section>
+          )}
+
+          {/* === Related Components === */}
+          {related.related.length > 0 && (
+            <section className="detail-section">
+              <div className="related-header">
+                <h2 className="related-h2">Related {typeLabel.title}</h2>
+                {firstTag && (
+                  <Link href={`/?tab=${pluralRoute}&tag=${encodeURIComponent(firstTag)}`} className="related-view-all">
+                    Browse all {firstTag} {typeLabel.plural} →
+                  </Link>
+                )}
+              </div>
+              <div className="related-grid">
+                {related.related.map((r: any) => (
+                  <RelatedCard key={r.id} item={r} />
+                ))}
+              </div>
+            </section>
           )}
         </div>
       </main>
     </div>
+  );
+}
+
+/** Related item card (mini preview) */
+function RelatedCard({ item }: { item: any }) {
+  const pluralRoute = item.type === "template" ? "templates" : item.type === "component" ? "components" : item.type === "asset" ? "assets" : "skills";
+  const href = item.type === "skill"
+    ? `/skills/${item.file}`
+    : `/${pluralRoute}/${item.slug}`;
+  return (
+    <Link href={href} className="related-card">
+      <div className="related-card-image-wrap">
+        {item.image ? (
+          <img
+            src={`/api/image?url=${encodeURIComponent(item.image)}`}
+            alt={item.title}
+            loading="lazy"
+            className="related-card-image"
+          />
+        ) : (
+          <img
+            src={`/api/skill-thumb?title=${encodeURIComponent(item.title)}&tags=${encodeURIComponent((item.tags || []).slice(0, 3).join(","))}`}
+            alt={item.title}
+            loading="lazy"
+            className="related-card-image"
+          />
+        )}
+        {item.premium && <span className="related-card-pro">PRO</span>}
+      </div>
+      <div className="related-card-footer">
+        <h3 className="related-card-title" title={item.title}>{item.title}</h3>
+        <div className="related-card-stats">
+          <span>👁 {formatCount(item.views)}</span>
+          {item.forks > 0 && <span>⑂ {formatCount(item.forks)}</span>}
+        </div>
+      </div>
+    </Link>
   );
 }
 
