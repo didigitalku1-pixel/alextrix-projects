@@ -71,7 +71,7 @@ function normalizeItem(raw: any, type: string): any {
     forks: raw.forks || 0,
     premium: raw.premium || false,
     featured: raw.featured || false,
-    username: raw.username,
+    username: raw.username || raw.created_by || null,
     created_at: raw.created_at,
     has_code: !!raw.code,
     code_chars: (raw.code || "").length,
