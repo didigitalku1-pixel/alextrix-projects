@@ -1,6 +1,76 @@
 "use client";
 
-import { use, useState, useEffect } from "react";
+import { use, useState, useEffect, useRef } from "react";
+
+/**
+ * Wraps raw HTML in full document with Tailwind CDN (mirrors aura.build).
+ * If HTML is already a full document, injects Tailwind into existing <head>.
+ */
+function withTailwindAndAutoResize(html: string): string {
+  const resizeScript = `<script>(function(){
+    var send = function(){
+      var h = Math.max(
+        document.body ? document.body.scrollHeight : 0,
+        document.documentElement ? document.documentElement.scrollHeight : 0
+      );
+      try { parent.postMessage({ source: 'aura-preview', height: h }, '*'); } catch (e) {}
+    };
+    if (document.readyState === 'complete' || document.readyState === 'interactive') {
+      send();
+    } else {
+      document.addEventListener('DOMContentLoaded', send);
+    }
+    window.addEventListener('load', send);
+    setTimeout(send, 100);
+    setTimeout(send, 500);
+    setTimeout(send, 1500);
+    setTimeout(send, 3000);
+    if (typeof MutationObserver !== 'undefined' && document.body) {
+      new MutationObserver(function(){ send(); }).observe(document.body, { childList: true, subtree: true, attributes: true });
+    }
+    if (typeof ResizeObserver !== 'undefined' && document.body) {
+      new ResizeObserver(function(){ send(); }).observe(document.body);
+    }
+  })();</script>`;
+
+  // Only inject Tailwind CDN if not already present
+  const hasTailwind = /cdn\.tailwindcss\.com/i.test(html);
+  const tailwindScript = hasTailwind ? "" : `<script src="https://cdn.tailwindcss.com"></script>`;
+
+  // Case 1: Full HTML document — inject into existing <head>
+  if (/<html[^>]*>/i.test(html) && /<\/html>/i.test(html)) {
+    if (/<head[^>]*>/i.test(html)) {
+      html = html.replace(/<head[^>]*>/i, (match) => match + tailwindScript);
+    } else {
+      html = html.replace(/<html[^>]*>/i, (match) => match + "<head>" + tailwindScript + "</head>");
+    }
+    if (/<\/body>/i.test(html)) {
+      html = html.replace(/<\/body>/i, resizeScript + "</body>");
+    } else {
+      html = html.replace(/<\/html>/i, resizeScript + "</html>");
+    }
+    return html;
+  }
+
+  // Case 2: Raw HTML fragment — wrap in full document
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Preview</title>
+  ${tailwindScript}
+  <style>
+    html, body { height: 100%; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+  </style>
+</head>
+<body>
+${html}
+${resizeScript}
+</body>
+</html>`;
+}
 
 export default function DesignSystemDetailPage({
   params,
@@ -12,6 +82,9 @@ export default function DesignSystemDetailPage({
   const [tab, setTab] = useState<"design" | "html">("design");
   const [loading, setLoading] = useState(true);
   const [dark, setDark] = useState(false);
+  const [iframeHeight, setIframeHeight] = useState(600);
+  const [copied, setCopied] = useState<string | null>(null);
+  const iframeRef = useRef<HTMLIFrameElement>(null);
 
   useEffect(() => {
     const saved = localStorage.getItem("aura-theme");
@@ -19,6 +92,7 @@ export default function DesignSystemDetailPage({
   }, []);
   useEffect(() => {
     document.documentElement.classList.toggle("dark", dark);
+    localStorage.setItem("aura-theme", dark ? "dark" : "light");
   }, [dark]);
 
   useEffect(() => {
@@ -30,10 +104,26 @@ export default function DesignSystemDetailPage({
       .catch(() => setLoading(false));
   }, [slug]);
 
-  const copyToClipboard = (text: string, label: string) => {
-    navigator.clipboard.writeText(text).then(() => {
-      alert(`${label} copied to clipboard!`);
-    }).catch(() => {});
+  // Auto-resize iframe
+  useEffect(() => {
+    const handler = (e: MessageEvent) => {
+      if (e.data && e.data.source === "aura-preview" && typeof e.data.height === "number") {
+        const next = Math.max(300, Math.min(e.data.height + 20, 8000));
+        setIframeHeight(next);
+      }
+    };
+    window.addEventListener("message", handler);
+    return () => window.removeEventListener("message", handler);
+  }, []);
+
+  useEffect(() => { setIframeHeight(600); }, [tab, slug]);
+
+  const copyToClipboard = async (text: string, label: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(label);
+      setTimeout(() => setCopied(null), 2000);
+    } catch {}
   };
 
   if (loading) {
@@ -55,13 +145,17 @@ export default function DesignSystemDetailPage({
   }
 
   const tabs = [
-    { id: "templates", label: "Templates" },
-    { id: "components", label: "Components" },
-    { id: "assets", label: "Assets" },
-    { id: "skills", label: "Skills" },
+    { id: "templates", label: "Templates", href: "/?tab=templates" },
+    { id: "components", label: "Components", href: "/?tab=components" },
+    { id: "assets", label: "Assets", href: "/?tab=assets" },
+    { id: "skills", label: "Skills", href: "/?tab=skills" },
     { id: "design-md", label: "DESIGN.MD", active: true },
-    { id: "learn", label: "Learn" },
-    { id: "progress", label: "Progress" },
+    { id: "learn", label: "Learn", href: "/learn" },
+  ];
+
+  const visibleTabs: { id: typeof tab; label: string; icon: string; show: boolean }[] = [
+    { id: "design", label: "DESIGN.md", icon: "📄", show: !!item.content },
+    { id: "html", label: "Preview", icon: "👁", show: !!item.preview_html },
   ];
 
   return (
@@ -71,7 +165,7 @@ export default function DesignSystemDetailPage({
           <a href="/" className="header-logo"><div className="header-logo-icon">A</div></a>
           <nav className="header-nav">
             {tabs.map(t => (
-              <a key={t.id} href={t.id === "design-md" ? "/design-systems" : `/?tab=${t.id}`}
+              <a key={t.id} href={t.href || "/design-systems"}
                  className={`header-tab ${t.active ? "active" : ""}`}>{t.label}</a>
             ))}
           </nav>
@@ -81,53 +175,120 @@ export default function DesignSystemDetailPage({
         </div>
       </header>
 
-      <main className="main">
-        <div className="detail-page">
-          {/* Breadcrumb + Actions */}
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 24, flexWrap: "wrap", gap: 12 }}>
-            <a href="/design-systems" className="detail-back">← Back to design systems</a>
-            <div style={{ display: "flex", gap: 8 }}>
+      <main className="main detail-main">
+        <div className="detail-container">
+          {/* === Hero section === */}
+          <div className="detail-hero">
+            <div className="detail-hero-left">
+              <nav className="detail-breadcrumb-nav">
+                <a href="/design-systems">Design Systems</a>
+                {item.featured && (
+                  <>
+                    <span className="breadcrumb-sep">•</span>
+                    <span>Featured</span>
+                  </>
+                )}
+              </nav>
+              <h1 className="detail-h1">{item.title}</h1>
+              {item.desc && <p className="about-desc" style={{ maxWidth: 800, marginTop: 12 }}>{item.desc}</p>}
+              <div className="detail-meta-row" style={{ marginTop: 16 }}>
+                <span className="detail-stat">👁 {item.views?.toLocaleString() || 0} views</span>
+                {item.forks > 0 && <span className="detail-stat">⑂ {item.forks} remixes</span>}
+                {item.featured && <span className="detail-stat">★ Featured</span>}
+                {item.created_at && <span className="detail-stat">📅 {new Date(item.created_at).toLocaleDateString()}</span>}
+              </div>
+            </div>
+            <div className="detail-hero-right">
               {item.content && (
-                <button className="btn btn-sm" onClick={() => copyToClipboard(item.content, "DESIGN.md")}>
-                  📋 Add to Prompt
+                <button
+                  className="btn-pro"
+                  onClick={() => copyToClipboard(item.content, "DESIGN.md")}
+                  style={{ textDecoration: "none", border: "none", cursor: "pointer" }}
+                >
+                  {copied === "DESIGN.md" ? "✓ Copied!" : "📋 Add to Prompt"}
                 </button>
               )}
-              <button className={`btn btn-sm ${tab === "design" ? "" : "btn-outline"}`} onClick={() => setTab("design")}>📄 DESIGN.md</button>
-              {item.preview_html && (
-                <button className={`btn btn-sm ${tab === "html" ? "" : "btn-outline"}`} onClick={() => setTab("html")}>🌐 HTML</button>
+            </div>
+          </div>
+
+          {/* === Preview frame (browser chrome) === */}
+          <div className="preview-frame">
+            <div className="preview-chrome">
+              <div className="preview-traffic-lights">
+                <span className="traffic-light red" />
+                <span className="traffic-light yellow" />
+                <span className="traffic-light green" />
+              </div>
+              <div className="preview-tabs">
+                {visibleTabs.filter(t => t.show).map(t => (
+                  <button
+                    key={t.id}
+                    className={`preview-tab ${tab === t.id ? "active" : ""}`}
+                    onClick={() => setTab(t.id)}
+                  >
+                    <span className="preview-tab-icon">{t.icon}</span>
+                    {t.label}
+                  </button>
+                ))}
+              </div>
+              {tab === "design" && item.content && (
+                <button className="preview-copy-btn" onClick={() => copyToClipboard(item.content, "DESIGN.md")}>
+                  {copied === "DESIGN.md" ? "✓ Copied!" : "Copy"}
+                </button>
+              )}
+            </div>
+
+            <div className="preview-content">
+              {tab === "design" && item.content && (
+                <div className="markdown-viewer" dangerouslySetInnerHTML={{ __html: renderMarkdown(item.content) }} />
+              )}
+              {tab === "html" && item.preview_html && (
+                <iframe
+                  ref={iframeRef}
+                  srcDoc={withTailwindAndAutoResize(item.preview_html)}
+                  title="HTML Preview"
+                  sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals"
+                  className="preview-iframe"
+                  style={{ height: `${iframeHeight}px`, transition: "height 0.2s ease-out" }}
+                  loading="eager"
+                />
+              )}
+              {tab === "design" && !item.content && (
+                <div className="artifact-empty">
+                  <div style={{ fontSize: 40 }}>⚠️</div>
+                  <h3>No DESIGN.md content</h3>
+                </div>
               )}
             </div>
           </div>
 
-          {/* Header */}
-          <div className="detail-header">
-            {item.featured && <span className="badge badge-featured" style={{ marginBottom: 8 }}>Featured</span>}
-            <h1 className="detail-title">{item.title}</h1>
-            {item.desc && <p className="detail-desc">{item.desc}</p>}
-            <div className="detail-meta">
-              <span className="detail-meta-item">👁 {item.views?.toLocaleString() || 0} views</span>
-              {item.forks > 0 && <span className="detail-meta-item">⑂ {item.forks} remixes</span>}
-              {item.created_at && <span className="detail-meta-item">{new Date(item.created_at).toLocaleDateString()}</span>}
-            </div>
-          </div>
-
-          {/* Content */}
-          <div className="detail-tab-panel">
-            {tab === "design" && item.content && (
-              <div className="code-pane-wrap" style={{ background: "hsl(var(--background))" }}>
-                <button className="copy-btn" onClick={() => copyToClipboard(item.content, "DESIGN.md")}>Copy DESIGN.md</button>
-                <div className="markdown" dangerouslySetInnerHTML={{ __html: renderMarkdown(item.content) }} />
+          {/* === About section === */}
+          <section className="detail-section">
+            <div className="about-grid">
+              <div className="about-left">
+                <h2 className="about-h2">About</h2>
+                <p className="about-desc">{item.desc || "No description available."}</p>
+                {item.tags && item.tags.length > 0 && (
+                  <div className="about-tags">
+                    {item.tags.map((t: string) => (
+                      <span key={t} className="about-tag">{t}</span>
+                    ))}
+                  </div>
+                )}
               </div>
-            )}
-            {tab === "html" && item.preview_html && (
-              <iframe srcDoc={item.preview_html} title="HTML Preview"
-                sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals"
-                className="preview-pane" />
-            )}
-            {tab === "design" && !item.content && (
-              <div className="artifact-empty"><div className="artifact-empty-content"><h3>No DESIGN.md content</h3></div></div>
-            )}
-          </div>
+              <div className="about-right">
+                <h3 className="about-h3">Details</h3>
+                <div className="about-stats">
+                  <div className="about-stat-row"><span>Views</span><span>{(item.views || 0).toLocaleString()}</span></div>
+                  {item.forks > 0 && <div className="about-stat-row"><span>Remixes</span><span>{item.forks}</span></div>}
+                  <div className="about-stat-row"><span>Type</span><span>Design System</span></div>
+                  {item.created_at && <div className="about-stat-row"><span>Created</span><span>{new Date(item.created_at).toLocaleDateString()}</span></div>}
+                  {item.updated_at && <div className="about-stat-row"><span>Updated</span><span>{new Date(item.updated_at).toLocaleDateString()}</span></div>}
+                  {item.source_name && <div className="about-stat-row"><span>Source</span><span>{item.source_name}</span></div>}
+                </div>
+              </div>
+            </div>
+          </section>
         </div>
       </main>
     </div>
@@ -153,7 +314,6 @@ function renderMarkdown(content: string): string {
     if (i === 0 && line.trim() === "---") { inFrontmatter = true; return; }
     if (inFrontmatter) {
       if (line.trim() === "---") { inFrontmatter = false; return; }
-      // Render frontmatter as table rows
       if (line.includes(":") && !line.startsWith(" ")) {
         const [key, ...valParts] = line.split(":");
         const val = valParts.join(":").trim();

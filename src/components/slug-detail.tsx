@@ -186,9 +186,14 @@ export default function SlugDetail({
       .catch(() => {});
   }, [item]);
 
-  // Fetch tab content
+  // Fetch tab content (skip for assets — they show image directly, no code artifact)
   const loadTabContent = useCallback(async () => {
     if (!item) return;
+    // Assets don't have code/design/prompt artifacts — show image directly
+    if (item.type === "asset") {
+      setContentStatus("loaded");
+      return;
+    }
     setContentStatus("loading");
     setContent("");
     let artifact = "code";
@@ -232,14 +237,15 @@ export default function SlugDetail({
   const firstTag = item.tags?.[0];
 
   const tabs: { id: typeof tab; label: string; icon: string; show: boolean }[] = [
-    { id: "preview", label: "Preview", icon: "👁", show: item.type !== "skill" },
+    { id: "preview", label: "Preview", icon: "👁", show: item.type !== "skill" && item.type !== "asset" },
+    { id: "preview", label: "Image", icon: "🖼️", show: item.type === "asset" }, // asset uses same tab id but different content
     { id: "code", label: "Code", icon: "</>", show: (item.type === "template" || item.type === "component") && (item.has_code || item.code_chars > 0) },
     { id: "design", label: "DESIGN.md", icon: "📄", show: item.type === "template" },
     { id: "prompt", label: "Copy Prompt", icon: "✨", show: item.type === "template" },
     { id: "content", label: "Content", icon: "📄", show: item.type === "skill" },
   ];
 
-  const visibleTabs = tabs.filter(t => t.show);
+  const visibleTabs = tabs.filter((t, i, arr) => t.show && arr.findIndex(x => x.id === t.id) === i);
 
   return (
     <div className="app">
@@ -334,7 +340,56 @@ export default function SlugDetail({
             <div className="preview-content">
               {contentStatus === "loading" && <div className="loading-spinner"><div className="spinner" /></div>}
 
-              {contentStatus === "loaded" && tab === "preview" && (
+              {/* === Asset: show image with download button === */}
+              {contentStatus === "loaded" && item.type === "asset" && (
+                <div className="asset-viewer">
+                  {item.image ? (
+                    <>
+                      <div className="asset-image-wrap">
+                        <img
+                          src={`/api/image?url=${encodeURIComponent(item.image)}`}
+                          alt={item.title}
+                          className="asset-image"
+                          loading="eager"
+                        />
+                      </div>
+                      <div className="asset-actions">
+                        <a
+                          href={`/api/image?url=${encodeURIComponent(item.image)}`}
+                          download={`${item.slug || "asset"}.jpg`}
+                          className="btn-pro"
+                          style={{ textDecoration: "none" }}
+                        >
+                          ⬇️ Download Image
+                        </a>
+                        <a
+                          href={item.image}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="preview-copy-btn"
+                          style={{ textDecoration: "none", display: "inline-flex", alignItems: "center" }}
+                        >
+                          🔗 Open Original
+                        </a>
+                      </div>
+                      {item.tags && item.tags.length > 0 && (
+                        <div className="asset-tags">
+                          {item.tags.map((t: string) => (
+                            <span key={t} className="about-tag">{t}</span>
+                          ))}
+                        </div>
+                      )}
+                    </>
+                  ) : (
+                    <div className="artifact-empty">
+                      <div style={{ fontSize: 40 }}>🖼️</div>
+                      <h3>Image not available</h3>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {contentStatus === "loaded" && tab === "preview" && item.type !== "asset" && (
                 <iframe
                   ref={iframeRef}
                   srcDoc={withAutoResize(content)}

@@ -4,15 +4,15 @@ import { useState, useEffect, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
 const LEARN_PAGES = [
-  { id: "introduction", label: "Pengenalan", icon: "📖" },
-  { id: "tips-for-prompting", label: "Tips Prompting", icon: "💡" },
-  { id: "how-to-prompt", label: "Cara Prompt", icon: "✍️" },
-  { id: "how-to-design", label: "Cara Edit Desain", icon: "🎨" },
-  { id: "seo-settings", label: "Pengaturan SEO", icon: "🔍" },
-  { id: "custom-domain", label: "Domain Kustom", icon: "🌐" },
-  { id: "faq", label: "Pertanyaan Umum", icon: "❓" },
-  { id: "video-tutorials", label: "Tutorial Video", icon: "🎬" },
-  { id: "documentation", label: "Dokumentasi", icon: "📚" },
+  { id: "introduction", label: "Pengenalan", icon: "📖", group: "Memulai" },
+  { id: "how-to-design", label: "Cara Edit Desain", icon: "🎨", group: "Memulai" },
+  { id: "custom-domain", label: "Domain Kustom", icon: "🌐", group: "Memulai" },
+  { id: "seo-settings", label: "Pengaturan SEO", icon: "🔍", group: "Memulai" },
+  { id: "tips-for-prompting", label: "Tips Prompting", icon: "💡", group: "Prompting" },
+  { id: "how-to-prompt", label: "Cara Prompt", icon: "✍️", group: "Prompting" },
+  { id: "video-tutorials", label: "Tutorial Video", icon: "🎬", group: "Video" },
+  { id: "faq", label: "Pertanyaan Umum", icon: "❓", group: "Sumber" },
+  { id: "documentation", label: "Dokumentasi", icon: "📚", group: "Sumber" },
 ];
 
 const VALID_IDS = new Set(LEARN_PAGES.map(p => p.id));
@@ -132,23 +132,42 @@ export default function LearnView({ params }: LearnViewProps) {
               <p style={{ fontSize: 13, color: "hsl(var(--muted-foreground))" }}>Pelajari cara menggunakan Aura</p>
             </div>
             <nav>
-              {LEARN_PAGES.map(page => (
-                <a
-                  key={page.id}
-                  href={`/learn/${page.id}`}
-                  onClick={(e) => { e.preventDefault(); goToPage(page.id); }}
-                  style={{
-                    display: "flex", alignItems: "center", gap: 10, width: "100%",
-                    padding: "10px 20px", fontSize: 14, fontWeight: activePage === page.id ? 500 : 400,
-                    color: activePage === page.id ? "hsl(var(--foreground))" : "hsl(var(--muted-foreground))",
-                    background: activePage === page.id ? "hsl(var(--secondary))" : "transparent",
-                    border: "none", cursor: "pointer", transition: "all 0.15s", textAlign: "left",
-                    textDecoration: "none",
-                  }}
-                >
-                  <span style={{ fontSize: 16 }}>{page.icon}</span>
-                  {page.label}
-                </a>
+              {/* Group sidebar links like aura.build */}
+              {Object.entries(
+                LEARN_PAGES.reduce((acc, page) => {
+                  if (!acc[page.group]) acc[page.group] = [];
+                  acc[page.group].push(page);
+                  return acc;
+                }, {} as Record<string, typeof LEARN_PAGES>)
+              ).map(([groupName, pages]) => (
+                <div key={groupName} style={{ marginBottom: 20 }}>
+                  <div style={{
+                    padding: "8px 20px 6px",
+                    fontSize: 11,
+                    fontWeight: 600,
+                    textTransform: "uppercase",
+                    letterSpacing: "0.08em",
+                    color: "hsl(var(--muted-foreground))",
+                  }}>{groupName}</div>
+                  {pages.map(page => (
+                    <a
+                      key={page.id}
+                      href={`/learn/${page.id}`}
+                      onClick={(e) => { e.preventDefault(); goToPage(page.id); }}
+                      style={{
+                        display: "flex", alignItems: "center", gap: 10, width: "100%",
+                        padding: "8px 20px", fontSize: 14, fontWeight: activePage === page.id ? 500 : 400,
+                        color: activePage === page.id ? "hsl(var(--foreground))" : "hsl(var(--muted-foreground))",
+                        background: activePage === page.id ? "hsl(var(--secondary))" : "transparent",
+                        border: "none", cursor: "pointer", transition: "all 0.15s", textAlign: "left",
+                        textDecoration: "none",
+                      }}
+                    >
+                      <span style={{ fontSize: 16 }}>{page.icon}</span>
+                      {page.label}
+                    </a>
+                  ))}
+                </div>
               ))}
             </nav>
           </aside>
