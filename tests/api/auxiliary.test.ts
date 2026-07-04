@@ -39,25 +39,26 @@ describe("/sitemap.xml — sitemap index", () => {
 describe("/sitemap-xml/[n].xml — child sitemaps", () => {
   it("child 0 returns valid sitemap with URLs", async () => {
     if (skipIfOffline()) return;
-    const r = await fetch(`${BASE_URL}/sitemap-xml/0.xml`);
+    // Sitemap can be slow to generate on first cold-cache hit (paginates 21K rows from Supabase)
+    const r = await fetch(`${BASE_URL}/sitemap-xml/0.xml`, { signal: AbortSignal.timeout(45000) });
     expect(r.status).toBe(200);
     const xml = await r.text();
     expect(xml).toContain("<loc>");
     // Should have at least 1000 URLs (we have 55K total)
     const count = (xml.match(/<loc>/g) || []).length;
     expect(count).toBeGreaterThan(1000);
-  });
+  }, 60000); // 60s per-test timeout (sitemaps can be slow on cold cache)
 
   it("each child sitemap has < 50,000 URLs (Google limit)", async () => {
     if (skipIfOffline()) return;
     // Only check first child — fetching all 55K URLs is too slow for tests
-    const r = await fetch(`${BASE_URL}/sitemap-xml/0.xml`);
+    const r = await fetch(`${BASE_URL}/sitemap-xml/0.xml`, { signal: AbortSignal.timeout(45000) });
     expect(r.status).toBe(200);
     const xml = await r.text();
     const count = (xml.match(/<loc>/g) || []).length;
     expect(count, `Sitemap 0.xml has ${count} URLs (Google limit: 50,000)`).toBeLessThan(50000);
     expect(count, `Sitemap 0.xml should have substantial URLs`).toBeGreaterThan(1000);
-  });
+  }, 60000);
 
   it("returns 404 for negative index", async () => {
     if (skipIfOffline()) return;
@@ -67,21 +68,21 @@ describe("/sitemap-xml/[n].xml — child sitemaps", () => {
 
   it("child sitemap 0 has substantial URLs (>1000)", async () => {
     if (skipIfOffline()) return;
-    const r = await fetch(`${BASE_URL}/sitemap-xml/0.xml`);
+    const r = await fetch(`${BASE_URL}/sitemap-xml/0.xml`, { signal: AbortSignal.timeout(45000) });
     expect(r.status).toBe(200);
     const xml = await r.text();
     const count = (xml.match(/<loc>/g) || []).length;
     expect(count, `Expected >1000 URLs in sitemap 0, got ${count}`).toBeGreaterThan(1000);
-  });
+  }, 60000);
 
   it("URLs in sitemap use https:// and the production domain", async () => {
     if (skipIfOffline()) return;
-    const r = await fetch(`${BASE_URL}/sitemap-xml/0.xml`);
+    const r = await fetch(`${BASE_URL}/sitemap-xml/0.xml`, { signal: AbortSignal.timeout(45000) });
     const xml = await r.text();
     expect(xml).toContain("https://web-library-coral.vercel.app/");
     // Should not contain http:// (non-secure)
     expect(xml).not.toMatch(/<loc>http:\/\//);
-  });
+  }, 60000);
 });
 
 describe("/robots.txt", () => {
