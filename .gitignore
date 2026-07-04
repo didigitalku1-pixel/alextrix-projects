@@ -89,3 +89,12 @@ mini-services/*/node_modules/
 
 # Large ZIP files (download separately)
 download/*.zip
+
+# Cookie & session outputs from cookie-tools scripts (sensitive — jangan commit!)
+*.cookies.json
+session.json
+aura_session.json
+cookies.json
+*_session.json
+*_cookies.json
+__pycache__/
