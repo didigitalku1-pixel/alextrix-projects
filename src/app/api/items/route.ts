@@ -8,51 +8,12 @@ const ANON_KEY = process.env.USER_SUPABASE_ANON_KEY || "eyJhbGciOiJIUzI1NiIsInR5
 export const dynamic = "force-dynamic";
 export const maxDuration = 30;
 
-// Cache for access token (for skills auth)
-let _accessToken: string | null = null;
-let _tokenTime = 0;
-
-async function getAccessTokenForSkills(): Promise<string | null> {
-  const now = Date.now();
-  if (_accessToken && now - _tokenTime < 300000) return _accessToken;
-
-  // Try filesystem session (local)
-  try {
-    const sessionPath = path.join(process.cwd(), "download", "aura_library", "_meta", "session.json");
-    const raw = await fs.readFile(sessionPath, "utf-8");
-    const session = JSON.parse(raw);
-    _accessToken = session.access_token;
-    _tokenTime = now;
-    return _accessToken;
-  } catch {}
-
-  // Try env var (Vercel)
-  const refreshToken = process.env.AURA_REFRESH_TOKEN;
-  if (!refreshToken) return null;
-
-  try {
-    const r = await fetch(`${SUPA_URL}/auth/v1/token?grant_type=refresh_token`, {
-      method: "POST",
-      headers: { apikey: ANON_KEY, "Content-Type": "application/json" },
-      body: JSON.stringify({ refresh_token: refreshToken }),
-    });
-    if (!r.ok) return null;
-    const data = await r.json();
-    _accessToken = data.access_token;
-    _tokenTime = now;
-    return _accessToken;
-  } catch {
-    return null;
-  }
-}
-
 // Cache manifest
 let _manifestCache: any = null;
 
 async function getManifest() {
   if (_manifestCache) return _manifestCache;
   try {
-    // Try lite manifest first (faster)
     const litePath = path.join(process.cwd(), "download", "aura_library", "manifest-lite.json");
     const raw = await fs.readFile(litePath, "utf-8");
     _manifestCache = JSON.parse(raw);
@@ -68,22 +29,26 @@ async function getManifest() {
   return _manifestCache;
 }
 
-const TABLE_MAP: Record<string, { table: string; select: string }> = {
+const TABLE_MAP: Record<string, { table: string; select: string; textCols: string[] }> = {
   template: {
     table: process.env.USER_SUPABASE_URL ? "templates" : "shared_code",
     select: "id,slug,title,description,code,tags,image_url,views,forks,premium,featured,username,created_at",
+    textCols: ["title", "description"],
   },
   component: {
     table: "components",
     select: "id,slug,title,description,code,tags,image_url,views,forks,premium,featured,background,created_at",
+    textCols: ["title", "description"],
   },
   asset: {
     table: "assets",
     select: "id,slug,title,description,keywords,image_1600w,image_800w,image_320w,views,media_type,resolution,colors,created_at",
+    textCols: ["title", "description"],
   },
   skill: {
     table: "skills",
     select: "id,title,description,content,tags,views,created_at",
+    textCols: ["title", "description"],
   },
 };
 
@@ -114,53 +79,61 @@ function normalizeItem(raw: any, type: string): any {
   };
 }
 
+/**
+ * Build PostgREST `or` query for full-text search across multiple columns.
+ * Pattern: `or=(title.ilike.*q*,description.ilike.*q*,tags.cs.{q})`
+ *
+ * IMPORTANT: PostgREST `*` must NOT be URL-encoded as %2A in the or= filter,
+ * but the value q itself must be URL-encoded to escape special chars.
+ */
+function buildSearchOr(q: string, textCols: string[]): string {
+  const safeQ = q.replace(/[%_]/g, (m) => "\\" + m); // escape SQL LIKE wildcards
+  const parts = textCols.map(c => `${c}.ilike.*${encodeURIComponent(safeQ)}*`);
+  // Also search inside tags JSON array
+  parts.push(`tags.cs.{${encodeURIComponent(safeQ)}}`);
+  return `or=(${parts.join(",")})`;
+}
+
 export async function GET(req: NextRequest) {
   const p = req.nextUrl.searchParams;
   const type = p.get("type") || "all";
   const sort = p.get("sort") || "views";
   const tag = p.get("tag") || undefined;
-  const q = p.get("q") || undefined;
+  const q = p.get("q") || p.get("search") || undefined;
   const premium = p.get("premium") === "true";
   const featured = p.get("featured") === "true";
   const page = Math.max(parseInt(p.get("page") || "1", 10), 1);
   const limit = Math.min(Math.max(parseInt(p.get("limit") || "24", 10), 1), 100);
 
   try {
-    // For templates and components: fetch directly from Supabase for full data
+    // === Templates & Components ===
     if (type === "template" || type === "component") {
       const config = TABLE_MAP[type];
 
-      // Build query
       let query = `${SUPA_URL}/rest/v1/${config.table}?select=${config.select}`;
-      
-      // Order by
+
+      // Order
       let orderCol = "views";
       let ascending = false;
       if (sort === "forks") orderCol = "forks";
       else if (sort === "recent") orderCol = "created_at";
       else if (sort === "az") { orderCol = "title"; ascending = true; }
-      
       query += `&order=${orderCol}.${ascending ? "asc" : "desc"}`;
 
-      // Tag filter
+      // Tag filter (JSONB contains)
       if (tag) {
         query += `&tags=cs.{${encodeURIComponent(tag)}}`;
       }
 
-      // Premium filter
-      if (premium) {
-        query += `&premium=is.true`;
-      }
-      if (featured) {
-        query += `&featured=is.true`;
+      // Boolean filters
+      if (premium) query += `&premium=is.true`;
+      if (featured) query += `&featured=is.true`;
+
+      // Search across text columns + tags
+      if (q && q.trim()) {
+        query += `&${buildSearchOr(q.trim(), config.textCols)}`;
       }
 
-      // Search
-      if (q) {
-        query += `&title=ilike.*${encodeURIComponent(q)}*`;
-      }
-
-      // Pagination via Range header
       const start = (page - 1) * limit;
       const end = start + limit - 1;
 
@@ -174,7 +147,6 @@ export async function GET(req: NextRequest) {
       });
 
       if (!r.ok) {
-        // Fallback to manifest
         return await getFromManifest(type, sort, tag, q, premium, featured, page, limit);
       }
 
@@ -184,16 +156,10 @@ export async function GET(req: NextRequest) {
 
       const items = data.map((item: any) => normalizeItem(item, type));
 
-      return NextResponse.json({
-        items,
-        total,
-        page,
-        totalPages: Math.ceil(total / limit),
-        limit,
-      });
+      return NextResponse.json({ items, total, page, totalPages: Math.ceil(total / limit), limit });
     }
 
-    // For assets: fetch from Supabase too
+    // === Assets ===
     if (type === "asset") {
       const config = TABLE_MAP[type];
       let query = `${SUPA_URL}/rest/v1/${config.table}?select=${config.select}`;
@@ -202,7 +168,12 @@ export async function GET(req: NextRequest) {
       if (sort === "recent") orderCol = "created_at";
       else if (sort === "az") { orderCol = "title"; ascending = true; }
       query += `&order=${orderCol}.${ascending ? "asc" : "desc"}`;
-      if (q) query += `&title=ilike.*${encodeURIComponent(q)}*`;
+      if (featured) query += `&featured=is.true`;
+      if (premium) query += `&premium=is.true`;
+      if (tag) query += `&keywords=cs.{${encodeURIComponent(tag)}}`;
+      if (q && q.trim()) {
+        query += `&${buildSearchOr(q.trim(), config.textCols)}`;
+      }
       const start = (page - 1) * limit;
       const end = start + limit - 1;
       const r = await fetch(query, {
@@ -218,7 +189,7 @@ export async function GET(req: NextRequest) {
       return await getFromManifest(type, sort, tag, q, premium, featured, page, limit);
     }
 
-    // For skills: use skills-manifest.json (has all 118 skills with content)
+    // === Skills ===
     if (type === "skill") {
       try {
         const skillsPath = path.join(process.cwd(), "download", "aura_library", "skills-manifest.json");
@@ -226,18 +197,28 @@ export async function GET(req: NextRequest) {
         const skillsManifest = JSON.parse(raw);
         let skillItems = skillsManifest.items || [];
 
-        // Apply filters
-        if (q) {
+        // Apply search filter across title, desc, tags, content
+        if (q && q.trim()) {
           const ql = q.toLowerCase();
           skillItems = skillItems.filter((i: any) =>
-            i.title.toLowerCase().includes(ql) || (i.desc || "").toLowerCase().includes(ql)
+            (i.title || "").toLowerCase().includes(ql) ||
+            (i.desc || "").toLowerCase().includes(ql) ||
+            (Array.isArray(i.tags) && i.tags.some((t: string) => t.toLowerCase().includes(ql))) ||
+            (i.content || "").toLowerCase().includes(ql)
+          );
+        }
+
+        // Tag filter
+        if (tag) {
+          skillItems = skillItems.filter((i: any) =>
+            Array.isArray(i.tags) && i.tags.some((t: string) => t.toLowerCase() === tag!.toLowerCase())
           );
         }
 
         // Sort
         switch (sort) {
           case "forks":
-            skillItems = [...skillItems].sort((a: any, b: any) => b.forks - a.forks);
+            skillItems = [...skillItems].sort((a: any, b: any) => (b.forks || 0) - (a.forks || 0));
             break;
           case "recent":
             skillItems = [...skillItems].sort((a: any, b: any) =>
@@ -248,7 +229,7 @@ export async function GET(req: NextRequest) {
             skillItems = [...skillItems].sort((a: any, b: any) => a.title.localeCompare(b.title));
             break;
           default:
-            skillItems = [...skillItems].sort((a: any, b: any) => b.views - a.views);
+            skillItems = [...skillItems].sort((a: any, b: any) => (b.views || 0) - (a.views || 0));
         }
 
         const total = skillItems.length;
@@ -267,9 +248,9 @@ export async function GET(req: NextRequest) {
       }
     }
 
-    // Fallback to manifest
-  } catch (e: any) {
-    // Fallback to manifest
+    // Unknown type — fallback to manifest
+    return await getFromManifest(type, sort, tag, q, premium, featured, page, limit);
+  } catch {
     return await getFromManifest(type, sort, tag, q, premium, featured, page, limit);
   }
 }
@@ -299,9 +280,9 @@ async function getFromManifest(
     const ql = q.toLowerCase();
     items = items.filter(
       (i: any) =>
-        i.title.toLowerCase().includes(ql) ||
+        (i.title || "").toLowerCase().includes(ql) ||
         (i.desc || "").toLowerCase().includes(ql) ||
-        (i.tags || []).some((t: string) => t.toLowerCase().includes(ql))
+        (Array.isArray(i.tags) && i.tags.some((t: string) => t.toLowerCase().includes(ql)))
     );
   }
   if (premium) items = items.filter((i: any) => i.premium);

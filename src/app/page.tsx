@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useMemo, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 
 type ItemType = "template" | "component" | "asset" | "skill";
 type TabType = "templates" | "components" | "assets" | "skills" | "design-md" | "learn" | "progress";
@@ -66,13 +67,30 @@ const PAGE_INFO: Record<string, { eyebrow: string; title: string; desc: string; 
 };
 
 export default function Home() {
-  const [tab, setTab] = useState<TabType>("templates");
-  const [sort, setSort] = useState("views");
-  const [tag, setTag] = useState<string | null>(null);
-  const [q, setQ] = useState("");
-  const [premium, setPremium] = useState(false);
-  const [featured, setFeatured] = useState(false);
-  const [page, setPage] = useState(1);
+  return (
+    <Suspense fallback={<div className="app"><main className="main"><div className="loading-spinner"><div className="spinner" /></div></main></div>}>
+      <HomeInner />
+    </Suspense>
+  );
+}
+
+function HomeInner() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
+  // Initialize state from URL params (one-time read on mount)
+  const [tab, setTabState] = useState<TabType>(() => {
+    const t = searchParams.get("tab") as TabType;
+    return ["templates", "components", "assets", "skills", "design-md", "learn", "progress"].includes(t || "")
+      ? t!
+      : "templates";
+  });
+  const [sort, setSort] = useState(() => searchParams.get("sort") || "views");
+  const [tag, setTag] = useState<string | null>(searchParams.get("tag"));
+  const [q, setQ] = useState(searchParams.get("q") || "");
+  const [premium, setPremium] = useState(searchParams.get("premium") === "true");
+  const [featured, setFeatured] = useState(searchParams.get("featured") === "true");
+  const [page, setPageState] = useState(() => Math.max(1, parseInt(searchParams.get("page") || "1", 10) || 1));
   const [dark, setDark] = useState(false);
   const [items, setItems] = useState<Item[]>([]);
   const [total, setTotal] = useState(0);
@@ -82,6 +100,31 @@ export default function Home() {
   const [tags, setTags] = useState<{ tag: string; count: number }[]>([]);
   const [debouncedQ, setDebouncedQ] = useState("");
   const [showFilters, setShowFilters] = useState(false);
+
+  // Wrapper setters that also sync to URL
+  const setTab = useCallback((t: TabType) => { setTabState(t); setPageState(1); }, []);
+  const setPage = useCallback((p: number | ((prev: number) => number)) => {
+    setPageState(p);
+  }, []);
+
+  // Sync all state → URL (replace history to avoid back/forward spam)
+  useEffect(() => {
+    if (tab === "learn" || tab === "progress" || tab === "design-md") {
+      // These tabs have their own routes; don't pollute URL
+      return;
+    }
+    const params = new URLSearchParams();
+    params.set("tab", tab);
+    if (sort !== "views") params.set("sort", sort);
+    if (tag) params.set("tag", tag);
+    if (debouncedQ) params.set("q", debouncedQ);
+    if (premium) params.set("premium", "true");
+    if (featured) params.set("featured", "true");
+    if (page > 1) params.set("page", String(page));
+    const qs = params.toString();
+    const newUrl = qs ? `/?${qs}` : "/";
+    router.replace(newUrl, { scroll: false });
+  }, [tab, sort, tag, debouncedQ, premium, featured, page, router]);
 
   // Theme
   useEffect(() => {
@@ -343,18 +386,26 @@ export default function Home() {
                           className="card-image"
                           onError={(e) => {
                             const t = e.target as HTMLImageElement;
-                            t.style.display = "none";
+                            // Swap to branded placeholder instead of plain "No preview"
                             const p = t.parentElement;
-                            if (p && !p.querySelector(".card-image-placeholder")) {
-                              const d = document.createElement("div");
-                              d.className = "card-image-placeholder";
-                              d.textContent = "No preview";
-                              p.appendChild(d);
+                            if (p && !p.querySelector(".card-image-fallback")) {
+                              t.style.display = "none";
+                              const fb = document.createElement("img");
+                              fb.className = "card-image card-image-fallback";
+                              fb.alt = item.title;
+                              fb.loading = "lazy";
+                              fb.src = `/api/skill-thumb?title=${encodeURIComponent(item.title)}&tags=${encodeURIComponent((item.tags || []).slice(0, 4).join(","))}`;
+                              p.appendChild(fb);
                             }
                           }}
                         />
                       ) : (
-                        <div className="card-image-placeholder">No preview</div>
+                        <img
+                          src={`/api/skill-thumb?title=${encodeURIComponent(item.title)}&tags=${encodeURIComponent((item.tags || []).slice(0, 4).join(","))}`}
+                          alt={item.title}
+                          loading="lazy"
+                          className="card-image"
+                        />
                       )}
                       <div className="card-overlay"></div>
                       {item.premium && <span className="card-badge badge-pro">PRO</span>}

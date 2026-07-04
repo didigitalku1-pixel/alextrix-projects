@@ -1,0 +1,112 @@
+name: Daily Aura Scraper
+
+# Cron: 03:00 UTC daily (≈ 10:00 WIB Jakarta).
+# Also runnable manually from the Actions tab.
+on:
+  schedule:
+    - cron: "0 3 * * *"
+  workflow_dispatch:
+    inputs:
+      full:
+        description: "Force full re-scrape (ignore progress.json)"
+        required: false
+        default: "false"
+        type: choice
+        options: ["true", "false"]
+
+permissions:
+  contents: write   # needed to push scraped data back to repo
+
+concurrency:
+  group: aura-scraper
+  cancel-in-progress: false
+
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Python deps
+        run: |
+          python -m pip install --upgrade pip
+          pip install httpx
+
+      - name: Configure git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Optional full re-scrape
+        if: ${{ github.event.inputs.full == 'true' }}
+        run: |
+          rm -f download/aura_library/_meta/progress.json
+          echo "Progress reset — full scrape will run."
+
+      - name: Run scraper
+        run: python scripts/scrape_aura.py
+        continue-on-error: true
+
+      - name: Rebuild skill manifest (extract tags from frontmatter)
+        run: python scripts/rebuild-skills-manifest.py
+        continue-on-error: true
+
+      - name: Rebuild lite manifest
+        run: python scripts/build_manifest.py || true
+        continue-on-error: true
+
+      - name: Show summary
+        if: always()
+        run: |
+          echo "## Scraper summary" >> $GITHUB_STEP_SUMMARY
+          if [ -f download/aura_library/_meta/progress.json ]; then
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            cat download/aura_library/_meta/progress.json >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+          fi
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Components:** $(ls download/aura_library/components/*.json 2>/dev/null | wc -l) files" >> $GITHUB_STEP_SUMMARY
+          echo "**Templates:**  $(ls download/aura_library/templates/*.json 2>/dev/null | wc -l) files" >> $GITHUB_STEP_SUMMARY
+
+      - name: Commit changes
+        run: |
+          git add download/aura_library/ || true
+          # Skip commit if nothing changed
+          if git diff --cached --quiet; then
+            echo "No changes to commit."
+            exit 0
+          fi
+          git commit -m "chore(scrape): daily refresh $(date -u +%Y-%m-%d)" \
+            || true
+          git push origin HEAD:${{ github.ref_name }} \
+            || echo "Push failed (likely no upstream changes to merge)"
+
+      - name: Trigger Vercel redeploy (optional)
+        if: success() && env.VERCEL_TOKEN != ''
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+        run: |
+          # Trigger a fresh production deployment via Vercel REST API
+          curl -sS -X POST "https://api.vercel.com/v13/deployments" \
+            -H "Authorization: Bearer ${VERCEL_TOKEN}" \
+            -H "Content-Type: application/json" \
+            -d "{\"projectId\":\"${VERCEL_PROJECT_ID}\",\"target\":\"production\",\"gitSource\":{\"repo\":\"${{ github.repository }}\",\"ref\":\"${{ github.ref_name }}\",\"sha\":\"${{ github.sha }}\"}}" \
+            | tee /tmp/vercel-deploy.json
+          echo ""
+          echo "Deployment triggered."
+
+      - name: Notify on failure
+        if: failure()
+        run: |
+          echo "::warning::Daily scraper failed — check logs at ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"

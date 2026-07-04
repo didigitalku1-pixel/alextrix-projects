@@ -20,18 +20,26 @@ export function ItemCard({ item, onClick }: Props) {
             className="card-image"
             onError={(e) => {
               const t = e.target as HTMLImageElement;
-              t.style.display = "none";
               const parent = t.parentElement;
-              if (parent && !parent.querySelector(".card-image-placeholder")) {
-                const ph = document.createElement("div");
-                ph.className = "card-image-placeholder";
-                ph.textContent = "No preview";
-                parent.appendChild(ph);
+              if (parent && !parent.querySelector(".card-image-fallback")) {
+                t.style.display = "none";
+                const fb = document.createElement("img");
+                fb.className = "card-image card-image-fallback";
+                fb.alt = item.title;
+                fb.loading = "lazy";
+                fb.src = `/api/skill-thumb?title=${encodeURIComponent(item.title)}&tags=${encodeURIComponent((item.tags || []).slice(0, 4).join(","))}`;
+                parent.appendChild(fb);
               }
             }}
           />
         ) : (
-          <div className="card-image-placeholder">No preview</div>
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={`/api/skill-thumb?title=${encodeURIComponent(item.title)}&tags=${encodeURIComponent((item.tags || []).slice(0, 4).join(","))}`}
+            alt={item.title}
+            loading="lazy"
+            className="card-image"
+          />
         )}
 
         <div className="card-badge-row">
