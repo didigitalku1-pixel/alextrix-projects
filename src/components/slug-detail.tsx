@@ -206,14 +206,17 @@ export default function SlugDetail({
         <div className="header-inner">
           <a href="/" className="header-logo"><div className="header-logo-icon">A</div></a>
           <nav className="header-nav">
+            <a href="/" className="header-tab">CREATE</a>
             <a href="/?tab=templates" className="header-tab">TEMPLATES</a>
             <a href="/?tab=components" className="header-tab">COMPONENTS</a>
             <a href="/?tab=assets" className="header-tab">ASSETS</a>
             <a href="/?tab=skills" className="header-tab">SKILLS</a>
             <a href="/design-systems" className="header-tab">DESIGN.MD</a>
             <a href="/learn" className="header-tab">LEARN</a>
+            <a href="/" className="header-tab">PRICING</a>
           </nav>
           <div className="header-right">
+            <a href="/" className="header-tab">SIGN IN</a>
             <button className="header-icon-btn" onClick={() => setDark(!dark)}>{dark ? "☀️" : "🌙"}</button>
           </div>
         </div>
@@ -261,15 +264,9 @@ export default function SlugDetail({
             </div>
           </div>
 
-          {/* === Preview section (browser-style chrome with tabs) === */}
+          {/* === Preview section (simplified frame — mirrors aura.build) === */}
           <div className="preview-frame">
-            {/* Browser chrome */}
             <div className="preview-chrome">
-              <div className="preview-traffic-lights">
-                <span className="traffic-light red" />
-                <span className="traffic-light yellow" />
-                <span className="traffic-light green" />
-              </div>
               <div className="preview-tabs">
                 {visibleTabs.map(t => (
                   <button
@@ -393,6 +390,9 @@ export default function SlugDetail({
             <div className="about-grid">
               <div className="about-left">
                 <h2 className="about-h2">About</h2>
+                {item.premium && (
+                  <div className="about-pro-badge">👑 Pro {item.type}</div>
+                )}
                 {item.desc ? (
                   <p className="about-desc">{item.desc}</p>
                 ) : (
@@ -471,7 +471,80 @@ export default function SlugDetail({
           )}
         </div>
       </main>
+
+      {/* === Footer — mirrors aura.build === */}
+      <SiteFooter />
     </div>
+  );
+}
+
+/** Site-wide footer — mirrors aura.build footer structure */
+function SiteFooter() {
+  const footerColumns = [
+    {
+      title: "PRODUCT",
+      links: [
+        { text: "Create", href: "/" },
+        { text: "Templates", href: "/?tab=templates" },
+        { text: "Components", href: "/?tab=components" },
+        { text: "Assets", href: "/?tab=assets" },
+        { text: "Skills", href: "/?tab=skills" },
+        { text: "DESIGN.MD", href: "/design-systems" },
+      ],
+    },
+    {
+      title: "RESOURCES",
+      links: [
+        { text: "Introduction", href: "/learn/introduction" },
+        { text: "How to Prompt", href: "/learn/tips-for-prompting" },
+        { text: "How to Edit", href: "/learn/how-to-design" },
+        { text: "SEO Settings", href: "/learn/seo-settings" },
+        { text: "Sell Templates", href: "/learn/selling-templates" },
+        { text: "FAQ", href: "/learn/faq" },
+      ],
+    },
+    {
+      title: "CONNECT",
+      links: [
+        { text: "Privacy", href: "/" },
+        { text: "Terms", href: "/" },
+        { text: "Support", href: "/" },
+        { text: "Report Issue", href: "/" },
+      ],
+    },
+  ];
+
+  return (
+    <footer className="site-footer">
+      <div className="footer-container">
+        <div className="footer-top">
+          <div className="footer-brand">
+            <div className="footer-brand-icon">A</div>
+            <p className="footer-brand-text">
+              AI landing page builder that creates stunning designs in seconds.
+              No design skills needed. Export to HTML & Figma.
+            </p>
+          </div>
+          <div className="footer-columns">
+            {footerColumns.map(col => (
+              <div key={col.title} className="footer-column">
+                <h4 className="footer-col-title">{col.title}</h4>
+                {col.links.map(link => (
+                  <a key={link.text} href={link.href} className="footer-link">{link.text}</a>
+                ))}
+              </div>
+            ))}
+          </div>
+        </div>
+        <div className="footer-bottom">
+          <p>© 2026 Aura Library. All rights reserved.</p>
+          <div className="footer-socials">
+            <a href="https://youtube.com" target="_blank" rel="noopener" className="footer-social">YouTube</a>
+            <a href="https://twitter.com" target="_blank" rel="noopener" className="footer-social">Twitter</a>
+          </div>
+        </div>
+      </div>
+    </footer>
   );
 }
 
