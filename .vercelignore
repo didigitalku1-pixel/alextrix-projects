@@ -7,7 +7,6 @@ download/aura_library/_meta/
 node_modules/
 .next/
 upload/
-./skills/
 .zscripts/
 examples/
 db/
