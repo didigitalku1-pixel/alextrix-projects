@@ -4,12 +4,27 @@ import { use, useState, useEffect, useCallback, useRef } from "react";
 import Link from "next/link";
 
 /**
- * Injects an auto-resize script into the iframe's srcDoc HTML.
- * The script measures the actual content height (after fonts/images load)
- * and posts it to the parent window via postMessage.
+ * Wraps raw component HTML in a full HTML document with Tailwind CSS injected.
+ *
+ * BUG FIXED: Previously, iframe srcDoc only contained the raw component HTML
+ * (e.g., `<div class="flex">...</div>`) WITHOUT any stylesheet. All Tailwind
+ * classes were present in the markup but had zero visual effect — the preview
+ * looked completely unstyled (no flex, no colors, no spacing).
+ *
+ * SOLUTION (mirrors aura.build): wrap the HTML in a proper document with:
+ *   - <!DOCTYPE html> + <html> + <head> + <body> structure
+ *   - <script src="https://cdn.tailwindcss.com"></script> — loads Tailwind JIT
+ *     from the official CDN, which scans the HTML and generates styles for
+ *     every Tailwind class used (just like aura.build does)
+ *   - Basic body reset (margin: 0, font-family, height: 100%)
+ *   - Auto-resize script that posts height to parent via postMessage
+ *
+ * If the input HTML is already a full document (has <html>), we just inject
+ * the Tailwind script + auto-resize script into the existing <head>.
  */
 function withAutoResize(html: string): string {
-  const script = `<script>(function(){
+  // Auto-resize script — measures body height and posts to parent
+  const resizeScript = `<script>(function(){
     var send = function(){
       var h = Math.max(
         document.body ? document.body.scrollHeight : 0,
@@ -26,6 +41,7 @@ function withAutoResize(html: string): string {
     setTimeout(send, 100);
     setTimeout(send, 500);
     setTimeout(send, 1500);
+    setTimeout(send, 3000); // Tailwind JIT may take time to process large HTML
     if (typeof MutationObserver !== 'undefined' && document.body) {
       new MutationObserver(function(){ send(); }).observe(document.body, { childList: true, subtree: true, attributes: true });
     }
@@ -33,10 +49,48 @@ function withAutoResize(html: string): string {
       new ResizeObserver(function(){ send(); }).observe(document.body);
     }
   })();</script>`;
-  if (/<\/body>/i.test(html)) {
-    return html.replace(/<\/body>/i, script + "</body>");
+
+  // Tailwind CDN script + basic body styles (matches aura.build)
+  const headInjection = `
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Component Preview</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+      html, body { height: 100%; margin: 0; padding: 0; }
+      body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #ffffff; color: #000000; }
+      .component-wrapper { width: 100%; min-height: 100%; box-sizing: border-box; }
+    </style>
+  `;
+
+  // Case 1: Already a full HTML document — inject into existing <head>
+  if (/<html[^>]*>/i.test(html) && /<\/html>/i.test(html)) {
+    // Add Tailwind script + styles to existing head (or create one)
+    if (/<head[^>]*>/i.test(html)) {
+      html = html.replace(/<head[^>]*>/i, (match) => match + headInjection);
+    } else {
+      html = html.replace(/<html[^>]*>/i, (match) => match + "<head>" + headInjection + "</head>");
+    }
+    // Add resize script before </body> (or </html>)
+    if (/<\/body>/i.test(html)) {
+      html = html.replace(/<\/body>/i, resizeScript + "</body>");
+    } else {
+      html = html.replace(/<\/html>/i, resizeScript + "</html>");
+    }
+    return html;
   }
-  return html + script;
+
+  // Case 2: Raw HTML fragment — wrap in full document
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>${headInjection}</head>
+<body>
+<div class="component-wrapper">
+${html}
+</div>
+${resizeScript}
+</body>
+</html>`;
 }
 
 function formatCount(n: number): string {
