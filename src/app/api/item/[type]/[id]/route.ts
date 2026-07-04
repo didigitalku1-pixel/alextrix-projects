@@ -9,12 +9,12 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 30;
 
 // Per-table SELECT clauses — must match each table's actual columns
-// (templates has username, components has background+created_by, assets has keywords+image_*)
+// (templates has username, components has background+created_by, assets has keywords+image_*, skills has no premium/featured/slug)
 const SELECT_MAP: Record<string, string> = {
   template: "id,slug,title,description,code,tags,image_url,views,forks,premium,featured,username,created_at",
   component: "id,slug,title,description,code,tags,image_url,views,forks,premium,featured,background,created_by,created_at",
   asset: "id,slug,title,description,keywords,image_1600w,image_800w,image_320w,views,media_type,resolution,colors,created_at",
-  skill: "id,title,description,content,tags,views,forks,premium,featured,created_at",
+  skill: "id,title,description,content,tags,views,forks,created_at",
 };
 
 export async function GET(

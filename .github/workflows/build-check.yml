@@ -1,6 +1,8 @@
 name: Build Check
 
 # Runs on every PR + push to main. Fails fast if there are TypeScript / lint errors.
+# Tests now live in a separate workflow (tests.yml) for parallel execution.
+
 on:
   pull_request:
     branches: [main]
