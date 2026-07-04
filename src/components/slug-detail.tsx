@@ -4,53 +4,25 @@ import { use, useState, useEffect, useCallback, useRef } from "react";
 import Link from "next/link";
 
 /**
- * Wraps raw component HTML in a full HTML document with Tailwind CSS injected.
+ * Wraps raw component HTML in a full HTML document — mirrors aura.build exactly.
  *
- * BUG FIXED: Previously, iframe srcDoc only contained the raw component HTML
- * (e.g., `<div class="flex">...</div>`) WITHOUT any stylesheet. All Tailwind
- * classes were present in the markup but had zero visual effect — the preview
- * looked completely unstyled (no flex, no colors, no spacing).
+ * PREVIOUS BUGS (now fixed):
+ * 1. Body background was white (#ffffff) — should be black (#000000) to match
+ *    aura.build's dark preview environment. Components designed for dark bg
+ *    looked broken (white text on white bg = invisible).
+ * 2. Auto-resize via postMessage caused infinite scroll loop. Each resize
+ *    triggered a postMessage, which triggered another resize, ad infinitum.
  *
- * SOLUTION (mirrors aura.build): wrap the HTML in a proper document with:
- *   - <!DOCTYPE html> + <html> + <head> + <body> structure
- *   - <script src="https://cdn.tailwindcss.com"></script> — loads Tailwind JIT
- *     from the official CDN, which scans the HTML and generates styles for
- *     every Tailwind class used (just like aura.build does)
- *   - Basic body reset (margin: 0, font-family, height: 100%)
- *   - Auto-resize script that posts height to parent via postMessage
+ * SOLUTION (mirrors aura.build srcDoc exactly):
+ *   - body { background: #000000; color: #ffffff; height: 100%; overflow: auto; }
+ *   - .component-wrapper { width: 100%; height: 100%; overflow: auto; }
+ *   - Iframe height is FIXED (controlled by parent), content scrolls inside.
+ *   - No auto-resize postMessage loop — content scrolls within iframe.
  *
- * If the input HTML is already a full document (has <html>), we just inject
- * the Tailwind script + auto-resize script into the existing <head>.
+ * Verified against aura.build/component/3F3EFB8 srcDoc.
  */
 function withAutoResize(html: string): string {
-  // Auto-resize script — measures body height and posts to parent
-  const resizeScript = `<script>(function(){
-    var send = function(){
-      var h = Math.max(
-        document.body ? document.body.scrollHeight : 0,
-        document.documentElement ? document.documentElement.scrollHeight : 0
-      );
-      try { parent.postMessage({ source: 'aura-preview', height: h }, '*'); } catch (e) {}
-    };
-    if (document.readyState === 'complete' || document.readyState === 'interactive') {
-      send();
-    } else {
-      document.addEventListener('DOMContentLoaded', send);
-    }
-    window.addEventListener('load', send);
-    setTimeout(send, 100);
-    setTimeout(send, 500);
-    setTimeout(send, 1500);
-    setTimeout(send, 3000); // Tailwind JIT may take time to process large HTML
-    if (typeof MutationObserver !== 'undefined' && document.body) {
-      new MutationObserver(function(){ send(); }).observe(document.body, { childList: true, subtree: true, attributes: true });
-    }
-    if (typeof ResizeObserver !== 'undefined' && document.body) {
-      new ResizeObserver(function(){ send(); }).observe(document.body);
-    }
-  })();</script>`;
-
-  // Tailwind CDN script + basic body styles (matches aura.build)
+  // Tailwind CDN script + body styles — EXACT match with aura.build
   const headInjection = `
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -58,29 +30,22 @@ function withAutoResize(html: string): string {
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
       html, body { height: 100%; margin: 0; padding: 0; }
-      body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #ffffff; color: #000000; }
-      .component-wrapper { width: 100%; min-height: 100%; box-sizing: border-box; }
+      body { height: 100%; overflow: auto; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #000000; color: #ffffff; }
+      .component-wrapper { width: 100%; height: 100%; padding: 0; box-sizing: border-box; overflow: auto; }
     </style>
   `;
 
   // Case 1: Already a full HTML document — inject into existing <head>
   if (/<html[^>]*>/i.test(html) && /<\/html>/i.test(html)) {
-    // Add Tailwind script + styles to existing head (or create one)
     if (/<head[^>]*>/i.test(html)) {
       html = html.replace(/<head[^>]*>/i, (match) => match + headInjection);
     } else {
       html = html.replace(/<html[^>]*>/i, (match) => match + "<head>" + headInjection + "</head>");
     }
-    // Add resize script before </body> (or </html>)
-    if (/<\/body>/i.test(html)) {
-      html = html.replace(/<\/body>/i, resizeScript + "</body>");
-    } else {
-      html = html.replace(/<\/html>/i, resizeScript + "</html>");
-    }
     return html;
   }
 
-  // Case 2: Raw HTML fragment — wrap in full document
+  // Case 2: Raw HTML fragment — wrap in full document with component-wrapper
   return `<!DOCTYPE html>
 <html lang="en">
 <head>${headInjection}</head>
@@ -88,7 +53,6 @@ function withAutoResize(html: string): string {
 <div class="component-wrapper">
 ${html}
 </div>
-${resizeScript}
 </body>
 </html>`;
 }
@@ -128,23 +92,12 @@ export default function SlugDetail({
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
   const [dark, setDark] = useState(false);
-  const [iframeHeight, setIframeHeight] = useState<number>(600);
+  // Fixed iframe height — content scrolls inside iframe (mirrors aura.build)
+  // No auto-resize postMessage (caused infinite scroll loop in previous version)
+  // 70vh gives roughly 630px on a 900px viewport, similar to aura.build's ~757px
+  const iframeHeight = "70vh";
   const [related, setRelated] = useState<{ moreFromAuthor: any[]; related: any[] }>({ moreFromAuthor: [], related: [] });
   const iframeRef = useRef<HTMLIFrameElement>(null);
-
-  // Listen for height messages from the iframe (auto-resize)
-  useEffect(() => {
-    const handler = (e: MessageEvent) => {
-      if (e.data && e.data.source === "aura-preview" && typeof e.data.height === "number") {
-        const next = Math.max(300, Math.min(e.data.height + 20, 4000));
-        setIframeHeight(next);
-      }
-    };
-    window.addEventListener("message", handler);
-    return () => window.removeEventListener("message", handler);
-  }, []);
-
-  useEffect(() => { setIframeHeight(600); }, [content, tab]);
 
   // Theme
   useEffect(() => {
@@ -396,7 +349,7 @@ export default function SlugDetail({
                   title="Preview"
                   sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals"
                   className="preview-iframe"
-                  style={{ height: `${iframeHeight}px`, transition: "height 0.2s ease-out" }}
+                  style={{ height: iframeHeight }}
                   loading="eager"
                 />
               )}

@@ -3,22 +3,76 @@
 import { useState, useEffect, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
-const LEARN_PAGES = [
-  { id: "introduction", label: "Pengenalan", icon: "📖", group: "Memulai" },
-  { id: "how-to-design", label: "Cara Edit Desain", icon: "🎨", group: "Memulai" },
-  { id: "custom-domain", label: "Domain Kustom", icon: "🌐", group: "Memulai" },
-  { id: "seo-settings", label: "Pengaturan SEO", icon: "🔍", group: "Memulai" },
-  { id: "tips-for-prompting", label: "Tips Prompting", icon: "💡", group: "Prompting" },
-  { id: "how-to-prompt", label: "Cara Prompt", icon: "✍️", group: "Prompting" },
-  { id: "video-tutorials", label: "Tutorial Video", icon: "🎬", group: "Video" },
-  { id: "faq", label: "Pertanyaan Umum", icon: "❓", group: "Sumber" },
-  { id: "documentation", label: "Dokumentasi", icon: "📚", group: "Sumber" },
+/**
+ * Learn page structure — mirrors aura.build/learn/introduction exactly.
+ *
+ * 3 groups:
+ *   GETTING STARTED — Introduction, How to Edit Designs, Custom Domain, SEO Settings,
+ *                     Selling Templates, Tips for Prompting, Typography Prompting,
+ *                     Styling Prompting, Animation Prompting, Layout Prompting
+ *   VIDEOS          — 18 video tutorials (links to /learn/video-tutorials#<slug>)
+ *   RESOURCES       — Video Tutorials, Documentation, FAQ
+ *
+ * Each video entry is a hash-link to /learn/video-tutorials#<slug> (mirrors aura.build).
+ */
+
+interface LearnPage {
+  id: string;
+  label: string;
+  group: "GETTING STARTED" | "VIDEOS" | "RESOURCES";
+  hash?: string; // For video entries — link to /learn/video-tutorials#<hash>
+  isVideo?: boolean;
+}
+
+const LEARN_PAGES: LearnPage[] = [
+  // === GETTING STARTED ===
+  { id: "introduction", label: "Introduction", group: "GETTING STARTED" },
+  { id: "how-to-design", label: "How to Edit Designs", group: "GETTING STARTED" },
+  { id: "custom-domain", label: "Custom Domain", group: "GETTING STARTED" },
+  { id: "seo-settings", label: "SEO Settings", group: "GETTING STARTED" },
+  { id: "selling-templates", label: "Selling Templates", group: "GETTING STARTED" },
+  { id: "tips-for-prompting", label: "Tips for Prompting", group: "GETTING STARTED" },
+  { id: "typography-prompting", label: "Typography Prompting", group: "GETTING STARTED" },
+  { id: "styling-prompting", label: "Styling Prompting", group: "GETTING STARTED" },
+  { id: "animation-prompting", label: "Animation Prompting", group: "GETTING STARTED" },
+  { id: "layout-prompting", label: "Layout Prompting", group: "GETTING STARTED" },
+
+  // === VIDEOS (18 entries — hash-links to /learn/video-tutorials#<slug>) ===
+  { id: "video-tutorials", label: "Interactive Rain Hero", group: "VIDEOS", hash: "interactive-rain-hero-opus-48", isVideo: true },
+  { id: "video-tutorials", label: "Brutalist Landing Page", group: "VIDEOS", hash: "design-to-website-brutalist-landing-page", isVideo: true },
+  { id: "video-tutorials", label: "$20K Website Prompt", group: "VIDEOS", hash: "one-prompt-20000-website-claude-fable-5", isVideo: true },
+  { id: "video-tutorials", label: "$20K AI Workflow", group: "VIDEOS", hash: "recreate-20000-website-ai-workflow", isVideo: true },
+  { id: "video-tutorials", label: "GPT Images + Grok", group: "VIDEOS", hash: "gpt-images-grok-imagine-landing-page-workflow", isVideo: true },
+  { id: "video-tutorials", label: "Avoid AI Slop", group: "VIDEOS", hash: "avoid-ai-slop-vibe-coded-landing-pages", isVideo: true },
+  { id: "video-tutorials", label: "Claude 4.8 vs GPT-5.5", group: "VIDEOS", hash: "claude-opus-48-vs-gpt-55-landing-pages", isVideo: true },
+  { id: "video-tutorials", label: "AI Landing Pages with Media", group: "VIDEOS", hash: "gpt-image-2-gpt-55-landing-page", isVideo: true },
+  { id: "video-tutorials", label: "GPT Image to Landing Page", group: "VIDEOS", hash: "gpt-image-2-gpt-55-landing-page", isVideo: true },
+  { id: "video-tutorials", label: "DESIGN.md Workflow", group: "VIDEOS", hash: "design-md-ai-web-design-workflow", isVideo: true },
+  { id: "video-tutorials", label: "GPT 5.5 + DESIGN.md", group: "VIDEOS", hash: "better-landing-pages-gpt-55-design-md", isVideo: true },
+  { id: "video-tutorials", label: "Complex Animations", group: "VIDEOS", hash: "complex-animations-chatgpt-design-md", isVideo: true },
+  { id: "video-tutorials", label: "DESIGN.md Better AI Design", group: "VIDEOS", hash: "design-md-file-ai-design-better", isVideo: true },
+  { id: "video-tutorials", label: "Animated WebGL Pages", group: "VIDEOS", hash: "animated-webgl-gemini-design-md", isVideo: true },
+  { id: "video-tutorials", label: "Gemini 3 Landing Pages", group: "VIDEOS", hash: "gemini-3-pro-level-landing-page", isVideo: true },
+  { id: "video-tutorials", label: "Gemini 3 Animations", group: "VIDEOS", hash: "gemini-3-animations", isVideo: true },
+  { id: "video-tutorials", label: "Gemini 3 Changes Everything", group: "VIDEOS", hash: "gemini-3-changes-everything", isVideo: true },
+  { id: "video-tutorials", label: "Using GPT 5.1 for Creating UIs", group: "VIDEOS", hash: "gpt-51-creating-uis", isVideo: true },
+  { id: "video-tutorials", label: "Aura Compose Workflow", group: "VIDEOS", hash: "aura-compose-workflow", isVideo: true },
+  { id: "video-tutorials", label: "Turn AI Designs to Pro-level", group: "VIDEOS", hash: "turn-ai-designs-pro-level", isVideo: true },
+  { id: "video-tutorials", label: "Master Customizations", group: "VIDEOS", hash: "master-customizations", isVideo: true },
+  { id: "video-tutorials", label: "Image to HTML with AI", group: "VIDEOS", hash: "image-to-html-ai", isVideo: true },
+  { id: "video-tutorials", label: "Improve your AI Designs", group: "VIDEOS", hash: "improve-ai-designs", isVideo: true },
+  { id: "video-tutorials", label: "How to Prompt for UI", group: "VIDEOS", hash: "how-to-prompt-ui", isVideo: true },
+
+  // === RESOURCES ===
+  { id: "video-tutorials", label: "Video Tutorials", group: "RESOURCES" },
+  { id: "documentation", label: "Documentation", group: "RESOURCES" },
+  { id: "faq", label: "FAQ", group: "RESOURCES" },
 ];
 
-const VALID_IDS = new Set(LEARN_PAGES.map(p => p.id));
+// Pages that have markdown content (not video hash-links)
+const CONTENT_PAGES = new Set(LEARN_PAGES.filter(p => !p.isVideo).map(p => p.id));
 
 interface LearnViewProps {
-  /** When rendered from /learn/[slug], pass the slug param */
   params?: Promise<{ slug: string }>;
 }
 
@@ -26,10 +80,6 @@ export default function LearnView({ params }: LearnViewProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  // Resolve initial active page from either:
-  // 1. props.params.slug (when accessed via /learn/<slug>)
-  // 2. searchParams.get("page") (legacy query-string form)
-  // 3. default to "introduction"
   const [slugFromParams, setSlugFromParams] = useState<string | null>(null);
   const [activePage, setActivePage] = useState<string>("introduction");
   const [content, setContent] = useState("");
@@ -37,12 +87,12 @@ export default function LearnView({ params }: LearnViewProps) {
   const [dark, setDark] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  // Resolve slug from params promise (only once)
+  // Resolve slug from params promise
   useEffect(() => {
     let mounted = true;
     if (params) {
       params.then(p => {
-        if (mounted && p.slug && VALID_IDS.has(p.slug)) {
+        if (mounted && p.slug && CONTENT_PAGES.has(p.slug)) {
           setSlugFromParams(p.slug);
         }
       });
@@ -54,10 +104,9 @@ export default function LearnView({ params }: LearnViewProps) {
   useEffect(() => {
     const sp = searchParams.get("page");
     const candidate = slugFromParams || sp || "introduction";
-    if (VALID_IDS.has(candidate)) {
+    if (CONTENT_PAGES.has(candidate)) {
       setActivePage(candidate);
     } else if (candidate !== "introduction") {
-      // Invalid slug — redirect to default page
       router.replace("/learn/introduction");
     }
   }, [slugFromParams, searchParams, router]);
@@ -77,15 +126,22 @@ export default function LearnView({ params }: LearnViewProps) {
     setLoading(true);
     fetch(`/api/learn?page=${activePage}`)
       .then(r => r.json())
-      .then(d => { setContent(d.content || "Konten belum tersedia."); setLoading(false); })
+      .then(d => { setContent(d.content || "Content not available yet."); setLoading(false); })
       .catch(() => setLoading(false));
   }, [activePage]);
 
-  // Navigate to a learn page (uses /learn/<slug> route for shareable URL)
-  const goToPage = useCallback((pageId: string) => {
-    setActivePage(pageId);
+  // Navigate — for video entries, go to /learn/video-tutorials#<hash>
+  const goToPage = useCallback((page: LearnPage) => {
+    if (page.isVideo) {
+      // Video entries link to /learn/video-tutorials#<hash>
+      router.push(`/learn/video-tutorials#${page.hash}`, { scroll: false });
+      // Also set active page to video-tutorials for sidebar highlight
+      setActivePage("video-tutorials");
+    } else {
+      setActivePage(page.id);
+      router.push(`/learn/${page.id}`, { scroll: false });
+    }
     setSidebarOpen(false);
-    router.push(`/learn/${pageId}`, { scroll: false });
   }, [router]);
 
   const tabs = [
@@ -95,10 +151,19 @@ export default function LearnView({ params }: LearnViewProps) {
     { id: "skills", label: "Skills", href: "/?tab=skills" },
     { id: "design-md", label: "DESIGN.MD", href: "/design-systems" },
     { id: "learn", label: "Learn", active: true },
-    { id: "progress", label: "Progress", href: "/?tab=progress" },
   ];
 
-  const currentPage = LEARN_PAGES.find(p => p.id === activePage);
+  // Group pages by group name (preserve order)
+  const groupedPages = LEARN_PAGES.reduce((acc, page) => {
+    if (!acc[page.group]) acc[page.group] = [];
+    acc[page.group].push(page);
+    return acc;
+  }, {} as Record<string, LearnPage[]>);
+
+  const currentPage = LEARN_PAGES.find(p => p.id === activePage && !p.isVideo);
+
+  // Check if a video entry should be highlighted (matches hash in URL)
+  const currentHash = typeof window !== "undefined" ? window.location.hash.slice(1) : "";
 
   return (
     <div className="app">
@@ -121,100 +186,78 @@ export default function LearnView({ params }: LearnViewProps) {
       </header>
 
       <main className="main" style={{ background: "hsl(var(--background))" }}>
-        <div style={{ maxWidth: 1200, margin: "0 auto", display: "flex", gap: 0, minHeight: "calc(100vh - 80px)" }}>
-          {/* Sidebar */}
-          <aside style={{
-            width: 260, flexShrink: 0, borderRight: "1px solid hsl(var(--border))",
-            padding: "32px 0", position: "sticky", top: 80, height: "fit-content",
-          }}>
-            <div style={{ padding: "0 20px 20px", borderBottom: "1px solid hsl(var(--border))", marginBottom: 16 }}>
-              <h2 style={{ fontSize: 11, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", color: "hsl(var(--muted-foreground))", marginBottom: 4 }}>Dokumentasi</h2>
-              <p style={{ fontSize: 13, color: "hsl(var(--muted-foreground))" }}>Pelajari cara menggunakan Aura</p>
+        <div className="learn-layout">
+          {/* === Sidebar — mirrors aura.build exactly === */}
+          <aside className="learn-sidebar">
+            <div className="learn-sidebar-header">
+              <h2>LEARN</h2>
             </div>
             <nav>
-              {/* Group sidebar links like aura.build */}
-              {Object.entries(
-                LEARN_PAGES.reduce((acc, page) => {
-                  if (!acc[page.group]) acc[page.group] = [];
-                  acc[page.group].push(page);
-                  return acc;
-                }, {} as Record<string, typeof LEARN_PAGES>)
-              ).map(([groupName, pages]) => (
-                <div key={groupName} style={{ marginBottom: 20 }}>
-                  <div style={{
-                    padding: "8px 20px 6px",
-                    fontSize: 11,
-                    fontWeight: 600,
-                    textTransform: "uppercase",
-                    letterSpacing: "0.08em",
-                    color: "hsl(var(--muted-foreground))",
-                  }}>{groupName}</div>
-                  {pages.map(page => (
-                    <a
-                      key={page.id}
-                      href={`/learn/${page.id}`}
-                      onClick={(e) => { e.preventDefault(); goToPage(page.id); }}
-                      style={{
-                        display: "flex", alignItems: "center", gap: 10, width: "100%",
-                        padding: "8px 20px", fontSize: 14, fontWeight: activePage === page.id ? 500 : 400,
-                        color: activePage === page.id ? "hsl(var(--foreground))" : "hsl(var(--muted-foreground))",
-                        background: activePage === page.id ? "hsl(var(--secondary))" : "transparent",
-                        border: "none", cursor: "pointer", transition: "all 0.15s", textAlign: "left",
-                        textDecoration: "none",
-                      }}
-                    >
-                      <span style={{ fontSize: 16 }}>{page.icon}</span>
-                      {page.label}
-                    </a>
-                  ))}
+              {Object.entries(groupedPages).map(([groupName, pages]) => (
+                <div key={groupName} className="learn-sidebar-group">
+                  <div className="learn-sidebar-group-title">{groupName}</div>
+                  {pages.map(page => {
+                    const isActive = page.isVideo
+                      ? (activePage === "video-tutorials" && currentHash === page.hash)
+                      : (activePage === page.id);
+                    return (
+                      <a
+                        key={`${page.id}-${page.hash || page.label}`}
+                        href={page.isVideo ? `/learn/video-tutorials#${page.hash}` : `/learn/${page.id}`}
+                        onClick={(e) => { e.preventDefault(); goToPage(page); }}
+                        className={`learn-sidebar-link ${isActive ? "active" : ""}`}
+                      >
+                        {page.label}
+                      </a>
+                    );
+                  })}
                 </div>
               ))}
             </nav>
           </aside>
 
-          {/* Content */}
-          <div style={{ flex: 1, minWidth: 0, padding: "48px 56px", maxWidth: 800 }}>
+          {/* === Content area === */}
+          <div className="learn-content">
             {loading ? (
               <div className="loading-spinner"><div className="spinner" /></div>
             ) : (
               <>
                 {/* Breadcrumb */}
-                <div style={{ fontSize: 12, color: "hsl(var(--muted-foreground))", marginBottom: 16, textTransform: "uppercase", letterSpacing: "0.05em" }}>
-                  Learn / {currentPage?.label}
+                <div className="learn-breadcrumb">
+                  Learn / {currentPage?.label || "Introduction"}
                 </div>
                 {/* Title */}
-                <h1 style={{ fontSize: 32, fontWeight: 700, marginBottom: 8, letterSpacing: "-0.02em", color: "hsl(var(--foreground))" }}>
-                  {currentPage?.label}
-                </h1>
-                <div style={{ width: 48, height: 3, background: "hsl(var(--foreground))", marginBottom: 32, borderRadius: 2 }} />
+                <h1 className="learn-h1">{currentPage?.label || "Introduction"}</h1>
+                <div className="learn-underline" />
                 {/* Markdown content */}
-                <div className="markdown" style={{ padding: 0, maxWidth: "none" }} dangerouslySetInnerHTML={{ __html: renderMarkdown(content) }} />
-                {/* Navigation footer */}
-                <div style={{ display: "flex", justifyContent: "space-between", marginTop: 64, paddingTop: 24, borderTop: "1px solid hsl(var(--border))" }}>
+                <div className="markdown learn-markdown" dangerouslySetInnerHTML={{ __html: renderMarkdown(content) }} />
+                {/* Prev/Next navigation */}
+                <div className="learn-nav-footer">
                   {(() => {
-                    const idx = LEARN_PAGES.findIndex(p => p.id === activePage);
-                    const prev = idx > 0 ? LEARN_PAGES[idx - 1] : null;
-                    const next = idx < LEARN_PAGES.length - 1 ? LEARN_PAGES[idx + 1] : null;
+                    const contentPages = LEARN_PAGES.filter(p => !p.isVideo);
+                    const idx = contentPages.findIndex(p => p.id === activePage);
+                    const prev = idx > 0 ? contentPages[idx - 1] : null;
+                    const next = idx < contentPages.length - 1 ? contentPages[idx + 1] : null;
                     return (
                       <>
                         {prev ? (
                           <a
                             href={`/learn/${prev.id}`}
-                            onClick={(e) => { e.preventDefault(); goToPage(prev.id); }}
-                            style={{ display: "flex", flexDirection: "column", gap: 4, background: "none", border: "none", cursor: "pointer", textAlign: "left", textDecoration: "none" }}
+                            onClick={(e) => { e.preventDefault(); goToPage(prev); }}
+                            className="learn-nav-link learn-nav-prev"
                           >
-                            <span style={{ fontSize: 12, color: "hsl(var(--muted-foreground))" }}>← Sebelumnya</span>
-                            <span style={{ fontSize: 14, fontWeight: 500, color: "hsl(var(--foreground))" }}>{prev.label}</span>
+                            <span className="learn-nav-label">← Previous</span>
+                            <span className="learn-nav-title">{prev.label}</span>
                           </a>
                         ) : <div />}
                         {next ? (
                           <a
                             href={`/learn/${next.id}`}
-                            onClick={(e) => { e.preventDefault(); goToPage(next.id); }}
-                            style={{ display: "flex", flexDirection: "column", gap: 4, background: "none", border: "none", cursor: "pointer", textAlign: "right", textDecoration: "none" }}
+                            onClick={(e) => { e.preventDefault(); goToPage(next); }}
+                            className="learn-nav-link learn-nav-next"
                           >
-                            <span style={{ fontSize: 12, color: "hsl(var(--muted-foreground))" }}>Selanjutnya →</span>
-                            <span style={{ fontSize: 14, fontWeight: 500, color: "hsl(var(--foreground))" }}>{next.label}</span>
+                            <span className="learn-nav-label">Next →</span>
+                            <span className="learn-nav-title">{next.label}</span>
                           </a>
                         ) : <div />}
                       </>

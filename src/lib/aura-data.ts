@@ -184,15 +184,21 @@ export async function getLearnPage(page: string): Promise<{ content: string; ava
 }
 
 export const LEARN_PAGES = [
-  { id: "introduction", label: "Pengenalan" },
-  { id: "tips-for-prompting", label: "Tips Prompting" },
-  { id: "how-to-prompt", label: "Cara Prompt" },
-  { id: "how-to-design", label: "Cara Edit" },
-  { id: "seo-settings", label: "Pengaturan SEO" },
+  // GETTING STARTED
+  { id: "introduction", label: "Introduction" },
+  { id: "how-to-design", label: "How to Edit Designs" },
+  { id: "custom-domain", label: "Custom Domain" },
+  { id: "seo-settings", label: "SEO Settings" },
+  { id: "selling-templates", label: "Selling Templates" },
+  { id: "tips-for-prompting", label: "Tips for Prompting" },
+  { id: "typography-prompting", label: "Typography Prompting" },
+  { id: "styling-prompting", label: "Styling Prompting" },
+  { id: "animation-prompting", label: "Animation Prompting" },
+  { id: "layout-prompting", label: "Layout Prompting" },
+  // RESOURCES
+  { id: "video-tutorials", label: "Video Tutorials" },
+  { id: "documentation", label: "Documentation" },
   { id: "faq", label: "FAQ" },
-  { id: "custom-domain", label: "Domain Kustom" },
-  { id: "video-tutorials", label: "Tutorial Video" },
-  { id: "documentation", label: "Dokumentasi" },
 ];
 
 export function esc(s: any): string {

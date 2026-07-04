@@ -3,51 +3,32 @@
 import { use, useState, useEffect, useRef } from "react";
 
 /**
- * Wraps raw HTML in full document with Tailwind CDN (mirrors aura.build).
- * If HTML is already a full document, injects Tailwind into existing <head>.
+ * Wraps raw HTML in full document with Tailwind CDN + dark bg (mirrors aura.build).
+ * No auto-resize postMessage — content scrolls inside fixed-height iframe.
  */
 function withTailwindAndAutoResize(html: string): string {
-  const resizeScript = `<script>(function(){
-    var send = function(){
-      var h = Math.max(
-        document.body ? document.body.scrollHeight : 0,
-        document.documentElement ? document.documentElement.scrollHeight : 0
-      );
-      try { parent.postMessage({ source: 'aura-preview', height: h }, '*'); } catch (e) {}
-    };
-    if (document.readyState === 'complete' || document.readyState === 'interactive') {
-      send();
-    } else {
-      document.addEventListener('DOMContentLoaded', send);
-    }
-    window.addEventListener('load', send);
-    setTimeout(send, 100);
-    setTimeout(send, 500);
-    setTimeout(send, 1500);
-    setTimeout(send, 3000);
-    if (typeof MutationObserver !== 'undefined' && document.body) {
-      new MutationObserver(function(){ send(); }).observe(document.body, { childList: true, subtree: true, attributes: true });
-    }
-    if (typeof ResizeObserver !== 'undefined' && document.body) {
-      new ResizeObserver(function(){ send(); }).observe(document.body);
-    }
-  })();</script>`;
-
   // Only inject Tailwind CDN if not already present
   const hasTailwind = /cdn\.tailwindcss\.com/i.test(html);
   const tailwindScript = hasTailwind ? "" : `<script src="https://cdn.tailwindcss.com"></script>`;
 
+  const headInjection = `
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Component Preview</title>
+    ${tailwindScript}
+    <style>
+      html, body { height: 100%; margin: 0; padding: 0; }
+      body { height: 100%; overflow: auto; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #000000; color: #ffffff; }
+      .component-wrapper { width: 100%; height: 100%; padding: 0; box-sizing: border-box; overflow: auto; }
+    </style>
+  `;
+
   // Case 1: Full HTML document — inject into existing <head>
   if (/<html[^>]*>/i.test(html) && /<\/html>/i.test(html)) {
     if (/<head[^>]*>/i.test(html)) {
-      html = html.replace(/<head[^>]*>/i, (match) => match + tailwindScript);
+      html = html.replace(/<head[^>]*>/i, (match) => match + headInjection);
     } else {
-      html = html.replace(/<html[^>]*>/i, (match) => match + "<head>" + tailwindScript + "</head>");
-    }
-    if (/<\/body>/i.test(html)) {
-      html = html.replace(/<\/body>/i, resizeScript + "</body>");
-    } else {
-      html = html.replace(/<\/html>/i, resizeScript + "</html>");
+      html = html.replace(/<html[^>]*>/i, (match) => match + "<head>" + headInjection + "</head>");
     }
     return html;
   }
@@ -55,19 +36,11 @@ function withTailwindAndAutoResize(html: string): string {
   // Case 2: Raw HTML fragment — wrap in full document
   return `<!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Preview</title>
-  ${tailwindScript}
-  <style>
-    html, body { height: 100%; margin: 0; padding: 0; }
-    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
-  </style>
-</head>
+<head>${headInjection}</head>
 <body>
+<div class="component-wrapper">
 ${html}
-${resizeScript}
+</div>
 </body>
 </html>`;
 }
@@ -82,7 +55,8 @@ export default function DesignSystemDetailPage({
   const [tab, setTab] = useState<"design" | "html">("design");
   const [loading, setLoading] = useState(true);
   const [dark, setDark] = useState(false);
-  const [iframeHeight, setIframeHeight] = useState(600);
+  // Fixed iframe height — content scrolls inside iframe (mirrors aura.build)
+  const iframeHeight = "70vh";
   const [copied, setCopied] = useState<string | null>(null);
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
@@ -103,20 +77,6 @@ export default function DesignSystemDetailPage({
       .then(d => { setItem(d); setLoading(false); })
       .catch(() => setLoading(false));
   }, [slug]);
-
-  // Auto-resize iframe
-  useEffect(() => {
-    const handler = (e: MessageEvent) => {
-      if (e.data && e.data.source === "aura-preview" && typeof e.data.height === "number") {
-        const next = Math.max(300, Math.min(e.data.height + 20, 8000));
-        setIframeHeight(next);
-      }
-    };
-    window.addEventListener("message", handler);
-    return () => window.removeEventListener("message", handler);
-  }, []);
-
-  useEffect(() => { setIframeHeight(600); }, [tab, slug]);
 
   const copyToClipboard = async (text: string, label: string) => {
     try {
@@ -249,7 +209,7 @@ export default function DesignSystemDetailPage({
                   title="HTML Preview"
                   sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals"
                   className="preview-iframe"
-                  style={{ height: `${iframeHeight}px`, transition: "height 0.2s ease-out" }}
+                  style={{ height: iframeHeight }}
                   loading="eager"
                 />
               )}
