@@ -146,7 +146,7 @@ export default function Home() {
     { id: "assets", label: "Assets", count: stats?.assets?.toLocaleString() },
     { id: "skills", label: "Skills", count: stats?.skills?.toLocaleString() },
     { id: "design-md", label: "DESIGN.MD", href: "/design-systems" },
-    { id: "learn", label: "Learn" },
+    { id: "learn", label: "Learn", href: "/learn" },
     { id: "progress", label: "Progress" },
   ];
 
