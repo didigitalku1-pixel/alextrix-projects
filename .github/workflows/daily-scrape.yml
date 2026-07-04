@@ -40,12 +40,47 @@ jobs:
       - name: Install Python deps
         run: |
           python -m pip install --upgrade pip
-          pip install "httpx[http2]"
+          pip install "httpx[http2]" pynacl
 
       - name: Configure git
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Refresh Aura access token
+        id: refresh
+        if: ${{ env.AURA_REFRESH_TOKEN != '' }}
+        env:
+          AURA_REFRESH_TOKEN: ${{ secrets.AURA_REFRESH_TOKEN }}
+        run: |
+          set -euo pipefail
+          echo "🔄 Refreshing Aura access token..."
+          # Call Supabase refresh endpoint
+          RESPONSE=$(curl -sS -X POST \
+            "https://hoirqrkdgbmvpwutwuwj.supabase.co/auth/v1/token?grant_type=refresh_token" \
+            -H "apikey: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhvaXJxcmtkZ2JtdnB3dXR3dXdqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDM2Nzc2NTAsImV4cCI6MjA1OTI1MzY1MH0._UsCSHsTELn7m54tOhX3ySm67WEhcyHAPbuxEQZsl3c" \
+            -H "Content-Type: application/json" \
+            -d "{\"refresh_token\": \"${AURA_REFRESH_TOKEN}\"}")
+          
+          # Parse response
+          NEW_ACCESS=$(echo "$RESPONSE" | python3 -c "import json,sys; d=json.load(sys.stdin); print(d.get('access_token',''))")
+          NEW_REFRESH=$(echo "$RESPONSE" | python3 -c "import json,sys; d=json.load(sys.stdin); print(d.get('refresh_token',''))")
+          USER_EMAIL=$(echo "$RESPONSE" | python3 -c "import json,sys; d=json.load(sys.stdin); print(d.get('user',{}).get('email',''))")
+          
+          if [ -z "$NEW_ACCESS" ] || [ -z "$NEW_REFRESH" ]; then
+            echo "::error::Failed to refresh token. Response: $RESPONSE"
+            echo "::error::Refresh token may be expired (valid 30 days). Re-extract via scripts/extract_session_v2.js"
+            exit 1
+          fi
+          
+          echo "✅ Token refreshed for $USER_EMAIL"
+          echo "   New access token: ${NEW_ACCESS:0:50}..."
+          echo "   New refresh token: ${NEW_REFRESH:0:10}..."
+          
+          # Export to env for subsequent steps
+          echo "AURA_ACCESS_TOKEN=$NEW_ACCESS" >> $GITHUB_ENV
+          echo "AURA_REFRESH_TOKEN_NEW=$NEW_REFRESH" >> $GITHUB_ENV
+          echo "AURA_USER_EMAIL=$USER_EMAIL" >> $GITHUB_ENV
 
       - name: Optional full re-scrape
         if: ${{ github.event.inputs.full == 'true' }}
@@ -54,6 +89,8 @@ jobs:
           echo "Progress reset — full scrape will run."
 
       - name: Run scraper
+        env:
+          AURA_ACCESS_TOKEN: ${{ env.AURA_ACCESS_TOKEN }}
         run: python scripts/scrape_aura.py
         continue-on-error: true
 
@@ -106,7 +143,28 @@ jobs:
           echo ""
           echo "Deployment triggered."
 
+      - name: Update AURA_REFRESH_TOKEN secret with rotated token
+        # Supabase rotates refresh_token on every use — old one is invalid after refresh.
+        # Update the GitHub secret so the next workflow run can refresh again.
+        if: success() && env.AURA_REFRESH_TOKEN_NEW != ''
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          AURA_REFRESH_TOKEN_NEW: ${{ env.AURA_REFRESH_TOKEN_NEW }}
+        run: |
+          set -euo pipefail
+          echo "🔄 Updating AURA_REFRESH_TOKEN secret with rotated token..."
+          # Use Python script to encrypt & upload (needs pynacl)
+          GITHUB_TOKEN="$GITHUB_TOKEN" python3 scripts/set-github-secrets.py \
+            didigitalku1-pixel/web-library \
+            AURA_REFRESH_TOKEN="$AURA_REFRESH_TOKEN_NEW"
+          echo "✅ Secret updated. Next workflow run will use the new refresh token."
+
       - name: Notify on failure
         if: failure()
         run: |
           echo "::warning::Daily scraper failed — check logs at ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          if [ -z "${{ env.AURA_ACCESS_TOKEN }}" ]; then
+            echo "::error::Aura access token was not obtained. Refresh token may be expired."
+            echo "::error::Re-extract session: login to aura.build → F12 → paste scripts/extract_session_v2.js"
+            echo "::error::Then update AURA_REFRESH_TOKEN GitHub secret with new refresh_token."
+          fi
