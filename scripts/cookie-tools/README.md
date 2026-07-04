@@ -6,147 +6,169 @@ Tools untuk debugging session autentikasi di aplikasi web. Berguna untuk:
 - Inspecting cookies yang disimpan Chrome untuk domain tertentu
 - Decoding JWT tokens untuk pahami claims dan expiry
 
+## 🚀 Quick Start — Extract aura.build Session
+
+**Cara paling cepat** (recommended):
+
+1. Login ke https://www.aura.build/ dengan akun Google
+2. Tekan **F12** → tab **Console**
+3. Copy-paste isi `../extract_session_v2.js` ke Console → Enter
+4. Modal popup muncul dengan 3 tab: `.ENV` | `JSON` | `CURL`
+5. Klik tab `.ENV` → tombol **Copy** → paste ke file `.env` di project
+6. Atau klik **Download .env** untuk download file `.env.aura` langsung
+7. Klik **Test Token** untuk verifikasi token bekerja
+
+**Bookmarklet** (klik sekali, tanpa F12):
+1. Buat bookmark baru, isi URL dengan isi `bookmarklet.min.js`
+2. Buka https://www.aura.build/ (sudah login)
+3. Klik bookmark → modal popup muncul
+
 ## 📦 Tools
 
-### 1. `chrome_cookies.py` — Chrome Cookie Extractor (Python)
+### 1. `extract_session_v2.js` — Aura Session Extractor (RECOMMENDED)
+
+Script utama untuk extract session dari aura.build. Run di browser Console (F12).
+
+**Cara pakai:**
+```
+1. Login ke https://www.aura.build/ dengan Google
+2. F12 → Console
+3. Copy-paste isi script → Enter
+4. Modal popup muncul
+```
+
+**Fitur:**
+- 🎨 Modal popup UI (dark theme) dengan 3 tab
+- 📄 `.ENV` format siap pakai untuk scraper
+- 📋 `JSON` format untuk debugging
+- 🔧 `cURL` commands untuk test API manual
+- 🧪 Tombol "Test Token" untuk verify via live API call
+- ⬇️ Tombol "Download .env" untuk download file langsung
+- 📋 Auto-copy JSON ke clipboard
+- ⚠️ Deteksi token expired/expiring soon dengan warna
+
+### 2. `bookmarklet.min.js` — Bookmarklet Version
+
+Versi minified dari `extract_session_v2.js` (12KB) yang bisa di-save sebagai bookmark URL.
+
+**Cara pakai:**
+1. Bookmarks → Bookmark Manager → Add new bookmark
+2. Name: `Aura Session Extract`
+3. URL: copy-paste isi `bookmarklet.min.js`
+4. Save
+5. Buka https://www.aura.build/ → klik bookmark
+
+### 3. `refresh_token.py` — Auto-Refresh Access Token
+
+Refresh access_token otomatis menggunakan refresh_token. Berguna untuk scraper jangka panjang.
+
+```bash
+# Pakai env var
+export AURA_REFRESH_TOKEN="v1.xxx..."
+python3 refresh_token.py
+
+# Update file .env otomatis
+python3 refresh_token.py --env-file .env
+
+# Output JSON lengkap
+python3 refresh_token.py --refresh-token "v1.xxx..." --json
+
+# Hanya print access_token baru (untuk pipe ke command lain)
+python3 refresh_token.py --refresh-token "v1.xxx..." --quiet
+```
+
+**Token flow:**
+- `access_token` expired tiap 1 jam
+- `refresh_token` valid 30 hari
+- Setiap refresh → dapat refresh_token baru (rotasi)
+- Refresh token lama invalid setelah dipakai
+
+### 4. `chrome_cookies.py` — Chrome Cookie Extractor (Python)
 
 Extract & decrypt cookies dari Chrome SQLite database untuk domain tertentu.
 
 ```bash
-# Install dependency
 pip install pycryptodome
 
-# Basic usage
 python3 chrome_cookies.py --domain aura.build
-
-# Pretty print + save to file
-python3 chrome_cookies.py --domain aura.build --pretty --output cookies.json
-
-# List semua Chrome profiles
+python3 chrome_cookies.py --domain aura.build --output cookies.json --pretty
 python3 chrome_cookies.py --list-profiles
-
-# Filter domain lain
-python3 chrome_cookies.py --domain supabase.co
-python3 chrome_cookies.py --domain .build
 ```
 
-**Cara kerja:**
-1. Locate Chrome's `Cookies` SQLite database (Default + Profile 1, 2, ...)
-2. Copy DB ke temp file (Chrome locks the original)
-3. Decrypt master key dari `Local State` JSON (Linux/macOS) atau DPAPI (Windows)
-4. AES-256-GCM decrypt setiap cookie value (v10/v11 prefix)
-5. Output: JSON + summary table
+Cross-platform: Linux, macOS, Windows. Lihat docstring file untuk detail.
 
-**Cross-platform:**
-- ✅ Linux (GNOME keyring / KWallet / "peanuts" fallback)
-- ✅ macOS (Keychain, password = "chrome")
-- ✅ Windows (DPAPI, requires `pywin32`)
-
-### 2. `chrome_cookies.js` — Chrome Cookie Extractor (Node.js)
-
-Alternative Node.js version (lighter, no Python).
+### 5. `chrome_cookies.js` — Node.js Alternative
 
 ```bash
-# Install dependency
 npm install better-sqlite3 argparse
-
-# Usage
 node chrome_cookies.js --domain aura.build
-node chrome_cookies.js --domain aura.build --output cookies.json --pretty
-node chrome_cookies.js --list-profiles
 ```
 
-> ⚠️ Node.js version cuma mendukung Linux & macOS untuk sekarang. Untuk Windows, gunakan `chrome_cookies.py`.
+Linux/macOS only. Untuk Windows, gunakan `chrome_cookies.py`.
 
-### 3. `browser_console_snippet.js` — DevTools F12 Snippet
+### 6. `browser_console_snippet.js` — Generic DevTools Snippet
 
-JavaScript snippet yang di-paste ke Browser Console (F12) untuk dump semua session info dari current page.
+Versi generic dari extract_session_v2.js — dump cookies, localStorage, sessionStorage, JWTs dari website mana pun. Tidak spesifik aura.build.
 
-**Cara pakai:**
-1. Buka website target (e.g., `https://www.aura.build/`)
-2. Login jika perlu
-3. Tekan **F12** → pilih tab **Console**
-4. Copy-paste isi `browser_console_snippet.js` ke Console
-5. Tekan **Enter**
-
-**Output:**
-- 🍌 Cookies table (yang accessible via JS — HttpOnly cookies tidak terlihat)
-- 💾 localStorage items (dengan preview)
-- 💾 sessionStorage items
-- 🔑 JWT tokens yang ter-decode (header, payload, expiry)
-- 🔐 Supabase sessions (khusus key `sb-*-auth-token`)
-- 📋 Full JSON di-copy ke clipboard
-
-**Sebagai bookmarklet:** Save snippet sebagai URL bookmark (prepend `javascript:`). Klik bookmark di halaman mana pun untuk dump session.
-
-### 4. `jwt_inspector.py` — JWT Decoder
-
-Decode JWT tokens dari berbagai sumber.
+### 7. `jwt_inspector.py` — JWT Decoder
 
 ```bash
-# Decode JWT langsung
-python3 jwt_inspector.py "eyJhbGciOiJIUzI1NiIs..."
-
-# Dari file berisi JWT(s)
+python3 jwt_inspector.py "eyJhbGc..."
 python3 jwt_inspector.py --file cookies.json
-
-# Dari Supabase session JSON
 python3 jwt_inspector.py --supabase session.json
-
-# Output sebagai JSON
-python3 jwt_inspector.py --supabase session.json --json
 ```
 
-**Output:**
-- Header (alg, typ)
-- Payload (iss, sub, aud, exp, iat, role, email, dll.)
-- Expiry status (valid / expired / not yet valid)
-- Time to expiry
+Decode JWT dari command line, file, atau Supabase session JSON. Output: header, payload, expiry status.
 
-## 🔄 Workflow: Extract aura.build Session
-
-Untuk scraper yang butuh aura.build auth session:
+## 🔄 Workflow: Setup Scraper dengan Auth
 
 ```bash
-# Step 1: Login ke aura.build di Chrome secara manual
-# (Buka https://www.aura.build/, login dengan akun Anda)
+# Step 1: Extract session (manual, sekali per 30 hari)
+# - Login ke aura.build dengan Google
+# - F12 → Console → paste extract_session_v2.js → Enter
+# - Klik "Download .env" di modal popup
+# - Pindahkan file .env.aura ke root project, rename jadi .env
 
-# Step 2: Extract cookies + localStorage via DevTools snippet
-# (F12 → Console → paste browser_console_snippet.js → Enter)
-# Output JSON akan ke-copy ke clipboard. Save sebagai session.json
+# Step 2: Verify token masih valid
+python3 scripts/cookie-tools/refresh_token.py --env-file .env
 
-# Step 3: Decode Supabase session untuk dapat access_token + refresh_token
-python3 jwt_inspector.py --supabase session.json
+# Step 3: Run scraper (akan auto-refresh jika token expired)
+python3 scripts/scrape_aura.py
 
-# Step 4 (optional): Extract cookies langsung dari Chrome DB
-python3 chrome_cookies.py --domain aura.build --output aura_cookies.json
-
-# Step 5: Use di scraper Python
-# (lihat scripts/scrape_aura.py — sudah expect AURA_REFRESH_TOKEN env var)
+# Step 4: Setup cron untuk auto-refresh token tiap 12 jam
+# (tambahkan ke crontab atau GitHub Actions)
+0 */12 * * * cd /path/to/web-library && python3 scripts/cookie-tools/refresh_token.py --env-file .env
 ```
 
 ## 🔐 Security Notes
 
-- Tools ini hanya untuk debugging **session Anda sendiri** di **mesin Anda sendiri**
-- Cookies di Chrome di-encrypt dengan key yang terikat ke user account OS — tidak bisa diekstrak di mesin lain
-- JWT tokens punya expiry — cek selalu `is_expired` sebelum dipakai
-- Jangan commit file `cookies.json` / `session.json` ke git — tambahkan ke `.gitignore`
-- `browser_console_snippet.js` hanya bisa akses cookies non-HttpOnly. Cookie auth biasanya HttpOnly (aman dari XSS) — gunakan `chrome_cookies.py` untuk akses lengkap
+- Tools hanya untuk debugging **session Anda sendiri** di **mesin Anda sendiri**
+- Jangan commit file `.env`, `cookies.json`, `session.json` ke git (sudah di `.gitignore`)
+- `access_token` expired tiap 1 jam — gunakan `refresh_token` untuk auto-renew
+- `refresh_token` valid 30 hari — simpan di tempat aman
+- HttpOnly cookies hanya bisa diakses via `chrome_cookies.py`, **bukan** via browser console
+- Jangan share token ke siapa pun — siapa pun yang punya refresh_token bisa impersonate akun Anda
 
 ## 📋 File Layout
 
 ```
-scripts/cookie-tools/
-├── README.md                       ← dokumentasi ini
-├── chrome_cookies.py               ← Python Chrome cookie extractor (cross-platform)
-├── chrome_cookies.js               ← Node.js Chrome cookie extractor (Linux/macOS)
-├── browser_console_snippet.js      ← DevTools F12 snippet (copy-paste ke Console)
-└── jwt_inspector.py                ← JWT decoder & inspector
+scripts/
+├── extract_session_v2.js              ← script utama (F12 Console) — RECOMMENDED
+├── extract_session.js                 ← versi lama (simple, console output only)
+└── cookie-tools/
+    ├── README.md                      ← dokumentasi ini
+    ├── BOOKMARKLET.md                 ← cara buat bookmarklet
+    ├── bookmarklet.min.js             ← bookmarklet compressed (12KB)
+    ├── refresh_token.py               ← auto-refresh access_token
+    ├── chrome_cookies.py              ← Chrome cookie extractor (Python, cross-platform)
+    ├── chrome_cookies.js              ← Chrome cookie extractor (Node.js)
+    ├── browser_console_snippet.js     ← generic DevTools snippet
+    └── jwt_inspector.py               ← JWT decoder
 ```
 
 ## 🛠️ Adding to .gitignore
 
-Tambahkan ke `.gitignore` agar file output tidak ter-commit:
+Sudah ditambahkan ke `.gitignore` utama project:
 
 ```gitignore
 # Cookie & session outputs (jangan commit!)
@@ -154,6 +176,8 @@ Tambahkan ke `.gitignore` agar file output tidak ter-commit:
 session.json
 aura_session.json
 cookies.json
+*_session.json
+*_cookies.json
+.env*
+__pycache__/
 ```
-
-Atau jalankan: `echo "*.cookies.json\nsession.json\ncookies.json" >> .gitignore`
