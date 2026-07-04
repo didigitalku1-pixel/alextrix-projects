@@ -332,7 +332,7 @@ export default function Home() {
                   <a
                     key={`${item.type}-${item.id}`}
                     className="card"
-                    href={`/detail/${item.type}/${item.type === "skill" ? item.file : item.id}`}
+                    href={`/${item.type === "template" ? "templates" : item.type === "component" ? "components" : item.type === "asset" ? "assets" : "skills"}/${item.slug || item.id}`}
                   >
                     <div className="card-image-wrap">
                       {item.image ? (
