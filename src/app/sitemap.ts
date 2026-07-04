@@ -6,116 +6,62 @@ const SUPA_KEY = process.env.USER_SUPABASE_ANON_KEY || "eyJhbGciOiJIUzI1NiIsInR5
 const BASE_URL = "https://web-library-coral.vercel.app";
 
 export const dynamic = "force-dynamic";
-export const maxDuration = 60;
-export const revalidate = 86400; // 24h
+export const maxDuration = 30;
+export const revalidate = 86400;
 
-async function fetchSlugs(table: string, limit = 5000): Promise<{ slug: string; updated_at?: string }[]> {
+/**
+ * Sitemap index — returns a list of child sitemaps.
+ * Each child sitemap (/sitemap-xml/<n>.xml) contains up to 40,000 URLs
+ * to stay well under Google's 50,000-URL-per-file limit.
+ *
+ * Total URLs: ~55,000 (21K templates + 3K components + 30K assets + 118 skills + 12 misc)
+ * → 2 child sitemap files (n=0, n=1).
+ */
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  // Get total counts from each table (one HEAD request each, cheap)
+  const [t, c, a] = await Promise.all([
+    countRows("templates"),
+    countRows("components"),
+    countRows("assets"),
+  ]);
+  const skillsCount = 118; // static from manifest
+
+  const totalUrls = t + c + a + skillsCount + 12; // 12 = homepage + learn + design-systems
+  const URLS_PER_FILE = 40000;
+  const numFiles = Math.max(1, Math.ceil(totalUrls / URLS_PER_FILE));
+
+  const now = new Date().toISOString();
+  const entries: MetadataRoute.Sitemap = [];
+  for (let i = 0; i < numFiles; i++) {
+    entries.push({
+      url: `${BASE_URL}/sitemap-xml/${i}.xml`,
+      lastModified: now,
+      changeFrequency: "daily",
+      priority: 0.9,
+    });
+  }
+  return entries;
+}
+
+async function countRows(table: string): Promise<number> {
   try {
     const r = await fetch(
-      `${SUPA_URL}/rest/v1/${table}?select=slug,updated_at&order=views.desc&limit=${limit}`,
-      { headers: { apikey: SUPA_KEY, Authorization: `Bearer ${SUPA_KEY}` } }
+      `${SUPA_URL}/rest/v1/${table}?select=id`,
+      {
+        method: "GET",
+        headers: {
+          apikey: SUPA_KEY,
+          Authorization: `Bearer ${SUPA_KEY}`,
+          Range: "0-0",
+          Prefer: "count=exact",
+        },
+      }
     );
-    if (!r.ok) return [];
-    const data = await r.json();
-    return (data || [])
-      .filter((i: any) => i.slug)
-      .map((i: any) => ({ slug: String(i.slug), updated_at: i.updated_at || undefined }));
+    if (!r.ok) return 0;
+    const cr = r.headers.get("content-range") || "";
+    const m = cr.match(/\/(\d+)/);
+    return m ? parseInt(m[1], 10) : 0;
   } catch {
-    return [];
+    return 0;
   }
-}
-
-async function fetchSkillFiles(): Promise<{ file: string }[]> {
-  // Skills live in skills-manifest.json committed to repo (server-side FS read)
-  try {
-    const { promises: fs } = await import("fs");
-    const path = await import("path");
-    const skillsPath = path.join(process.cwd(), "download", "aura_library", "skills-manifest.json");
-    const raw = await fs.readFile(skillsPath, "utf-8");
-    const manifest = JSON.parse(raw);
-    return (manifest.items || [])
-      .filter((i: any) => i.file)
-      .map((i: any) => ({ file: String(i.file) }));
-  } catch {
-    return [];
-  }
-}
-
-const LEARN_PAGES = [
-  "introduction",
-  "tips-for-prompting",
-  "how-to-prompt",
-  "how-to-design",
-  "seo-settings",
-  "faq",
-  "custom-domain",
-  "video-tutorials",
-  "documentation",
-];
-
-export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const now = new Date().toISOString();
-
-  const [templates, components, assets, skills] = await Promise.all([
-    fetchSlugs("templates", 5000),
-    fetchSlugs("components", 3000),
-    fetchSlugs("assets", 10000),
-    fetchSkillFiles(),
-  ]);
-
-  const entries: MetadataRoute.Sitemap = [];
-
-  // Homepage & top-level routes
-  entries.push(
-    { url: BASE_URL, lastModified: now, changeFrequency: "daily", priority: 1.0 },
-    { url: `${BASE_URL}/learn`, lastModified: now, changeFrequency: "weekly", priority: 0.7 },
-    { url: `${BASE_URL}/design-systems`, lastModified: now, changeFrequency: "weekly", priority: 0.7 },
-  );
-
-  // Learn pages
-  for (const p of LEARN_PAGES) {
-    entries.push({ url: `${BASE_URL}/learn/${p}`, lastModified: now, changeFrequency: "monthly", priority: 0.6 });
-  }
-
-  // Templates
-  for (const t of templates) {
-    entries.push({
-      url: `${BASE_URL}/templates/${encodeURIComponent(t.slug)}`,
-      lastModified: t.updated_at || now,
-      changeFrequency: "weekly",
-      priority: 0.8,
-    });
-  }
-
-  // Components
-  for (const c of components) {
-    entries.push({
-      url: `${BASE_URL}/components/${encodeURIComponent(c.slug)}`,
-      lastModified: c.updated_at || now,
-      changeFrequency: "weekly",
-      priority: 0.7,
-    });
-  }
-
-  // Assets
-  for (const a of assets) {
-    entries.push({
-      url: `${BASE_URL}/assets/${encodeURIComponent(a.slug)}`,
-      lastModified: a.updated_at || now,
-      changeFrequency: "monthly",
-      priority: 0.5,
-    });
-  }
-
-  // Skills (use file as route param)
-  for (const s of skills) {
-    entries.push({
-      url: `${BASE_URL}/skills/${encodeURIComponent(s.file)}`,
-      lastModified: now,
-      changeFrequency: "monthly",
-      priority: 0.6,
-    });
-  }
-
-  return entries;
 }
