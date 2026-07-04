@@ -14,7 +14,16 @@ interface DSItem {
   has_design_md: boolean;
   has_code: boolean;
   content_chars: number;
+  tags?: string[];
 }
+
+// Static pulse stats (would normally come from API, but values from aura.build)
+const PULSE_STATS = [
+  { label: "Systems", value: 725, color: "#3b82f6" },
+  { label: "Colors", value: 5820, color: "#ef4444" },
+  { label: "Type", value: 2172, color: "#f59e0b" },
+  { label: "Spacing", value: 2946, color: "#10b981" },
+];
 
 export default function DesignSystemsPage() {
   const [items, setItems] = useState<DSItem[]>([]);
@@ -63,7 +72,6 @@ export default function DesignSystemsPage() {
     { id: "skills", label: "Skills" },
     { id: "design-md", label: "DESIGN.MD", active: true },
     { id: "learn", label: "Learn" },
-    { id: "progress", label: "Progress" },
   ];
 
   return (
@@ -85,32 +93,71 @@ export default function DesignSystemsPage() {
 
       <main className="main">
         <div className="main-content">
-          {/* Hero */}
-          <div style={{ marginBottom: 32 }}>
+          {/* === Hero section === */}
+          <div className="ds-hero">
             <p className="hero-eyebrow">DESIGN.md LIBRARY</p>
             <h1 className="hero-title">DESIGN.md templates for AI web design</h1>
             <p className="hero-desc">Browse, upload, or generate DESIGN.md systems for typography, colors, spacing, components, motion, and style rules. Aura turns websites and templates into reusable prompt context for stronger generated UIs.</p>
+            {/* CTA buttons */}
+            <div className="ds-cta-row">
+              <button className="ds-cta-primary">
+                <span className="ds-cta-icon">+</span>
+                Add DESIGN.md
+              </button>
+              <button className="ds-cta-secondary">
+                <span className="ds-cta-icon">⬆</span>
+                Import from Templates
+              </button>
+            </div>
           </div>
 
-          {/* Filter pills */}
-          <div style={{ display: "flex", gap: 4, marginBottom: 24, padding: "4px", borderRadius: 999, border: "1px solid hsl(var(--border))", width: "fit-content" }}>
-            {sorts.map(s => (
-              <button key={s.id} onClick={() => setSort(s.id)}
-                style={{
-                  padding: "6px 16px", borderRadius: 999, fontSize: 12, fontWeight: 500,
-                  background: sort === s.id ? "hsl(var(--primary))" : "transparent",
-                  color: sort === s.id ? "hsl(var(--primary-foreground))" : "hsl(var(--muted-foreground))",
-                  border: "none", cursor: "pointer", transition: "all 0.15s",
-                }}>{s.label}</button>
-            ))}
+          {/* === Library Pulse === */}
+          <div className="ds-pulse-box">
+            <div className="ds-pulse-header">
+              <span className="ds-pulse-dot"></span>
+              <span className="ds-pulse-title">LIBRARY PULSE</span>
+            </div>
+            <div className="ds-pulse-stats">
+              {PULSE_STATS.map(stat => (
+                <div key={stat.label} className="ds-pulse-stat">
+                  <span className="ds-pulse-label">
+                    <span className="ds-pulse-dot-sm" style={{ background: stat.color }}></span>
+                    {stat.label}
+                  </span>
+                  <span className="ds-pulse-value">{stat.value.toLocaleString()}</span>
+                </div>
+              ))}
+            </div>
           </div>
 
-          {/* Result count */}
-          <div style={{ fontSize: 13, color: "hsl(var(--muted-foreground))", marginBottom: 16 }}>
-            {loading ? "Loading..." : <><strong style={{ color: "hsl(var(--foreground))" }}>{total.toLocaleString()}</strong> design systems{page > 1 && <span style={{ marginLeft: 8, fontSize: 12 }}>· Page {page} of {totalPages}</span>}</>}
+          {/* === Sort tabs === */}
+          <div className="ds-sort-row">
+            <div className="ds-sort-tabs">
+              {sorts.map(s => (
+                <button
+                  key={s.id}
+                  onClick={() => setSort(s.id)}
+                  className={`ds-sort-tab ${sort === s.id ? "active" : ""}`}
+                >
+                  {s.label}
+                </button>
+              ))}
+            </div>
           </div>
 
-          {/* Grid */}
+          {/* === Result count === */}
+          <div className="ds-result-count">
+            {loading ? (
+              "Loading..."
+            ) : (
+              <>
+                Showing <strong>{Math.min(page * 24, total)}</strong> of <strong>{total.toLocaleString()}</strong>
+                {page > 1 && <span className="ds-page-info"> · Page {page} of {totalPages}</span>}
+              </>
+            )}
+          </div>
+
+          {/* === Grid === */}
           {loading ? (
             <div className="grid">
               {Array.from({ length: 24 }).map((_, i) => <div key={i} className="skeleton" />)}
@@ -123,7 +170,11 @@ export default function DesignSystemsPage() {
                 <a key={item.id} className="card" href={`/design-systems/${item.slug}`}>
                   <div className="card-image-wrap">
                     {item.image ? (
-                      <img src={`/api/image?url=${encodeURIComponent(item.image)}`} alt={item.title} loading="lazy" className="card-image"
+                      <img
+                        src={`/api/image?url=${encodeURIComponent(item.image)}`}
+                        alt={item.title}
+                        loading="lazy"
+                        className="card-image"
                         onError={(e) => {
                           const t = e.target as HTMLImageElement;
                           t.style.display = "none";
@@ -140,13 +191,15 @@ export default function DesignSystemsPage() {
                       <div className="card-image-placeholder">{item.title.substring(0, 20)}</div>
                     )}
                     {item.featured && <span className="card-badge badge-featured" style={{ background: "rgba(16, 185, 129, 0.95)" }}>★</span>}
+                    {item.has_design_md && (
+                      <span className="ds-card-badge">DESIGN.md</span>
+                    )}
                   </div>
                   <div className="card-footer">
                     <h3 className="card-title" title={item.title}>{item.title}</h3>
                     <div className="card-stats">
                       <span className="card-stat">👁 {item.views.toLocaleString()}</span>
                       {item.forks > 0 && <span className="card-stat">⑂ {item.forks}</span>}
-                      {item.has_design_md && <span className="card-stat" style={{ marginLeft: "auto", color: "hsl(var(--muted-foreground))" }}>DESIGN.md</span>}
                     </div>
                   </div>
                 </a>
@@ -154,7 +207,7 @@ export default function DesignSystemsPage() {
             </div>
           )}
 
-          {/* Pagination */}
+          {/* === Pagination === */}
           {totalPages > 1 && (
             <div className="pagination">
               <button className="btn btn-outline btn-sm" disabled={page <= 1} onClick={() => setPage(p => Math.max(1, p - 1))}>Previous</button>

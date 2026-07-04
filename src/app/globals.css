@@ -1341,3 +1341,199 @@ img { display: block; max-width: 100%; }
   font-size: 11px;
   color: hsl(var(--muted-foreground));
 }
+
+/* =========================================================================
+   DESIGN.MD LIBRARY PAGE (/design-systems)
+   ========================================================================= */
+
+.ds-hero {
+  margin-bottom: 32px;
+}
+
+.ds-cta-row {
+  display: flex;
+  gap: 10px;
+  margin-top: 20px;
+  flex-wrap: wrap;
+}
+
+.ds-cta-primary,
+.ds-cta-secondary {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s;
+  border: 1px solid hsl(var(--border));
+}
+
+.ds-cta-primary {
+  background: hsl(var(--foreground));
+  color: hsl(var(--background));
+  border-color: hsl(var(--foreground));
+}
+.ds-cta-primary:hover { opacity: 0.85; }
+
+.ds-cta-secondary {
+  background: transparent;
+  color: hsl(var(--foreground));
+}
+.ds-cta-secondary:hover {
+  background: hsl(var(--secondary));
+}
+
+.ds-cta-icon {
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1;
+}
+
+/* === Library Pulse box === */
+.ds-pulse-box {
+  background: hsl(var(--secondary) / 0.5);
+  border: 1px solid hsl(var(--border));
+  border-radius: 12px;
+  padding: 20px 24px;
+  margin-bottom: 32px;
+}
+
+.ds-pulse-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.ds-pulse-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #10b981;
+  animation: ds-pulse 2s infinite;
+}
+
+@keyframes ds-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+.ds-pulse-title {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  color: hsl(var(--muted-foreground));
+}
+
+.ds-pulse-stats {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+}
+@media (min-width: 768px) {
+  .ds-pulse-stats { grid-template-columns: repeat(4, 1fr); }
+}
+
+.ds-pulse-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.ds-pulse-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: hsl(var(--muted-foreground));
+}
+
+.ds-pulse-dot-sm {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+
+.ds-pulse-value {
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: hsl(var(--foreground));
+}
+
+/* === Sort tabs (segmented control) === */
+.ds-sort-row {
+  display: flex;
+  justify-content: flex-start;
+  margin-bottom: 16px;
+}
+
+.ds-sort-tabs {
+  display: inline-flex;
+  background: hsl(var(--secondary));
+  border: 1px solid hsl(var(--border));
+  border-radius: 999px;
+  padding: 3px;
+  gap: 2px;
+}
+
+.ds-sort-tab {
+  padding: 6px 16px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.05em;
+  background: transparent;
+  color: hsl(var(--muted-foreground));
+  border: none;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.ds-sort-tab:hover {
+  color: hsl(var(--foreground));
+}
+
+.ds-sort-tab.active {
+  background: hsl(var(--background));
+  color: hsl(var(--foreground));
+  box-shadow: 0 1px 2px hsl(var(--foreground) / 0.1);
+}
+
+/* === Result count === */
+.ds-result-count {
+  font-size: 13px;
+  color: hsl(var(--muted-foreground));
+  margin-bottom: 16px;
+}
+
+.ds-result-count strong {
+  color: hsl(var(--foreground));
+  font-weight: 600;
+}
+
+.ds-page-info {
+  margin-left: 8px;
+  font-size: 12px;
+  opacity: 0.7;
+}
+
+/* === Card badge for DESIGN.md === */
+.ds-card-badge {
+  position: absolute;
+  bottom: 8px;
+  left: 8px;
+  padding: 2px 8px;
+  font-size: 10px;
+  font-weight: 600;
+  border-radius: 4px;
+  background: rgba(245, 158, 11, 0.95);
+  color: white;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
