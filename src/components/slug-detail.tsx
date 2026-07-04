@@ -223,22 +223,19 @@ export default function SlugDetail({
               </nav>
               {/* Title */}
               <h1 className="detail-h1">{item.title}</h1>
-              {/* Meta row: author + views + remixes + pro badge */}
+              {/* Meta row: author + views + remixes + pro badge (clean, like aura.build) */}
               <div className="detail-meta-row">
                 {item.username && (
                   <span className="detail-author">
                     <span className="detail-author-avatar">
                       {(item.username || "?").slice(0, 2).toUpperCase()}
                     </span>
-                    <span className="detail-author-name">by {(item.username || "").slice(0, 20)}</span>
+                    <span className="detail-author-name">by Creator</span>
                   </span>
                 )}
                 <span className="detail-stat">👁 {formatCount(item.views)} views</span>
                 {item.forks > 0 && <span className="detail-stat">⑂ {formatCount(item.forks)} remixes</span>}
                 {item.premium && <span className="detail-stat">👑 Pro</span>}
-                {item.featured && <span className="detail-stat">★ Featured</span>}
-                {item.created_at && <span className="detail-stat">📅 {formatDate(item.created_at)}</span>}
-                {item.code_chars > 0 && <span className="detail-stat">📝 {formatCount(item.code_chars)} chars</span>}
               </div>
             </div>
             <div className="detail-hero-right">
@@ -354,32 +351,34 @@ export default function SlugDetail({
                 )}
               </div>
               <div className="about-right">
-                <h3 className="about-h3">Author</h3>
+                <h3 className="about-h3">Creator</h3>
                 <div className="about-author-card">
                   <div className="about-author-avatar">
                     {(item.username || "?").slice(0, 2).toUpperCase()}
                   </div>
                   <div>
-                    <div className="about-author-name">{(item.username || "Anonymous").slice(0, 30)}</div>
-                    <div className="about-author-sub">Creator</div>
+                    <div className="about-author-name">Creator</div>
+                    <div className="about-author-sub">{item.premium ? "Pro Member" : "Member"}</div>
                   </div>
                 </div>
-                <h3 className="about-h3" style={{ marginTop: 24 }}>Stats</h3>
+                <h3 className="about-h3" style={{ marginTop: 24 }}>Details</h3>
                 <div className="about-stats">
                   <div className="about-stat-row"><span>Views</span><span>{formatCount(item.views)}</span></div>
                   {item.forks > 0 && <div className="about-stat-row"><span>Remixes</span><span>{formatCount(item.forks)}</span></div>}
                   <div className="about-stat-row"><span>Code size</span><span>{formatCount(item.code_chars)} chars</span></div>
                   {item.created_at && <div className="about-stat-row"><span>Created</span><span>{formatDate(item.created_at)}</span></div>}
+                  {item.featured && <div className="about-stat-row"><span>Featured</span><span>★ Yes</span></div>}
+                  <div className="about-stat-row"><span>Type</span><span style={{ textTransform: "capitalize" }}>{item.type}</span></div>
                 </div>
               </div>
             </div>
           </section>
 
-          {/* === More from Author === */}
+          {/* === More from Creator === */}
           {related.moreFromAuthor.length > 0 && (
             <section className="detail-section">
               <div className="related-header">
-                <h2 className="related-h2">More from {(item.username || "Author").slice(0, 20)}</h2>
+                <h2 className="related-h2">More from this Creator</h2>
                 <Link href={`/?tab=${pluralRoute}`} className="related-view-all">View all →</Link>
               </div>
               <div className="related-grid">
@@ -394,7 +393,7 @@ export default function SlugDetail({
           {related.related.length > 0 && (
             <section className="detail-section">
               <div className="related-header">
-                <h2 className="related-h2">Related {typeLabel.title}</h2>
+                <h2 className="related-h2">Related {typeLabel.plural === "components" ? "Components" : typeLabel.title}</h2>
                 {firstTag && (
                   <Link href={`/?tab=${pluralRoute}&tag=${encodeURIComponent(firstTag)}`} className="related-view-all">
                     Browse all {firstTag} {typeLabel.plural} →
