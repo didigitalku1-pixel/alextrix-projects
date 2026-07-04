@@ -110,7 +110,6 @@ export default function DesignSystemDetailPage({
     { id: "assets", label: "Assets", href: "/?tab=assets" },
     { id: "skills", label: "Skills", href: "/?tab=skills" },
     { id: "design-md", label: "DESIGN.MD", active: true },
-    { id: "learn", label: "Learn", href: "/learn" },
   ];
 
   const visibleTabs: { id: typeof tab; label: string; icon: string; show: boolean }[] = [

@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback, useMemo, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
 type ItemType = "template" | "component" | "asset" | "skill";
-type TabType = "templates" | "components" | "assets" | "skills" | "design-md" | "learn" | "progress";
+type TabType = "templates" | "components" | "assets" | "skills" | "design-md" | "progress";
 
 interface Item {
   id: string | number;
@@ -81,7 +81,7 @@ function HomeInner() {
   // Initialize state from URL params (one-time read on mount)
   const [tab, setTabState] = useState<TabType>(() => {
     const t = searchParams.get("tab") as TabType;
-    return ["templates", "components", "assets", "skills", "design-md", "learn", "progress"].includes(t || "")
+    return ["templates", "components", "assets", "skills", "design-md", "progress"].includes(t || "")
       ? t!
       : "templates";
   });
@@ -109,7 +109,7 @@ function HomeInner() {
 
   // Sync all state → URL (replace history to avoid back/forward spam)
   useEffect(() => {
-    if (tab === "learn" || tab === "progress" || tab === "design-md") {
+    if (tab === "progress" || tab === "design-md") {
       // These tabs have their own routes; don't pollute URL
       return;
     }
@@ -153,7 +153,7 @@ function HomeInner() {
 
   // Load items
   const loadItems = useCallback(async () => {
-    if (tab === "learn" || tab === "progress") return;
+    if (tab === "progress") return;
     setLoading(true);
     const apiType = tab === "templates" ? "template" : tab === "components" ? "component" : tab === "assets" ? "asset" : "skill";
     const params = new URLSearchParams({ type: apiType, sort, page: String(page), limit: "24" });
@@ -189,7 +189,6 @@ function HomeInner() {
     { id: "assets", label: "Assets", count: stats?.assets?.toLocaleString() },
     { id: "skills", label: "Skills", count: stats?.skills?.toLocaleString() },
     { id: "design-md", label: "DESIGN.MD", href: "/design-systems" },
-    { id: "learn", label: "Learn", href: "/learn" },
     { id: "progress", label: "Progress" },
   ];
 
@@ -249,9 +248,7 @@ function HomeInner() {
       </header>
 
       {/* Content */}
-      {tab === "learn" ? (
-        <LearnView />
-      ) : tab === "progress" ? (
+      {tab === "progress" ? (
         <ProgressView />
       ) : tab === "design-md" ? (
         <DesignSystemsView />
@@ -440,59 +437,6 @@ function HomeInner() {
         </main>
       )}
     </div>
-  );
-}
-
-// === Learn View ===
-function LearnView() {
-  const [activePage, setActivePage] = useState("introduction");
-  const [content, setContent] = useState("");
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    setLoading(true);
-    fetch(`/api/learn?page=${activePage}`)
-      .then(r => r.json())
-      .then(d => { setContent(d.content || "Konten belum tersedia."); setLoading(false); })
-      .catch(() => setLoading(false));
-  }, [activePage]);
-
-  const learnPages = [
-    { id: "introduction", label: "Pengenalan" },
-    { id: "tips-for-prompting", label: "Tips Prompting" },
-    { id: "how-to-prompt", label: "Cara Prompt" },
-    { id: "how-to-design", label: "Cara Edit" },
-    { id: "seo-settings", label: "Pengaturan SEO" },
-    { id: "faq", label: "FAQ" },
-    { id: "custom-domain", label: "Domain Kustom" },
-    { id: "video-tutorials", label: "Tutorial Video" },
-    { id: "documentation", label: "Dokumentasi" },
-  ];
-
-  return (
-    <main className="main">
-      <div className="learn-layout">
-        <aside className="learn-sidebar">
-          <h3>Learn</h3>
-          {learnPages.map(p => (
-            <a
-              key={p.id}
-              className={p.id === activePage ? "active" : ""}
-              onClick={e => { e.preventDefault(); setActivePage(p.id); }}
-            >
-              {p.label}
-            </a>
-          ))}
-        </aside>
-        <div className="learn-content">
-          {loading ? (
-            <div className="loading-spinner"><div className="spinner" /></div>
-          ) : (
-            <div className="markdown" dangerouslySetInnerHTML={{ __html: renderMarkdown(content) }} />
-          )}
-        </div>
-      </div>
-    </main>
   );
 }
 

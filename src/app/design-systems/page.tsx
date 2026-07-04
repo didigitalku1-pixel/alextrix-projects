@@ -71,7 +71,6 @@ export default function DesignSystemsPage() {
     { id: "assets", label: "Assets" },
     { id: "skills", label: "Skills" },
     { id: "design-md", label: "DESIGN.MD", active: true },
-    { id: "learn", label: "Learn" },
   ];
 
   return (

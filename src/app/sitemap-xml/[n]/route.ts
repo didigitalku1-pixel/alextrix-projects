@@ -10,17 +10,6 @@ export const maxDuration = 60;
 export const revalidate = 86400;
 
 const URLS_PER_FILE = 40000;
-const LEARN_PAGES = [
-  "introduction",
-  "tips-for-prompting",
-  "how-to-prompt",
-  "how-to-design",
-  "seo-settings",
-  "faq",
-  "custom-domain",
-  "video-tutorials",
-  "documentation",
-];
 
 interface Row { slug: string; updated_at?: string }
 
@@ -131,13 +120,7 @@ async function buildAllUrls(): Promise<UrlEntry[]> {
 
   // Top-level
   urls.push({ loc: BASE_URL, lastmod: now, changefreq: "daily", priority: "1.0" });
-  urls.push({ loc: `${BASE_URL}/learn`, lastmod: now, changefreq: "weekly", priority: "0.7" });
   urls.push({ loc: `${BASE_URL}/design-systems`, lastmod: now, changefreq: "weekly", priority: "0.7" });
-
-  // Learn pages
-  for (const p of LEARN_PAGES) {
-    urls.push({ loc: `${BASE_URL}/learn/${p}`, lastmod: now, changefreq: "monthly", priority: "0.6" });
-  }
 
   // Templates
   for (const t of templates) {

@@ -26,7 +26,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   ]);
   const skillsCount = 118; // static from manifest
 
-  const totalUrls = t + c + a + skillsCount + 12; // 12 = homepage + learn + design-systems
+  const totalUrls = t + c + a + skillsCount + 2; // 2 = homepage + design-systems
   const URLS_PER_FILE = 40000;
   const numFiles = Math.max(1, Math.ceil(totalUrls / URLS_PER_FILE));
 

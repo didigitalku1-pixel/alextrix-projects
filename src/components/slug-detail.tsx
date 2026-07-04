@@ -212,7 +212,6 @@ export default function SlugDetail({
             <a href="/?tab=assets" className="header-tab">ASSETS</a>
             <a href="/?tab=skills" className="header-tab">SKILLS</a>
             <a href="/design-systems" className="header-tab">DESIGN.MD</a>
-            <a href="/learn" className="header-tab">LEARN</a>
             <a href="/" className="header-tab">PRICING</a>
           </nav>
           <div className="header-right">
@@ -495,12 +494,9 @@ function SiteFooter() {
     {
       title: "RESOURCES",
       links: [
-        { text: "Introduction", href: "/learn/introduction" },
-        { text: "How to Prompt", href: "/learn/tips-for-prompting" },
-        { text: "How to Edit", href: "/learn/how-to-design" },
-        { text: "SEO Settings", href: "/learn/seo-settings" },
-        { text: "Sell Templates", href: "/learn/selling-templates" },
-        { text: "FAQ", href: "/learn/faq" },
+        { text: "Documentation", href: "/" },
+        { text: "FAQ", href: "/" },
+        { text: "Support", href: "/" },
       ],
     },
     {
