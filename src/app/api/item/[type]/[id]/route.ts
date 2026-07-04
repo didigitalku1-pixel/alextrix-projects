@@ -16,22 +16,21 @@ export async function GET(
   const decodedId = decodeURIComponent(id);
 
   try {
-    // For skills: use skills-manifest.json
+    // For skills: ALWAYS use skills-manifest.json first
     if (type === "skill") {
       try {
         const skillsPath = path.join(process.cwd(), "download", "aura_library", "skills-manifest.json");
         const raw = await fs.readFile(skillsPath, "utf-8");
         const skillsManifest = JSON.parse(raw);
-        // Try matching by file, id, or slug
         const skill = skillsManifest.items?.find(
-          (i: any) => i.file === decodedId || i.id === decodedId || i.slug === decodedId ||
-          String(i.id) === String(decodedId) || i.file?.includes(decodedId)
+          (i: any) => i.file === decodedId || i.id === decodedId ||
+          i.slug === decodedId || String(i.id) === String(decodedId) ||
+          i.file?.endsWith("_" + decodedId) || i.file?.includes(decodedId)
         );
         if (skill) return NextResponse.json(skill);
       } catch {}
     }
 
-    // Determine table and try slug first, then ID
     const table = type === "template" ? "templates" : type === "component" ? "components" :
                   type === "asset" ? "assets" : type === "skill" ? "skills" : null;
     if (!table) return NextResponse.json({ error: "Invalid type" }, { status: 400 });
@@ -42,28 +41,28 @@ export async function GET(
       ? "id,slug,title,description,keywords,image_1600w,image_800w,image_320w,views,media_type,resolution,colors,created_at"
       : "id,slug,title,description,code,tags,image_url,views,forks,premium,featured,username,created_at";
 
-    // Fix: replace -all subdomain in image URLs
     const fixImage = (url: string | null): string | null => {
       if (!url) return null;
       return url.replace("hoirqrkdgbmvpwutwuwj-all.supabase.co", "hoirqrkdgbmvpwutwuwj.supabase.co");
     };
 
-    // Try by slug first (for slug-based routes)
+    // Try by slug first
     let r = await fetch(
       `${SUPA_URL}/rest/v1/${table}?select=${select}&slug=eq.${encodeURIComponent(decodedId)}&limit=1`,
       { headers: { apikey: SUPA_KEY, Authorization: `Bearer ${SUPA_KEY}` } }
     );
 
-    if (!r.ok || !(await r.json()).length) {
-      // Try by ID (for ID-based routes)
+    let data = r.ok ? await r.json() : [];
+
+    // If not found by slug, try by ID
+    if (!data || data.length === 0) {
       r = await fetch(
         `${SUPA_URL}/rest/v1/${table}?select=${select}&id=eq.${encodeURIComponent(decodedId)}&limit=1`,
         { headers: { apikey: SUPA_KEY, Authorization: `Bearer ${SUPA_KEY}` } }
       );
+      data = r.ok ? await r.json() : [];
     }
 
-    if (!r.ok) return NextResponse.json({ error: "Failed to fetch" }, { status: 502 });
-    const data = await r.json();
     if (!data || data.length === 0) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
     const raw = data[0];
