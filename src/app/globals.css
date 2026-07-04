@@ -118,6 +118,8 @@ img { display: block; max-width: 100%; }
   display: none;
   align-items: center;
   gap: 4px;
+  position: relative;
+  z-index: 2;
 }
 @media (min-width: 768px) { .header-nav { display: flex; } }
 
@@ -130,6 +132,10 @@ img { display: block; max-width: 100%; }
   transition: color 0.2s;
   text-transform: uppercase;
   letter-spacing: 0.025em;
+  position: relative;
+  z-index: 3;
+  cursor: pointer;
+  pointer-events: auto;
 }
 .header-tab:hover { color: hsl(var(--foreground)); }
 .header-tab.active { color: hsl(var(--foreground)); }

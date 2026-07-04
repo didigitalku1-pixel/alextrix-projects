@@ -140,12 +140,12 @@ export default function Home() {
     return String(n || 0);
   };
 
-  const tabs: { id: TabType; label: string; count?: string }[] = [
+  const tabs: { id: TabType; label: string; count?: string; href?: string }[] = [
     { id: "templates", label: "Templates", count: stats?.templates?.toLocaleString() },
     { id: "components", label: "Components", count: stats?.components?.toLocaleString() },
     { id: "assets", label: "Assets", count: stats?.assets?.toLocaleString() },
     { id: "skills", label: "Skills", count: stats?.skills?.toLocaleString() },
-    { id: "design-md", label: "DESIGN.MD" },
+    { id: "design-md", label: "DESIGN.MD", href: "/design-systems" },
     { id: "learn", label: "Learn" },
     { id: "progress", label: "Progress" },
   ];
@@ -171,13 +171,19 @@ export default function Home() {
           </div>
           <nav className="header-nav">
             {tabs.map(t => (
-              <button
-                key={t.id}
-                className={`header-tab ${t.id === tab ? "active" : ""}`}
-                onClick={() => setTab(t.id)}
-              >
-                {t.label}{t.count && <span style={{ opacity: 0.6, marginLeft: 4, fontSize: 10 }}>{t.count}</span>}
-              </button>
+              t.href ? (
+                <a key={t.id} href={t.href} className="header-tab">
+                  {t.label}{t.count && <span style={{ opacity: 0.6, marginLeft: 4, fontSize: 10 }}>{t.count}</span>}
+                </a>
+              ) : (
+                <button
+                  key={t.id}
+                  className={`header-tab ${t.id === tab ? "active" : ""}`}
+                  onClick={() => setTab(t.id)}
+                >
+                  {t.label}{t.count && <span style={{ opacity: 0.6, marginLeft: 4, fontSize: 10 }}>{t.count}</span>}
+                </button>
+              )
             ))}
           </nav>
           <div className="header-right">
