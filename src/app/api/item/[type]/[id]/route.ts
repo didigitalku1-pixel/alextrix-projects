@@ -168,6 +168,12 @@ export async function GET(
     }
 
     const raw = data[0];
+    // Fix: replace -all subdomain with regular subdomain
+    const fixImage = (url: string | null): string | null => {
+      if (!url) return null;
+      return url.replace("hoirqrkdgbmvpwutwuwj-all.supabase.co", "hoirqrkdgbmvpwutwuwj.supabase.co");
+    };
+
     const item: any = {
       id: raw.id,
       type,
@@ -175,7 +181,7 @@ export async function GET(
       title: raw.title || "Untitled",
       desc: raw.description || "",
       tags: raw.tags || raw.keywords || [],
-      image: raw.image_url || raw.image_1600w || raw.image_800w || raw.image_320w || null,
+      image: fixImage(raw.image_url || raw.image_1600w || raw.image_800w || raw.image_320w || null),
       views: raw.views || 0,
       forks: raw.forks || 0,
       premium: raw.premium || false,

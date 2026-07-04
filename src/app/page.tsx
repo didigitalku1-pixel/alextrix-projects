@@ -543,7 +543,7 @@ function DesignSystemsView() {
             {items.map(item => (
               <a key={item.id} className="card" href={`/detail/template/${item.id}`} style={{ maxWidth: "none" }}>
                 <div className="card-image-wrap" style={{ aspectRatio: "21 / 9" }}>
-                  {item.image ? <img src={item.image} alt={item.title} className="card-image" /> : <div className="card-image-placeholder">No preview</div>}
+                  {item.image ? <img src={`/api/image?url=${encodeURIComponent(item.image)}`} alt={item.title} className="card-image" loading="lazy" onError={(e) => { const t = e.target as HTMLImageElement; t.style.display = "none"; const p = t.parentElement; if (p && !p.querySelector(".card-image-placeholder")) { const d = document.createElement("div"); d.className = "card-image-placeholder"; d.textContent = item.title.substring(0, 20); p.appendChild(d); } }} /> : <div className="card-image-placeholder">{item.title.substring(0, 20)}</div>}
                   {item.premium && <span className="card-badge badge-pro">PRO</span>}
                 </div>
                 <div className="card-footer" style={{ padding: 20 }}>

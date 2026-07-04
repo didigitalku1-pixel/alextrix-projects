@@ -88,6 +88,12 @@ const TABLE_MAP: Record<string, { table: string; select: string }> = {
 };
 
 function normalizeItem(raw: any, type: string): any {
+  // Fix: replace -all subdomain with regular subdomain (aura.build storage bug)
+  const fixImage = (url: string | null): string | null => {
+    if (!url) return null;
+    return url.replace("hoirqrkdgbmvpwutwuwj-all.supabase.co", "hoirqrkdgbmvpwutwuwj.supabase.co");
+  };
+
   return {
     id: raw.id,
     type,
@@ -95,7 +101,7 @@ function normalizeItem(raw: any, type: string): any {
     title: raw.title || "Untitled",
     desc: (raw.description || "").substring(0, 300),
     tags: raw.tags || raw.keywords || [],
-    image: raw.image_url || raw.image_1600w || raw.image_800w || raw.image_320w || null,
+    image: fixImage(raw.image_url || raw.image_1600w || raw.image_800w || raw.image_320w || null),
     views: raw.views || 0,
     forks: raw.forks || 0,
     premium: raw.premium || false,
