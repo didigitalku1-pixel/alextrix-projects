@@ -61,7 +61,9 @@ server.log
 *.tsbuildinfo
 
 # System scaffold (not part of user project)
-skills/
+# Note: use leading slash to anchor to repo root only — otherwise this
+# pattern would also exclude src/app/skills/ (the Next.js route folder).
+/skills/
 .zscripts/
 examples/
 prisma/
