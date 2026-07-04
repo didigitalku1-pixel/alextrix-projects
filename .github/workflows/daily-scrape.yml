@@ -146,15 +146,17 @@ jobs:
       - name: Update AURA_REFRESH_TOKEN secret with rotated token
         # Supabase rotates refresh_token on every use — old one is invalid after refresh.
         # Update the GitHub secret so the next workflow run can refresh again.
-        if: success() && env.AURA_REFRESH_TOKEN_NEW != ''
+        if: success() && env.AURA_REFRESH_TOKEN_NEW != '' && env.AURA_PAT != ''
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          AURA_PAT: ${{ secrets.AURA_PAT }}
           AURA_REFRESH_TOKEN_NEW: ${{ env.AURA_REFRESH_TOKEN_NEW }}
         run: |
           set -euo pipefail
           echo "🔄 Updating AURA_REFRESH_TOKEN secret with rotated token..."
           # Use Python script to encrypt & upload (needs pynacl)
-          GITHUB_TOKEN="$GITHUB_TOKEN" python3 scripts/set-github-secrets.py \
+          # Uses AURA_PAT (Personal Access Token with repo scope) instead of
+          # default GITHUB_TOKEN (which lacks 'repo' scope for writing secrets)
+          GITHUB_TOKEN="$AURA_PAT" python3 scripts/set-github-secrets.py \
             didigitalku1-pixel/web-library \
             AURA_REFRESH_TOKEN="$AURA_REFRESH_TOKEN_NEW"
           echo "✅ Secret updated. Next workflow run will use the new refresh token."
