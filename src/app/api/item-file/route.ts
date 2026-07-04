@@ -1,90 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import { promises as fs } from "fs";
-import path from "path";
 
-const SUPA_URL = process.env.USER_SUPABASE_URL || "https://hoirqrkdgbmvpwutwuwj.supabase.co";
-const ANON_KEY = process.env.USER_SUPABASE_ANON_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhvaXJxcmtkZ2JtdnB3dXR3dXdqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDM2Nzc2NTAsImV4cCI6MjA1OTI1MzY1MH0._UsCSHsTELn7m54tOhX3ySm67WEhcyHAPbuxEQZsl3c";
+// USER's Supabase — 100% independent from aura.build
+const SUPA_URL = process.env.USER_SUPABASE_URL || "https://njgtmqwyabfknyktuwzc.supabase.co";
+const SUPA_KEY = process.env.USER_SUPABASE_ANON_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5qZ3RtcXd5YWJma255a3R1d3pjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMxMDM3MDcsImV4cCI6MjA5ODY3OTcwN30.10WHq_NOsG0wLJfsgHNSp0j4CPCqqZ12_bY9Q1h5kOI";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
-
-// Cache for session JWT
-let _sessionCache: any = null;
-let _sessionTime = 0;
-
-async function getSession() {
-  const now = Date.now();
-  if (_sessionCache && now - _sessionTime < 300000) return _sessionCache;
-
-  // Try filesystem first (local Bun server)
-  try {
-    const sessionPath = path.join(process.cwd(), "download", "aura_library", "_meta", "session.json");
-    const raw = await fs.readFile(sessionPath, "utf-8");
-    _sessionCache = JSON.parse(raw);
-    _sessionTime = now;
-    return _sessionCache;
-  } catch {
-    // Filesystem not available (Vercel) - use env var
-  }
-
-  // Use env var (Vercel deployment)
-  const refreshToken = process.env.AURA_REFRESH_TOKEN;
-  if (!refreshToken) return null;
-
-  // Refresh token to get access token
-  const session = await refreshTokenInternal(refreshToken);
-  if (session) {
-    _sessionCache = session;
-    _sessionTime = now;
-  }
-  return session;
-}
-
-async function refreshTokenInternal(refreshToken: string) {
-  try {
-    const r = await fetch(`${SUPA_URL}/auth/v1/token?grant_type=refresh_token`, {
-      method: "POST",
-      headers: { apikey: ANON_KEY, "Content-Type": "application/json" },
-      body: JSON.stringify({ refresh_token: refreshToken }),
-    });
-    if (!r.ok) return null;
-    const data = await r.json();
-    return {
-      access_token: data.access_token,
-      refresh_token: data.refresh_token,
-      expires_at: data.expires_at,
-      user: { id: data.user?.id, email: data.user?.email },
-    };
-  } catch {
-    return null;
-  }
-}
-
-async function refreshToken(refreshToken: string) {
-  try {
-    const r = await fetch(`${SUPA_URL}/auth/v1/token?grant_type=refresh_token`, {
-      method: "POST",
-      headers: { apikey: ANON_KEY, "Content-Type": "application/json" },
-      body: JSON.stringify({ refresh_token: refreshToken }),
-    });
-    if (!r.ok) return null;
-    const data = await r.json();
-    // Save refreshed session
-    const sessionPath = path.join(process.cwd(), "download", "aura_library", "_meta", "session.json");
-    const session = {
-      access_token: data.access_token,
-      refresh_token: data.refresh_token,
-      expires_at: data.expires_at,
-      user: { id: data.user?.id, email: data.user?.email },
-    };
-    await fs.writeFile(sessionPath, JSON.stringify(session, null, 2));
-    _sessionCache = session;
-    _sessionTime = Date.now();
-    return session;
-  } catch {
-    return null;
-  }
-}
 
 export async function GET(req: NextRequest) {
   const p = req.nextUrl.searchParams;
@@ -96,142 +17,56 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "Missing params" }, { status: 400 });
   }
 
-  // Extract numeric ID from file (e.g., "000073_rkB4w3" → 73)
+  // Extract numeric ID from file
   const idMatch = file.match(/^0*(\d+)_/);
   const itemId = idMatch ? parseInt(idMatch[1], 10) : null;
 
   try {
-    // === CODE artifact: fetch from Supabase ===
+    // === CODE: fetch HTML from user's Supabase ===
     if (artifact === "code") {
-      const table = type === "component" ? "components" : (process.env.USER_SUPABASE_URL ? "templates" : "shared_code");
+      const table = type === "component" ? "components" : "templates";
       const r = await fetch(
         `${SUPA_URL}/rest/v1/${table}?select=code&id=eq.${itemId}&limit=1`,
-        { headers: { apikey: ANON_KEY, Authorization: `Bearer ${ANON_KEY}` } }
+        { headers: { apikey: SUPA_KEY, Authorization: `Bearer ${SUPA_KEY}` } }
       );
-      if (!r.ok) {
-        return NextResponse.json({ error: "Failed to fetch", available: false }, { status: 502 });
-      }
+      if (!r.ok) return NextResponse.json({ error: "Failed", available: false }, { status: 502 });
       const data = await r.json();
-      if (!data || data.length === 0) {
-        return NextResponse.json({ error: "Not found", available: false }, { status: 404 });
-      }
-      const code = data[0].code || "";
-      return new NextResponse(code, {
-        headers: { "Content-Type": "text/html; charset=utf-8" },
-      });
+      if (!data || data.length === 0) return NextResponse.json({ error: "Not found", available: false }, { status: 404 });
+      return new NextResponse(data[0].code || "", { headers: { "Content-Type": "text/html; charset=utf-8" } });
     }
 
-    // === DESIGN.md / Copy Prompt: try filesystem first, then generate via Edge Function ===
+    // === DESIGN.md / Copy Prompt: try user's design_md table first ===
     if (artifact === "design_md" || artifact === "recreation_prompt") {
-      // 1. Try local filesystem (works on local Bun server)
-      const subdir = type === "component" ? "components" : "templates";
-      const ext = artifact === "design_md" ? "design.md" : "prompt.md";
-      const filePath = path.join(process.cwd(), "download", "aura_library", subdir, `${file}.${ext}`);
-      try {
-        const content = await fs.readFile(filePath, "utf-8");
-        if (content && content.length > 10) {
-          return new NextResponse(content, {
-            headers: { "Content-Type": "text/plain; charset=utf-8" },
-          });
-        }
-      } catch {
-        // File doesn't exist, try Edge Function
-      }
-
-      // 2. Generate via Aura's Edge Function (works on Vercel too)
-      const session = await getSession();
-      if (!session || !session.access_token) {
-        return NextResponse.json(
-          { error: "Session not available for generation", available: false },
-          { status: 404 }
-        );
-      }
-
-      // Check token expiry
-      const now = Math.floor(Date.now() / 1000);
-      if (session.expires_at && session.expires_at < now + 60) {
-        // Token expired, try refresh
-        if (session.refresh_token) {
-          const refreshed = await refreshToken(session.refresh_token);
-          if (!refreshed) {
-            return NextResponse.json(
-              { error: "Token expired, cannot refresh", available: false },
-              { status: 401 }
-            );
-          }
+      // 1. Check user's Supabase design_md table
+      const r = await fetch(
+        `${SUPA_URL}/rest/v1/design_md?select=content&template_id=eq.${itemId}&artifact_type=eq.${artifact}&limit=1`,
+        { headers: { apikey: SUPA_KEY, Authorization: `Bearer ${SUPA_KEY}` } }
+      );
+      if (r.ok) {
+        const data = await r.json();
+        if (data && data.length > 0 && data[0].content && data[0].content.length > 50) {
+          return new NextResponse(data[0].content, { headers: { "Content-Type": "text/plain; charset=utf-8" } });
         }
       }
 
-      // Call Edge Function
-      const sourceType = type === "component" ? "shared_code" : "shared_code";
-      const r = await fetch(`${SUPA_URL}/functions/v1/generate-template-artifact`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${_sessionCache?.access_token || session.access_token}`,
-          apikey: ANON_KEY,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          sourceType: sourceType,
-          sourceId: itemId,
-          artifact: artifact,
-          forceRegenerate: false,
-        }),
-      });
-
-      if (!r.ok) {
-        const errText = await r.text();
-        return NextResponse.json(
-          { error: `Edge Function failed: ${r.status}`, detail: errText.substring(0, 200), available: false },
-          { status: r.status }
-        );
-      }
-
-      const result = await r.json();
-      let content = "";
-      if (artifact === "design_md") {
-        content = result.designMarkdown || result.content || "";
-      } else {
-        content = result.recreationPrompt || result.content || "";
-      }
-
-      if (!content.trim()) {
-        return NextResponse.json(
-          { error: "Empty content from Edge Function", available: false },
-          { status: 500 }
-        );
-      }
-
-      // Try to save to filesystem for future use (won't work on Vercel but that's OK)
-      try {
-        await fs.mkdir(path.dirname(filePath), { recursive: true });
-        await fs.writeFile(filePath, content);
-      } catch {
-        // Ignore filesystem errors (Vercel read-only)
-      }
-
-      return new NextResponse(content, {
-        headers: { "Content-Type": "text/plain; charset=utf-8" },
-      });
+      // 2. Not in database — return 404 (client will show "not generated yet")
+      return NextResponse.json(
+        { error: "Artifact not generated yet", available: false },
+        { status: 404 }
+      );
     }
 
-    // === Skill content ===
+    // === Skill content: fetch from user's Supabase ===
     if (artifact === "content" && type === "skill") {
       const skillId = file.split("_").pop() || file;
       const r = await fetch(
         `${SUPA_URL}/rest/v1/skills?select=content&id=eq.${encodeURIComponent(skillId)}&limit=1`,
-        { headers: { apikey: ANON_KEY, Authorization: `Bearer ${ANON_KEY}` } }
+        { headers: { apikey: SUPA_KEY, Authorization: `Bearer ${SUPA_KEY}` } }
       );
-      if (!r.ok) {
-        return NextResponse.json({ error: "Failed", available: false }, { status: 502 });
-      }
+      if (!r.ok) return NextResponse.json({ error: "Failed", available: false }, { status: 502 });
       const data = await r.json();
-      if (!data || data.length === 0) {
-        return NextResponse.json({ error: "Not found", available: false }, { status: 404 });
-      }
-      return new NextResponse(data[0].content || "", {
-        headers: { "Content-Type": "text/plain; charset=utf-8" },
-      });
+      if (!data || data.length === 0) return NextResponse.json({ error: "Not found", available: false }, { status: 404 });
+      return new NextResponse(data[0].content || "", { headers: { "Content-Type": "text/plain; charset=utf-8" } });
     }
 
     return NextResponse.json({ error: "Invalid artifact" }, { status: 400 });

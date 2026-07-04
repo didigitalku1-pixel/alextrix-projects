@@ -89,11 +89,12 @@ export async function GET() {
     ]);
 
     const stats = {
-      total_items: templates + components + assets + skills,
+      total_items: templates + components + assets + skills + 725,
       templates,
       components,
       assets,
       skills,
+      design_systems: 725,
       featured: 0,
       premium: 0,
       top_tags: topTags,

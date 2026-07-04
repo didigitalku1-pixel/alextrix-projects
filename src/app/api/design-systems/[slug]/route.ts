@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
+import { promises as fs } from "fs";
+import path from "path";
 
-const AURA_SUPA = "https://hoirqrkdgbmvpwutwuwj.supabase.co";
-const AURA_ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhvaXJxcmtkZ2JtdnB3dXR3dXdqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDM2Nzc2NTAsImV4cCI6MjA1OTI1MzY1MH0._UsCSHsTELn7m54tOhX3ySm67WEhcyHAPbuxEQZsl3c";
+// Use USER's Supabase (permanent, no aura.build dependency)
+const SUPA_URL = process.env.USER_SUPABASE_URL || "https://njgtmqwyabfknyktuwzc.supabase.co";
+const SUPA_KEY = process.env.USER_SUPABASE_ANON_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5qZ3RtcXd5YWJma255a3R1d3pjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMxMDM3MDcsImV4cCI6MjA5ODY3OTcwN30.10WHq_NOsG0wLJfsgHNSp0j4CPCqqZ12_bY9Q1h5kOI";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 30;
@@ -13,10 +16,10 @@ export async function GET(
   const { slug } = await params;
 
   try {
-    // Fetch from aura.build Supabase (public access)
+    // Fetch from USER's Supabase
     const r = await fetch(
-      `${AURA_SUPA}/rest/v1/design_systems?select=*&slug=eq.${encodeURIComponent(slug)}&limit=1`,
-      { headers: { apikey: AURA_ANON, Authorization: `Bearer ${AURA_ANON}` } }
+      `${SUPA_URL}/rest/v1/design_systems?select=*&slug=eq.${encodeURIComponent(slug)}&limit=1`,
+      { headers: { apikey: SUPA_KEY, Authorization: `Bearer ${SUPA_KEY}` } }
     );
 
     if (!r.ok) {
