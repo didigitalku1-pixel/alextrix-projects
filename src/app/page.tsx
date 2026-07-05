@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback, useMemo, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
 type ItemType = "template" | "component" | "asset" | "skill";
-type TabType = "templates" | "components" | "assets" | "skills" | "design-md" | "learn" | "progress";
+type TabType = "templates" | "components" | "assets" | "skills" | "design-md" | "learn" ;
 
 interface Item {
   id: string | number;
@@ -81,7 +81,7 @@ function HomeInner() {
   // Initialize state from URL params (one-time read on mount)
   const [tab, setTabState] = useState<TabType>(() => {
     const t = searchParams.get("tab") as TabType;
-    return ["templates", "components", "assets", "skills", "design-md", "learn", "progress"].includes(t || "")
+    return ["templates", "components", "assets", "skills", "design-md", "learn"].includes(t || "")
       ? t!
       : "templates";
   });
@@ -109,7 +109,7 @@ function HomeInner() {
 
   // Sync all state → URL (replace history to avoid back/forward spam)
   useEffect(() => {
-    if (tab === "skills" || tab === "learn" || tab === "progress" || tab === "design-md") {
+    if (tab === "skills" || tab === "learn"  || tab === "design-md") {
       // These tabs have their own routes; don't pollute URL
       return;
     }
@@ -153,7 +153,7 @@ function HomeInner() {
 
   // Load items
   const loadItems = useCallback(async () => {
-    if (tab === "skills" || tab === "learn" || tab === "progress") return;
+    if (tab === "skills" || tab === "learn" ) return;
     setLoading(true);
     const apiType = tab === "templates" ? "template" : tab === "components" ? "component" : tab === "assets" ? "asset" : "skill";
     const params = new URLSearchParams({ type: apiType, sort, page: String(page), limit: "24" });
@@ -190,7 +190,6 @@ function HomeInner() {
     { id: "skills", label: "Skills", count: stats?.skills?.toLocaleString() },
     { id: "design-md", label: "DESIGN.MD", href: "/design-systems" },
     { id: "learn", label: "Learn", href: "/learn/introduction" },
-    { id: "progress", label: "Progress" },
   ];
 
   const info = PAGE_INFO[tab] || PAGE_INFO.templates;
@@ -250,8 +249,6 @@ function HomeInner() {
       {/* Content */}
       {tab === "skills" ? (
         <SkillsView />
-      ) : tab === "progress" ? (
-        <ProgressView />
       ) : tab === "design-md" ? (
         <DesignSystemsView />
       ) : (
@@ -683,46 +680,14 @@ function SkillsView() {
   return (
     <main className="main" style={{ background: "hsl(var(--background))" }}>
       <div className="skills-doc-layout">
-        {/* === Sidebar === */}
+        {/* === Sidebar — list only, no search/tags === */}
         <aside className="skills-doc-sidebar">
           <div className="skills-doc-header">
             <h2 className="skills-doc-title">AI Skills</h2>
-            <p className="skills-doc-subtitle">{skills.length} skills available</p>
+            <p className="skills-doc-subtitle">{filteredSkills.length} of {skills.length} skills</p>
           </div>
 
-          {/* Search */}
-          <div className="skills-doc-search">
-            <input
-              type="text"
-              placeholder="Search skills..."
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-              className="skills-doc-search-input"
-            />
-          </div>
-
-          {/* Tag filter */}
-          {allTags.length > 0 && (
-            <div className="skills-doc-tags">
-              {activeTag && (
-                <button
-                  className="skills-doc-tag-clear"
-                  onClick={() => setActiveTag(null)}
-                >✕ Clear filter</button>
-              )}
-              {allTags.map(([tag, count]) => (
-                <button
-                  key={tag}
-                  className={`skills-doc-tag ${activeTag === tag ? "active" : ""}`}
-                  onClick={() => setActiveTag(activeTag === tag ? null : tag)}
-                >
-                  {tag} <span className="skills-doc-tag-count">{count}</span>
-                </button>
-              ))}
-            </div>
-          )}
-
-          {/* Skills list */}
+          {/* Skills list — full height */}
           <nav className="skills-doc-list">
             {loadingList ? (
               <div className="loading-spinner"><div className="spinner" /></div>
@@ -755,6 +720,36 @@ function SkillsView() {
 
         {/* === Content area === */}
         <div className="skills-doc-content">
+          {/* Sticky search + filter bar */}
+          <div className="skills-doc-toolbar">
+            <div className="skills-doc-search">
+              <input
+                type="text"
+                placeholder="Search skills..."
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                className="skills-doc-search-input"
+              />
+            </div>
+            {allTags.length > 0 && (
+              <div className="skills-doc-tags">
+                <button
+                  className={`skills-doc-tag ${!activeTag ? "active" : ""}`}
+                  onClick={() => setActiveTag(null)}
+                >All</button>
+                {allTags.slice(0, 8).map(([tag, count]) => (
+                  <button
+                    key={tag}
+                    className={`skills-doc-tag ${activeTag === tag ? "active" : ""}`}
+                    onClick={() => setActiveTag(activeTag === tag ? null : tag)}
+                  >
+                    {tag} <span className="skills-doc-tag-count">{count}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
           {loadingContent ? (
             <div className="loading-spinner"><div className="spinner" /></div>
           ) : selectedSkill ? (

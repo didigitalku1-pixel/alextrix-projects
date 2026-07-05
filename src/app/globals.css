@@ -2267,3 +2267,29 @@ img { display: block; max-width: 100%; }
   }
   .skills-doc-content { padding: 32px 20px; }
 }
+
+/* === Skills sticky toolbar (search + tags) — NEW === */
+.skills-doc-toolbar {
+  position: sticky;
+  top: 64px;
+  z-index: 10;
+  background: hsl(var(--background));
+  padding: 16px 0 12px;
+  border-bottom: 1px solid hsl(var(--border));
+  margin-bottom: 24px;
+}
+
+.skills-doc-toolbar .skills-doc-search {
+  padding: 0;
+  margin-bottom: 8px;
+}
+
+.skills-doc-toolbar .skills-doc-tags {
+  padding: 0;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.skills-doc-toolbar .skills-doc-tag {
+  white-space: nowrap;
+}
