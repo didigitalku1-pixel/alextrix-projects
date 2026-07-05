@@ -3519,3 +3519,171 @@ img { display: block; max-width: 100%; }
   padding: 0 12px;
 }
 .docs-toc-list { border-left-color: hsl(var(--border) / 0.6); }
+
+/* =========================================================================
+   DOCS POLISH v2 — tighten spacing, add depth, fix amateurish details
+   ========================================================================= */
+
+/* H2 — add subtle top border separator on major sections */
+.docs-h2 {
+  margin-top: 64px;
+  padding-top: 24px;
+  border-top: 1px solid hsl(var(--border) / 0.5);
+  scroll-margin-top: 96px;
+}
+/* First H2 in article — no separator (article just started) */
+.docs-article > .docs-h2:first-of-type,
+.docs-article > section:first-child .docs-h2:first-of-type {
+  border-top: none;
+  padding-top: 0;
+  margin-top: 48px;
+}
+
+/* Feature block — tighten spacing, more card-like */
+.docs-feature-block {
+  margin: 0 0 12px !important;
+  padding: 14px 18px;
+}
+.docs-feature-title { margin-bottom: 6px; }
+.docs-feature-body { font-size: 14.5px; line-height: 1.65; }
+
+/* Code block — add language label always visible + better contrast */
+.docs-codeblock {
+  position: relative;
+  padding: 20px 20px 16px;
+  margin: 12px 0 20px;
+}
+.docs-codeblock::before {
+  content: "TEXT";
+  position: absolute;
+  top: 0;
+  right: 0;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  color: #666;
+  padding: 6px 12px;
+  background: #1a1a1a;
+  border-left: 1px solid #2a2a2a;
+  border-bottom: 1px solid #2a2a2a;
+  border-radius: 0 8px 0 6px;
+}
+.docs-codeblock:has(.docs-codeblock-lang)::before { display: none; }
+.docs-codeblock-lang {
+  position: absolute;
+  top: 0;
+  right: 0;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  color: #666;
+  padding: 6px 12px;
+  background: #1a1a1a;
+  border-left: 1px solid #2a2a2a;
+  border-bottom: 1px solid #2a2a2a;
+  border-radius: 0 8px 0 6px;
+}
+
+/* Cards — add shadow, larger arrow, better text */
+.docs-card {
+  padding: 22px 24px;
+  border: 1px solid hsl(var(--border));
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  transition: border-color 0.15s, box-shadow 0.15s, transform 0.15s;
+}
+.docs-card:hover {
+  border-color: hsl(var(--foreground) / 0.5);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+  transform: translateY(-2px);
+}
+.docs-card-title { font-size: 16px; padding-right: 28px; }
+.docs-card-body { font-size: 14px; line-height: 1.55; }
+.docs-card-arrow {
+  top: 24px;
+  right: 24px;
+  width: 18px;
+  height: 18px;
+}
+.docs-card-arrow svg { width: 18px; height: 18px; }
+
+/* Video carousel cards — add subtle shadow, tighter */
+.docs-video-card {
+  width: 240px;
+  padding: 14px 16px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+}
+.docs-video-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+}
+.docs-video-card-eyebrow { font-size: 10px; }
+.docs-video-card-title { font-size: 13px; }
+
+/* Pro tip — better contrast + tighter */
+.docs-protip {
+  padding: 14px 18px;
+  margin: 20px 0;
+}
+.docs-protip-body { font-size: 13.5px; }
+
+/* TOC — better visibility */
+.docs-toc {
+  padding: 8px 0;
+}
+.docs-toc-link {
+  padding: 6px 12px;
+  font-size: 13px;
+  line-height: 1.4;
+  border-radius: 0 4px 4px 0;
+}
+.docs-toc-link-active {
+  background: hsl(var(--secondary));
+  color: hsl(var(--foreground));
+  font-weight: 500;
+}
+
+/* Lists — tighten */
+.docs-li { margin: 6px 0; font-size: 15px; line-height: 1.65; }
+.docs-ul, .docs-ol { margin: 0 0 16px; }
+
+/* Steps — tighten */
+.docs-step { padding: 14px 0; }
+.docs-step-title { font-size: 14px; margin-bottom: 2px; }
+.docs-step-content { font-size: 13.5px; line-height: 1.6; }
+.docs-step-num { width: 26px; height: 26px; font-size: 12px; }
+
+/* Body paragraph — slightly tighter */
+.docs-p { font-size: 15.5px; line-height: 1.7; margin: 0 0 14px; }
+.docs-note { font-size: 13px; margin: 8px 0 16px; }
+
+/* H2/H3 tighten */
+.docs-h2 { font-size: 22px; margin-bottom: 14px; }
+.docs-h3 { font-size: 17px; margin: 24px 0 10px; }
+
+/* Lead paragraph — tighten */
+.docs-lead { line-height: 1.35; }
+
+/* Buttons — better feel */
+.docs-btn { padding: 8px 16px; font-size: 13.5px; }
+.docs-btn-primary:hover { opacity: 0.9; }
+
+/* Embed placeholder — more polished */
+.docs-embed-placeholder {
+  border: 1px solid hsl(var(--border));
+  background: linear-gradient(135deg, hsl(var(--secondary) / 0.4) 0%, hsl(var(--secondary) / 0.2) 100%);
+}
+.docs-embed-placeholder-link {
+  margin-top: 12px;
+  padding: 6px 14px;
+  border: 1px solid hsl(var(--foreground));
+  border-radius: 6px;
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 500;
+  color: hsl(var(--foreground));
+  background: hsl(var(--background));
+  transition: background 0.15s, color 0.15s;
+}
+.docs-embed-placeholder-link:hover {
+  background: hsl(var(--foreground));
+  color: hsl(var(--background));
+}
