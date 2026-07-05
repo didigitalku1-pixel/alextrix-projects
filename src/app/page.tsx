@@ -109,7 +109,7 @@ function HomeInner() {
 
   // Sync all state → URL (replace history to avoid back/forward spam)
   useEffect(() => {
-    if (tab === "learn" || tab === "progress" || tab === "design-md") {
+    if (tab === "skills" || tab === "learn" || tab === "progress" || tab === "design-md") {
       // These tabs have their own routes; don't pollute URL
       return;
     }
@@ -153,7 +153,7 @@ function HomeInner() {
 
   // Load items
   const loadItems = useCallback(async () => {
-    if (tab === "learn" || tab === "progress") return;
+    if (tab === "skills" || tab === "learn" || tab === "progress") return;
     setLoading(true);
     const apiType = tab === "templates" ? "template" : tab === "components" ? "component" : tab === "assets" ? "asset" : "skill";
     const params = new URLSearchParams({ type: apiType, sort, page: String(page), limit: "24" });
@@ -249,7 +249,9 @@ function HomeInner() {
       </header>
 
       {/* Content */}
-      {tab === "progress" ? (
+      {tab === "skills" ? (
+        <SkillsView />
+      ) : tab === "progress" ? (
         <ProgressView />
       ) : tab === "design-md" ? (
         <DesignSystemsView />
@@ -600,4 +602,224 @@ function renderMarkdown(content: string): string {
   });
   if (inCode && codeLines.length) out.push(`<pre><code>${esc(codeLines.join("\n"))}</code></pre>`);
   return out.join("");
+}
+
+// === Skills View — Documentation Viewer (2-column layout) ===
+function SkillsView() {
+  const [skills, setSkills] = useState<any[]>([]);
+  const [selectedSkill, setSelectedSkill] = useState<any>(null);
+  const [skillContent, setSkillContent] = useState("");
+  const [loadingList, setLoadingList] = useState(true);
+  const [loadingContent, setLoadingContent] = useState(false);
+  const [search, setSearch] = useState("");
+  const [activeTag, setActiveTag] = useState<string | null>(null);
+  const [dark, setDark] = useState(false);
+
+  useEffect(() => {
+    const saved = localStorage.getItem("aura-theme");
+    if (saved === "dark") setDark(true);
+  }, []);
+  useEffect(() => {
+    document.documentElement.classList.toggle("dark", dark);
+    localStorage.setItem("aura-theme", dark ? "dark" : "light");
+  }, [dark]);
+
+  // Load all skills
+  useEffect(() => {
+    fetch("/api/items?type=skill&limit=200")
+      .then(r => r.json())
+      .then(d => {
+        setSkills(d.items || []);
+        setLoadingList(false);
+        if (d.items && d.items.length > 0) {
+          setSelectedSkill(d.items[0]);
+        }
+      })
+      .catch(() => setLoadingList(false));
+  }, []);
+
+  // Load content for selected skill
+  useEffect(() => {
+    if (!selectedSkill) return;
+    setLoadingContent(true);
+    setSkillContent("");
+    fetch(`/api/item/skill/${selectedSkill.file}`)
+      .then(r => r.json())
+      .then(d => {
+        const content = d.content || "";
+        setSkillContent(content);
+        setLoadingContent(false);
+      })
+      .catch(() => setLoadingContent(false));
+  }, [selectedSkill]);
+
+  // Collect all unique tags
+  const allTags = useMemo(() => {
+    const tagMap = new Map<string, number>();
+    skills.forEach(s => {
+      (s.tags || []).forEach((t: string) => {
+        tagMap.set(t, (tagMap.get(t) || 0) + 1);
+      });
+    });
+    return Array.from(tagMap.entries())
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 12);
+  }, [skills]);
+
+  // Filter skills by search + tag
+  const filteredSkills = useMemo(() => {
+    let result = skills;
+    if (activeTag) {
+      result = result.filter(s => (s.tags || []).includes(activeTag));
+    }
+    if (search.trim()) {
+      const q = search.toLowerCase();
+      result = result.filter(s =>
+        s.title?.toLowerCase().includes(q) ||
+        s.desc?.toLowerCase().includes(q) ||
+        (s.tags || []).some((t: string) => t.toLowerCase().includes(q))
+      );
+    }
+    return result;
+  }, [skills, search, activeTag]);
+
+  const formatCount = (n: number) => {
+    if (n >= 1e6) return (n / 1e6).toFixed(1) + "M";
+    if (n >= 1e3) return (n / 1e3).toFixed(1) + "K";
+    return String(n || 0);
+  };
+
+  return (
+    <main className="main" style={{ background: "hsl(var(--background))" }}>
+      <div className="skills-doc-layout">
+        {/* === Sidebar === */}
+        <aside className="skills-doc-sidebar">
+          <div className="skills-doc-header">
+            <h2 className="skills-doc-title">AI Skills</h2>
+            <p className="skills-doc-subtitle">{skills.length} skills available</p>
+          </div>
+
+          {/* Search */}
+          <div className="skills-doc-search">
+            <input
+              type="text"
+              placeholder="Search skills..."
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              className="skills-doc-search-input"
+            />
+          </div>
+
+          {/* Tag filter */}
+          {allTags.length > 0 && (
+            <div className="skills-doc-tags">
+              {activeTag && (
+                <button
+                  className="skills-doc-tag-clear"
+                  onClick={() => setActiveTag(null)}
+                >✕ Clear filter</button>
+              )}
+              {allTags.map(([tag, count]) => (
+                <button
+                  key={tag}
+                  className={`skills-doc-tag ${activeTag === tag ? "active" : ""}`}
+                  onClick={() => setActiveTag(activeTag === tag ? null : tag)}
+                >
+                  {tag} <span className="skills-doc-tag-count">{count}</span>
+                </button>
+              ))}
+            </div>
+          )}
+
+          {/* Skills list */}
+          <nav className="skills-doc-list">
+            {loadingList ? (
+              <div className="loading-spinner"><div className="spinner" /></div>
+            ) : filteredSkills.length === 0 ? (
+              <p className="skills-doc-empty">No skills found</p>
+            ) : (
+              filteredSkills.map(skill => (
+                <button
+                  key={skill.id}
+                  className={`skills-doc-item ${selectedSkill?.id === skill.id ? "active" : ""}`}
+                  onClick={() => setSelectedSkill(skill)}
+                >
+                  <div className="skills-doc-item-title">{skill.title}</div>
+                  {skill.tags && skill.tags.length > 0 && (
+                    <div className="skills-doc-item-tags">
+                      {(skill.tags as string[]).slice(0, 2).map(t => (
+                        <span key={t} className="skills-doc-item-tag">{t}</span>
+                      ))}
+                    </div>
+                  )}
+                  <div className="skills-doc-item-stats">
+                    <span>👁 {formatCount(skill.views)}</span>
+                    {skill.forks > 0 && <span>⑂ {formatCount(skill.forks)}</span>}
+                  </div>
+                </button>
+              ))
+            )}
+          </nav>
+        </aside>
+
+        {/* === Content area === */}
+        <div className="skills-doc-content">
+          {loadingContent ? (
+            <div className="loading-spinner"><div className="spinner" /></div>
+          ) : selectedSkill ? (
+            <>
+              {/* Breadcrumb */}
+              <div className="skills-doc-breadcrumb">
+                Skills / {selectedSkill.title}
+              </div>
+              {/* Title */}
+              <h1 className="skills-doc-h1">{selectedSkill.title}</h1>
+              {selectedSkill.desc && (
+                <p className="skills-doc-desc">{selectedSkill.desc}</p>
+              )}
+              {/* Meta */}
+              <div className="skills-doc-meta">
+                <span>👁 {formatCount(selectedSkill.views)} views</span>
+                {selectedSkill.forks > 0 && <span>⑂ {formatCount(selectedSkill.forks)} remixes</span>}
+              </div>
+              {/* Tags */}
+              {selectedSkill.tags && selectedSkill.tags.length > 0 && (
+                <div className="skills-doc-content-tags">
+                  {(selectedSkill.tags as string[]).map(t => (
+                    <span key={t} className="about-tag">{t}</span>
+                  ))}
+                </div>
+              )}
+              <div style={{ width: 48, height: 3, background: "hsl(var(--foreground))", marginBottom: 32, borderRadius: 2 }} />
+              {/* Markdown content */}
+              <div
+                className="markdown skills-doc-markdown"
+                dangerouslySetInnerHTML={{ __html: renderMarkdown(skillContent) }}
+              />
+              {/* Action buttons */}
+              <div className="skills-doc-actions">
+                <a
+                  href={`/skills/${selectedSkill.file}`}
+                  className="btn-pro"
+                  style={{ textDecoration: "none" }}
+                >
+                  ↗ Open Full Page
+                </a>
+                <button
+                  className="preview-copy-btn"
+                  onClick={() => {
+                    navigator.clipboard.writeText(skillContent);
+                  }}
+                >
+                  📋 Copy Skill
+                </button>
+              </div>
+            </>
+          ) : (
+            <div className="empty"><div className="empty-icon">🧩</div><p className="empty-title">Select a skill to read</p></div>
+          )}
+        </div>
+      </div>
+    </main>
+  );
 }
