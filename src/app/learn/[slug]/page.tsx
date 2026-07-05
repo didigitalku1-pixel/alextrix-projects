@@ -1,6 +1,7 @@
 "use client";
 
 import { use, useState, useEffect } from "react";
+import Script from "next/script";
 import { notFound } from "next/navigation";
 import Sidebar from "../_components/Sidebar";
 import { getLearnPage } from "../_content";
@@ -46,6 +47,18 @@ export default function LearnPage({
 
   return (
     <div className="app" style={{ minHeight: "100vh" }}>
+      {/* Load Tailwind Play CDN so ALL classes in the scraped aura.build
+          HTML are styled at runtime. This is the same approach the old
+          iframe used and guarantees 100% visual match with aura.build.
+          The CDN scans the DOM after render and generates CSS for every
+          class it finds, including ones inside dangerouslySetInnerHTML.
+          It also watches for DOM changes via MutationObserver, so
+          navigation between learn pages re-scans automatically. */}
+      <Script
+        src="https://cdn.tailwindcss.com"
+        strategy="afterInteractive"
+      />
+
       {/* Header — our branding */}
       <header className="header">
         <div className="header-inner">
