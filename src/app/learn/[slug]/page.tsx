@@ -39,26 +39,6 @@ export default function LearnPage({
     localStorage.setItem("aura-theme", dark ? "dark" : "light");
   }, [dark]);
 
-  // Load Tailwind Play CDN on this page only. The CDN scans the DOM at
-  // runtime and generates CSS for every Tailwind class it finds —
-  // including the ones inside the scraped aura.build HTML. This is the
-  // same approach the old iframe used and guarantees 100% visual match.
-  // We inject the script tag manually (not via next/script) because the
-  // CDN needs to execute synchronously to style the page before paint.
-  useEffect(() => {
-    if (document.querySelector('script[data-tailwind-cdn]')) return;
-    const script = document.createElement("script");
-    script.src = "https://cdn.tailwindcss.com";
-    script.async = false;
-    script.setAttribute("data-tailwind-cdn", "true");
-    document.head.appendChild(script);
-    return () => {
-      // Don't remove on unmount — the CDN adds a <style> tag that
-      // would lose its source. The script itself is harmless if it
-      // stays, and it'll be reused on next learn page navigation.
-    };
-  }, []);
-
   const page = getLearnPage(slug);
   if (!page) return null;
 

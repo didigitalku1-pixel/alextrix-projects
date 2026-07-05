@@ -1,6 +1,12 @@
 /* === Aura Library — Exact replica of aura.build design === */
 /* Uses HSL color system matching aura.build's Tailwind config */
 
+/* Import Tailwind v4 — needed so utility classes used in the scraped
+   aura.build HTML (uppercase, tracking-wider, bg-neutral-50, max-w-7xl,
+   etc.) are generated. Without this, only the manual CSS below applies
+   and the learn pages don't match aura.build. */
+@import "tailwindcss";
+
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
 :root {
