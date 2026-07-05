@@ -94,6 +94,15 @@ jobs:
         run: python scripts/scrape_aura.py
         continue-on-error: true
 
+      - name: Migrate latest data from aura.build to user's Supabase
+        env:
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          echo "Migrating latest data from aura.build to user's Supabase..."
+          python3 scripts/migrate_final_v2.py --service-key "$SUPABASE_SERVICE_ROLE_KEY" --batch-size 500
+          echo "Migration complete!"
+        continue-on-error: true
+
       - name: Rebuild skill manifest (extract tags from frontmatter)
         run: python scripts/rebuild-skills-manifest.py
         continue-on-error: true
