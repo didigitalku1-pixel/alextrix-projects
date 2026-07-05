@@ -1,6 +1,6 @@
 import type { LearnPageContent } from "./types";
 import {
-  DocH1, DocLead, DocH2, DocH3, DocH4, DocP, DocUL, DocLI,
+  DocH1, DocLead, DocH2, DocH3, DocH4, DocP, DocUL, DocOL, DocLI, DocStep,
   DocFeatureBlock, DocProTip, DocCodeBlock, DocLink, DocNote, DocEmbed,
 } from "../_components/Doc";
 
