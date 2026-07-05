@@ -1,4 +1,3 @@
-import type { LearnPageContent } from "./types";
 import { introductionContent } from "./introduction";
 import { howToDesignContent } from "./how-to-design";
 import { customDomainContent } from "./custom-domain";
@@ -12,14 +11,17 @@ import { layoutContent } from "./prompt-for-layout";
 import { videoTutorialsContent } from "./video-tutorials";
 import { documentationContent } from "./documentation";
 import { faqContent } from "./faq";
+import type { LearnPageContent } from "./types";
 
 /**
  * Registry of all learn page content.
- * Add new pages here — the sidebar (types.ts SIDEBAR) must also include
- * the slug so it appears in the navigation.
+ * Each entry's body HTML is scraped from https://www.aura.build/learn/<slug>
+ * and rendered verbatim so the page is 100% identical to aura.build.
+ *
+ * Regenerate with: python3 /home/z/my-project/scripts/build_learn_content.py
  */
 export const LEARN_PAGES: Record<string, LearnPageContent> = {
-  introduction: introductionContent,
+  "introduction": introductionContent,
   "how-to-design": howToDesignContent,
   "custom-domain": customDomainContent,
   "seo-settings": seoSettingsContent,
@@ -30,8 +32,8 @@ export const LEARN_PAGES: Record<string, LearnPageContent> = {
   "prompt-for-animation": animationContent,
   "prompt-for-layout": layoutContent,
   "video-tutorials": videoTutorialsContent,
-  documentation: documentationContent,
-  faq: faqContent,
+  "documentation": documentationContent,
+  "faq": faqContent,
 };
 
 export function getLearnPage(slug: string): LearnPageContent | undefined {

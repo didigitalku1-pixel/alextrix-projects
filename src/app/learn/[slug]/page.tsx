@@ -4,14 +4,17 @@ import { use, useState, useEffect } from "react";
 import { notFound } from "next/navigation";
 import Sidebar from "../_components/Sidebar";
 import { getLearnPage } from "../_content";
-import { VALID_LEARN_SLUGS } from "../_content/types";
+import { VALID_LEARN_SLUGS, SIDEBAR } from "../_content/types";
 
 /**
  * Learn detail page.
  *
- * Renders the original content for each learn slug directly in React — no
- * iframe, no scraped HTML. The sidebar is sticky and uses next/link for
- * navigation, so back/forward and cmd-click all work as expected.
+ * Renders the article body scraped verbatim from
+ * https://www.aura.build/learn/<slug> via dangerouslySetInnerHTML.
+ *
+ * Layout matches aura.build: 280px sidebar + wide content area.
+ * No iframe, no shaking, no logo bug. Sidebar uses next/link so
+ * back/forward and cmd-click work natively.
  */
 export default function LearnPage({
   params,
@@ -21,7 +24,6 @@ export default function LearnPage({
   const { slug } = use(params);
   const [dark, setDark] = useState(false);
 
-  // Validate slug — if unknown, 404
   useEffect(() => {
     if (!VALID_LEARN_SLUGS.has(slug)) {
       notFound();
@@ -44,7 +46,7 @@ export default function LearnPage({
 
   return (
     <div className="app" style={{ minHeight: "100vh" }}>
-      {/* Header */}
+      {/* Header — our branding */}
       <header className="header">
         <div className="header-inner">
           <a href="/" className="header-logo"><div className="header-logo-icon">A</div></a>
@@ -64,65 +66,17 @@ export default function LearnPage({
         </div>
       </header>
 
-      {/* Main layout — sidebar + content */}
-      <div className="learn-layout learn-layout-react">
+      {/* Layout: sidebar + verbatim aura.build content */}
+      <div className="learn-layout-react">
         <Sidebar activeSlug={slug} />
 
-        <main className="learn-content learn-content-react">
-          <div className="learn-breadcrumb">
-            Learn / <span className="learn-breadcrumb-active">{page.title}</span>
-          </div>
-
-          <h1 className="learn-h1">{page.title}</h1>
-          <div className="learn-underline" />
-
-          <div className="learn-markdown learn-markdown-react">
-            <Body />
-          </div>
-
-          {/* Footer nav — prev/next */}
-          <LearnFooterNav activeSlug={slug} />
+        {/* The Body component renders the verbatim scraped HTML inside a
+            div.aura-learn-content. CSS for that class is minimal — we want
+            aura.build's Tailwind classes to apply directly. */}
+        <main className="learn-content-react learn-content-verbatim">
+          <Body />
         </main>
       </div>
     </div>
-  );
-}
-
-/**
- * Inline prev/next footer nav.
- * Reads from SIDEBAR to find neighbors of the current page.
- */
-function LearnFooterNav({ activeSlug }: { activeSlug: string }) {
-  // Lazy import to avoid circular issues at module load time.
-  // SIDEBAR is small and static so the cost is negligible.
-  const { SIDEBAR } = require("../_content/types") as typeof import("../_content/types");
-
-  // Flatten all sidebar entries into a single ordered list of slugs
-  const flat: { slug: string; label: string }[] = [];
-  for (const group of SIDEBAR) {
-    for (const entry of group.entries) {
-      if (entry.slug) flat.push({ slug: entry.slug, label: entry.label });
-    }
-  }
-  const idx = flat.findIndex((e) => e.slug === activeSlug);
-  if (idx < 0) return null;
-  const prev = idx > 0 ? flat[idx - 1] : null;
-  const next = idx < flat.length - 1 ? flat[idx + 1] : null;
-
-  return (
-    <nav className="learn-footer-nav">
-      {prev && (
-        <a href={`/learn/${prev.slug}`} className="learn-footer-nav-item learn-footer-nav-prev">
-          <div className="learn-footer-nav-label">Previous</div>
-          <div className="learn-footer-nav-title">← {prev.label}</div>
-        </a>
-      )}
-      {next && (
-        <a href={`/learn/${next.slug}`} className="learn-footer-nav-item learn-footer-nav-next">
-          <div className="learn-footer-nav-label">Next</div>
-          <div className="learn-footer-nav-title">{next.label} →</div>
-        </a>
-      )}
-    </nav>
   );
 }

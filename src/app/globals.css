@@ -1773,17 +1773,38 @@ img { display: block; max-width: 100%; }
 /* Override the old iframe rule — no longer needed but kept for safety */
 .learn-iframe { display: none !important; }
 
-/* React layout uses the same .learn-layout but with a small top offset
-   to clear the fixed header */
+/* React layout — sidebar + content area, flex row.
+   No max-width: aura.build content uses its own max-w-* classes.
+   margin-top clears the fixed 64px header. */
 .learn-layout-react {
+  display: flex;
   margin-top: 64px;
-  padding: 0 24px;
+  padding: 0;
   box-sizing: border-box;
+  min-height: calc(100vh - 64px);
 }
 
 .learn-content-react {
-  padding: 48px 56px 96px;
-  max-width: 800px;
+  padding: 0;
+  max-width: none;
+  flex: 1;
+  min-width: 0;
+}
+
+/* When rendering verbatim aura.build content, drop the old 800px cap and
+   let the article body fill the available width. The scraped HTML already
+   has its own max-w-* classes that handle line length. */
+.learn-content-verbatim {
+  padding: 0 !important;
+  max-width: none !important;
+}
+
+/* The scraped aura.build article body — let it render as-is. Only override
+   the things that need to integrate with our app shell (dark mode is
+   handled by the .dark class on <html>, which is the same convention
+   aura.build uses, so nothing to do here). */
+.aura-learn-content {
+  width: 100%;
 }
 
 .learn-breadcrumb-active {
@@ -2002,8 +2023,9 @@ img { display: block; max-width: 100%; }
 }
 
 @media (max-width: 768px) {
-  .learn-layout-react { padding: 0 16px; }
-  .learn-content-react { padding: 32px 16px 64px; }
+  .learn-layout-react { padding: 0; }
+  .learn-content-react,
+  .learn-content-verbatim { padding: 0; }
   .learn-footer-nav { flex-direction: column; }
   .learn-footer-nav-next { text-align: left; margin-left: 0; }
   .learn-section-title { font-size: 20px; }
