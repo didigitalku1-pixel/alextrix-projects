@@ -123,6 +123,18 @@ export default function LearnPage({
     localStorage.setItem("aura-theme", dark ? "dark" : "light");
   }, [dark]);
 
+  // Listen for navigation messages from iframe (sidebar link clicks)
+  useEffect(() => {
+    const handler = (e: MessageEvent) => {
+      if (e.data && e.data.type === "learn-navigate" && e.data.href) {
+        // Navigate parent window to the requested URL
+        window.location.href = e.data.href;
+      }
+    };
+    window.addEventListener("message", handler);
+    return () => window.removeEventListener("message", handler);
+  }, []);
+
   const iframeSrc = `/learn-data/${slug}.html`;
 
   return (
