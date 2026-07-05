@@ -7,7 +7,9 @@
    and the learn pages don't match aura.build. */
 @import "tailwindcss";
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+/* NOTE: Google Fonts (Inter) is loaded via <link> in app/layout.tsx
+   to comply with CSS @import ordering rules (must precede all rules
+   aside from @charset and @layer). */
 
 :root {
   --background: 0 0% 100%;
@@ -61,11 +63,33 @@ html, body {
   background: hsl(var(--background));
   color: hsl(var(--foreground));
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-  font-size: 14px;
+  font-size: 16px; /* was 14px — match aura.build root so rem-based utilities render at intended sizes */
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
   min-height: 100vh;
   transition: background-color 0.3s, color 0.3s;
+}
+
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: 96px; /* offset for sticky header when jumping to #anchor */
+}
+
+::selection {
+  background: hsl(var(--foreground));
+  color: hsl(var(--background));
+}
+
+/* Custom scrollbar (desktop) — subtle, modern */
+@media (min-width: 769px) {
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb {
+    background: hsl(var(--border));
+    border-radius: 8px;
+    border: 2px solid hsl(var(--background));
+  }
+  ::-webkit-scrollbar-thumb:hover { background: hsl(var(--muted-foreground) / 0.5); }
 }
 
 button { font-family: inherit; cursor: pointer; border: none; background: none; color: inherit; }
@@ -76,18 +100,19 @@ img { display: block; max-width: 100%; }
 /* === Layout === */
 .app { display: flex; flex-direction: column; min-height: 100vh; }
 
-/* === Header (fixed, backdrop-blur) — matches aura.build === */
+/* === Header (fixed, backdrop-blur) — matches aura.build ===
+   aura.build uses transparent bg + blur(24px), taller (73px), 48px horizontal padding. */
 .header {
   position: fixed;
   top: 0; left: 0; right: 0;
   z-index: 50;
-  padding: 8px 32px;
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+  padding: 16px 48px;
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
   border-bottom: 1px solid hsl(var(--border) / 0.3);
-  background: hsl(var(--background) / 0.8);
+  background: hsl(var(--background) / 0.001); /* transparent — let blur show through */
 }
-@media (max-width: 768px) { .header { padding: 8px 8px; } }
+@media (max-width: 768px) { .header { padding: 12px 16px; } }
 
 .header-inner {
   max-width: 1600px;
@@ -130,20 +155,23 @@ img { display: block; max-width: 100%; }
 @media (min-width: 768px) { .header-nav { display: flex; } }
 
 .header-tab {
-  font-size: 12px;
-  font-weight: 500;
+  font-size: 13px;
+  font-weight: 400; /* was 500 — aura.build uses Regular, looks more refined */
+  letter-spacing: -0.01em; /* subtle negative tracking */
   color: hsl(var(--muted-foreground));
-  padding: 8px 16px;
+  padding: 8px 14px;
   border-radius: 6px;
-  transition: color 0.2s;
+  transition: color 0.2s, background 0.2s;
   text-transform: uppercase;
-  letter-spacing: 0.025em;
   position: relative;
   z-index: 3;
   cursor: pointer;
   pointer-events: auto;
 }
-.header-tab:hover { color: hsl(var(--foreground)); }
+.header-tab:hover {
+  color: hsl(var(--foreground));
+  background: hsl(var(--secondary) / 0.6);
+}
 .header-tab.active { color: hsl(var(--foreground)); }
 
 .header-right { display: flex; align-items: center; gap: 16px; }
@@ -1600,10 +1628,10 @@ img { display: block; max-width: 100%; }
 /* Layout shell */
 .learn-layout-react {
   display: flex;
-  margin-top: 64px;
+  margin-top: 73px; /* matches new header height (was 64px) */
   padding: 0;
   box-sizing: border-box;
-  min-height: calc(100vh - 64px);
+  min-height: calc(100vh - 73px);
   /* Base font for learn pages only — 16px so Tailwind rem-based classes
      in scraped HTML render at their intended sizes (aura.build uses 16px). */
   font-size: 16px;
@@ -1674,44 +1702,38 @@ img { display: block; max-width: 100%; }
   justify-content: flex-start !important;
 }
 
-/* === H1 (Priority 2 fix #4) ===
-   Page title.aura.build uses 48px/400/-2.4px. We go bolder: 48px/700/-0.025em
-   for stronger hierarchy and professional feel (Stripe/Vercel/Linear style). */
+/* === H1 (matches aura.build exactly) ===
+   aura.build: 48px / weight 400 (Regular) / line-height 1.0 / letter-spacing -0.05em (tracking-tighter).
+   We DO NOT override font-weight or letter-spacing — let Tailwind classes from the
+   verbatim HTML (font-normal tracking-tighter) apply. We only set spacing + color.
+   This is the key fix that makes the page feel "editorial modern" instead of "corporate 2015". */
 .aura-learn-content h1 {
-  font-size: 48px;
-  line-height: 1.1;
-  font-weight: 700;
-  letter-spacing: -0.025em;
   margin: 48px 0 16px;
   color: hsl(var(--foreground));
-  scroll-margin-top: 80px;
+  scroll-margin-top: 96px;
+  /* Let font-weight, font-size, line-height, letter-spacing come from the inline Tailwind classes
+     (font-normal tracking-tighter text-5xl leading-tight) — DO NOT override. */
 }
 
-/* === LEAD PARAGRAPH (Priority 2 fix #5) ===
-   The first paragraph after H1. aura.build: 24px/300/1.33.
-   We use 22px/400/1.5 with max-width 65ch for optimal readability. */
+/* === LEAD PARAGRAPH (matches aura.build exactly) ===
+   aura.build: 24px / weight 300 (Light) / line-height 1.33 / color #525252 (neutral-600).
+   Tailwind classes from verbatim HTML: sm:text-2xl font-light leading-relaxed text-neutral-600.
+   We only set spacing + max-width — DO NOT override font-weight/color/size. */
 .aura-learn-content h1 + p,
 .aura-learn-content p.text-2xl,
 .aura-learn-content p[class*="text-2xl"] {
-  font-size: 22px;
-  line-height: 1.5;
-  font-weight: 400;
-  color: hsl(var(--muted-foreground));
   max-width: 65ch;
   margin: 0 0 48px;
 }
 
-/* === SECTION H2 (Priority 2 fix #6) ===
-   Major section headings. aura.build: 24px/500.
-   We use 28px/600 with 64px top margin for clear section separation. */
+/* === SECTION H2 (matches aura.build) ===
+   aura.build: 16px / weight 600 (semibold) / letter-spacing -0.05em (tracking-tighter).
+   Tailwind classes: text-base font-semibold tracking-tighter.
+   We only set spacing — DO NOT override font-size/weight/letter-spacing. */
 .aura-learn-content h2 {
-  font-size: 28px;
-  line-height: 1.25;
-  font-weight: 600;
-  letter-spacing: -0.015em;
   margin: 64px 0 16px;
   color: hsl(var(--foreground));
-  scroll-margin-top: 80px;
+  scroll-margin-top: 96px;
 }
 
 /* Special case: "On this page" TOC heading — keep smaller, like aura.build */
@@ -1723,24 +1745,19 @@ img { display: block; max-width: 100%; }
   margin: 0 0 12px;
 }
 
-/* === SUBSECTION H3 ===
-   Subsection headings inside a section.aura.build: ~18px/500.
-   We use 18px/600 with 32px top margin. */
+/* === SUBSECTION H3 (matches aura.build) ===
+   aura.build: 12px / weight 500 / uppercase / letter-spacing 0.05em.
+   We only set spacing — DO NOT override font-size/weight/letter-spacing. */
 .aura-learn-content h3 {
-  font-size: 18px;
-  line-height: 1.35;
-  font-weight: 600;
-  letter-spacing: -0.005em;
   margin: 32px 0 12px;
   color: hsl(var(--foreground));
-  scroll-margin-top: 80px;
+  scroll-margin-top: 96px;
 }
 
 /* === BODY PARAGRAPHS ===
-   Default body text. 16px/1.6/16px bottom margin for breathing room. */
+   Default body text — let Tailwind classes from verbatim HTML apply.
+   Only set spacing + max-width for readability. */
 .aura-learn-content p {
-  font-size: 16px;
-  line-height: 1.6;
   margin: 0 0 16px;
   color: hsl(var(--foreground));
   max-width: 70ch;
@@ -1810,18 +1827,18 @@ img { display: block; max-width: 100%; }
 
 /* === SIDEBAR (Priority 3 fixes #7-#11) === */
 
-/* Fix #7: sidebar width 280px → 256px */
+/* Sidebar — matches aura.build: transparent bg, no border-right, sticky independent scroll */
 .learn-sidebar {
   width: 256px;
   flex-shrink: 0;
-  border-right: 1px solid hsl(var(--border));
-  padding: 24px 0;
+  border-right: none; /* aura.build has no visible border — whitespace-only separation */
+  padding: 24px 16px 48px 0;
   position: sticky;
-  top: 64px;
-  height: fit-content;
-  max-height: calc(100vh - 64px);
+  top: 73px; /* matches new header height */
+  height: calc(100vh - 73px);
   overflow-y: auto;
-  background: hsl(var(--secondary) / 0.5);
+  background: transparent; /* was hsl(var(--secondary) / 0.5) — removed grey panel look */
+  scrollbar-width: thin;
 }
 
 /* Fix #11: hide the "LEARN" sidebar header — aura.build doesn't have it */
@@ -1829,17 +1846,18 @@ img { display: block; max-width: 100%; }
   display: none;
 }
 
-/* Fix #10: group title 11px → 12px, letter-spacing 0.08em → 0.05em */
+/* Sidebar group title — matches aura.build eyebrow style */
 .learn-sidebar-group {
-  margin-bottom: 20px;
+  margin-bottom: 24px;
 }
 .learn-sidebar-group-title {
   padding: 8px 16px 6px;
   font-size: 12px;
   font-weight: 500;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.06em; /* matches aura.build exactly */
   color: hsl(var(--muted-foreground));
+  margin-bottom: 4px;
 }
 
 .learn-sidebar-list {
@@ -1848,43 +1866,57 @@ img { display: block; max-width: 100%; }
   margin: 0;
 }
 
-/* Fix #8: sidebar link 13px → 14px, padding compact, with horizontal margin.
-   Use !important because Tailwind v4 preflight or cascade may override. */
+/* Sidebar link — flat (no border-radius / no pill), with leading icon slot.
+   aura.build uses 14px / weight 400 / square corners / very subtle hover bg. */
 .learn-sidebar-link {
-  display: block;
-  padding: 8px 12px;
-  margin: 2px 8px;
-  font-size: 14px !important;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 16px;
+  font-size: 14px;
+  font-weight: 400;
   color: hsl(var(--muted-foreground));
   text-decoration: none;
-  transition: all 0.15s;
+  transition: color 0.15s, background 0.15s;
   line-height: 1.4;
-  border-radius: 6px;
+  border-radius: 0;
   border-left: none;
 }
 
+.learn-sidebar-link-icon {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+  color: currentColor;
+  opacity: 0.7;
+  transition: opacity 0.15s;
+}
+.learn-sidebar-link:hover .learn-sidebar-link-icon { opacity: 1; }
+
 .learn-sidebar-link:hover {
+  color: hsl(var(--foreground));
+  background: hsl(var(--secondary) / 0.6);
+}
+
+/* Active state — black/foreground text + subtle neutral bg (NOT blue) */
+.learn-sidebar-link.active {
+  color: hsl(var(--foreground));
+  font-weight: 500;
+  background: hsl(var(--secondary));
+  border-left: none;
+  padding-left: 16px;
+}
+.learn-sidebar-link.active .learn-sidebar-link-icon { opacity: 1; }
+
+.dark .learn-sidebar-link.active {
   color: hsl(var(--foreground));
   background: hsl(var(--secondary));
 }
 
-/* Fix #9: active state — no text shift, no border-left, blue accent */
-.learn-sidebar-link.active {
-  color: #1d4ed8;
-  font-weight: 500;
-  background: #dbeafe;
-  border-left: none;
-  padding-left: 12px; /* same as inactive — no shift */
-}
-.dark .learn-sidebar-link.active {
-  color: #60a5fa;
-  background: rgba(37, 99, 235, 0.15);
-}
-
-/* Fix #15: focus-visible for keyboard navigation */
+/* Focus-visible for keyboard navigation */
 .learn-sidebar-link:focus-visible {
-  outline: 2px solid #2563eb;
-  outline-offset: 2px;
+  outline: 2px solid hsl(var(--foreground));
+  outline-offset: -2px;
 }
 
 /* === BREADCRUMB (removed from page.tsx, kept for safety) === */
@@ -2110,14 +2142,28 @@ img { display: block; max-width: 100%; }
     flex-direction: column;
     font-size: 16px;
   }
+  /* Sidebar is rendered as a slide-in drawer on mobile — hidden by default.
+     See the .learn-mobile-drawer rules below. */
   .learn-sidebar {
-    width: 100%;
-    position: relative;
+    display: none;
+  }
+  .learn-sidebar.is-mobile-open {
+    display: block;
+    position: fixed;
     top: 0;
-    max-height: none;
-    border-right: none;
-    border-bottom: 1px solid hsl(var(--border));
+    left: 0;
+    bottom: 0;
+    width: 280px;
+    max-width: 85vw;
+    height: 100vh;
+    max-height: 100vh;
     background: hsl(var(--background));
+    border-right: 1px solid hsl(var(--border));
+    padding: 80px 16px 24px 0;
+    z-index: 60;
+    overflow-y: auto;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+    animation: learn-drawer-slide-in 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   }
   .aura-learn-content {
     padding: 0 20px;
@@ -2127,6 +2173,43 @@ img { display: block; max-width: 100%; }
   .aura-learn-content h3 { font-size: 16px; }
   .learn-footer-nav { flex-direction: column; }
   .learn-footer-nav-next { text-align: left; margin-left: 0; }
+}
+
+/* Mobile drawer backdrop + animations */
+.learn-mobile-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  z-index: 55;
+  backdrop-filter: blur(2px);
+  animation: learn-backdrop-fade-in 0.2s ease-out;
+}
+
+.learn-mobile-menu-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  color: hsl(var(--foreground));
+  transition: background 0.15s;
+}
+.learn-mobile-menu-btn:hover { background: hsl(var(--secondary)); }
+
+/* Hamburger button only visible on mobile */
+.learn-mobile-menu-btn { display: none; }
+@media (max-width: 768px) {
+  .learn-mobile-menu-btn { display: inline-flex; }
+}
+
+@keyframes learn-drawer-slide-in {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(0); }
+}
+@keyframes learn-backdrop-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 /* =========================================================================
