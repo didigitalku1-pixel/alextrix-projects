@@ -798,18 +798,10 @@ img { display: block; max-width: 100%; }
   padding: 0 12px;
 }
 
-.learn-sidebar a {
-  display: block;
-  padding: 8px 12px;
-  font-size: 13px;
-  color: hsl(var(--muted-foreground));
-  border-radius: 6px;
-  margin-bottom: 2px;
-  transition: all 0.2s;
-  cursor: pointer;
-}
-.learn-sidebar a:hover { background: hsl(var(--secondary)); color: hsl(var(--foreground)); }
-.learn-sidebar a.active { background: hsl(var(--secondary)); color: hsl(var(--foreground)); font-weight: 500; }
+/* NOTE: Old .learn-sidebar a rules removed — they conflicted with the new
+   .learn-sidebar-link rules in the LEARN PAGE OVERHAUL block below.
+   The new rules use .learn-sidebar-link class directly (higher specificity
+   than .learn-sidebar a) and apply blue-100 bg + blue-700 color for active. */
 
 .learn-content { flex: 1; min-width: 0; }
 
