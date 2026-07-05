@@ -1,0 +1,50 @@
+name: Generate DESIGN.md
+
+# Runs every 2 hours to generate DESIGN.md + Copy Prompt for templates.
+# Processes 500 templates per run until all 21K are done.
+# Skip automatically when all templates have design_md.
+
+on:
+  schedule:
+    - cron: "0 */2 * * *"  # Every 2 hours
+  workflow_dispatch:
+    inputs:
+      batch-size:
+        description: "Templates per batch (default 500)"
+        required: false
+        default: "500"
+
+permissions:
+  contents: read
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Run DESIGN.md generator
+        env:
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          cd ${{ github.workspace }}
+          BATCH_SIZE=${{ github.event.inputs.batch-size || '500' }}
+          echo "📋 Generating DESIGN.md for $BATCH_SIZE templates..."
+          python3 scripts/generate_design_md.py \
+            --limit $BATCH_SIZE \
+            --batch-size 100 \
+            --generate-prompt \
+            --service-key "$SUPABASE_SERVICE_ROLE_KEY"
+
+      - name: Summary
+        if: always()
+        run: |
+          echo "## DESIGN.md Generation" >> $GITHUB_STEP_SUMMARY
+          echo "Check logs for progress. Next run in 2 hours." >> $GITHUB_STEP_SUMMARY
