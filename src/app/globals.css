@@ -2024,10 +2024,10 @@ img { display: block; max-width: 100%; }
   width: 100%;
   padding: 10px 16px;
   font-size: 15px;
-  border: 1px solid #333;
+  border: 1px solid hsl(var(--border));
   border-radius: 8px;
-  background: #1a1a1a;
-  color: #ffffff;
+  background: hsl(var(--background));
+  color: hsl(var(--foreground));
   outline: none;
   transition: border-color 0.15s;
 }
@@ -2037,7 +2037,7 @@ img { display: block; max-width: 100%; }
 }
 
 .skills-doc-search-input::placeholder {
-  color: #888;
+  color: hsl(var(--muted-foreground));
 }
 
 /* === Tag filter === */
@@ -2271,11 +2271,11 @@ img { display: block; max-width: 100%; }
 /* === Skills sticky toolbar (search + tags) — NEW === */
 .skills-doc-toolbar {
   position: sticky;
-  top: 64px;
+  top: 56px;
   z-index: 50;
-  background: #0a0a0a;
+  background: hsl(var(--background));
   padding: 16px 0 14px;
-  border-bottom: 1px solid #222;
+  border-bottom: 1px solid hsl(var(--border));
   margin-bottom: 24px;
 }
 
@@ -2292,17 +2292,17 @@ img { display: block; max-width: 100%; }
 
 .skills-doc-toolbar .skills-doc-tag {
   white-space: nowrap;
-  border-color: #333;
-  color: #999;
+  border-color: hsl(var(--border));
+  color: hsl(var(--muted-foreground));
 }
 
 .skills-doc-toolbar .skills-doc-tag:hover {
-  border-color: #555;
-  color: #fff;
+  border-color: hsl(var(--foreground) / 0.3);
+  color: hsl(var(--foreground));
 }
 
 .skills-doc-toolbar .skills-doc-tag.active {
-  background: #fff;
-  color: #000;
-  border-color: #fff;
+  background: hsl(var(--foreground));
+  color: hsl(var(--background));
+  border-color: hsl(var(--foreground));
 }
