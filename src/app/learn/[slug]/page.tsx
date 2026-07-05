@@ -136,60 +136,85 @@ export default function LearnPage({
     return () => window.removeEventListener("message", handler);
   }, []);
 
-  // === CRITICAL FIX: dynamically resize iframe to fit its content ===
-  // The iframe HTML files are ~13,000px tall but the iframe element was
-  // previously fixed at calc(100vh - 64px) (~513px) with overflow:clip,
-  // which clipped 96% of the content and made pages look "empty".
-  // This effect measures the iframe's content height and grows the
-  // iframe element to fit, so the parent page scrolls naturally.
+  // === iframe auto-resize — anti-shake version ===
+  //
+  // Background: the previous version resized on every ResizeObserver +
+  // MutationObserver callback + 5 setTimeout polls. This caused 60+ height
+  // changes per page-load (513 → 8308 → 8324 → 8325 → 8326 → ... → 8381px),
+  // and the scrollbar jumping made the page feel like it was "vibrating".
+  //
+  // New approach:
+  //   1. Debounce — collapse bursts of resize events into a single rAF tick.
+  //   2. Only GROW — once we've set a height, we never shrink by <100px.
+  //      This prevents minor reflows (font swap, lazy-image settle) from
+  //      yanking the scrollbar. We do allow large shrinks (>100px) so that
+  //      navigating from a tall page (e.g. tips-for-prompting, 18,968px)
+  //      to a short one (e.g. documentation, 5,167px) still shrinks correctly.
+  //   3. Drop ResizeObserver on <body>/<html> — those trigger on every
+  //      height change INCLUDING our own setHeight, creating a feedback
+  //      loop. MutationObserver on body subtree is enough to catch the
+  //      things that actually matter (Tailwind CDN injecting styles late,
+  //      images loading and changing intrinsic size).
+  //   4. Single late poll (2.5s) instead of 5 polls.
   useEffect(() => {
     const iframe = iframeRef.current;
     if (!iframe) return;
 
     let raf = 0;
-    let pollTimer: ReturnType<typeof setTimeout> | undefined;
-    let resizeObs: ResizeObserver | undefined;
+    let lastAppliedH = 0;
     let mutObs: MutationObserver | undefined;
+    let latePoll: ReturnType<typeof setTimeout> | undefined;
+    let settled = false;
 
-    const resize = () => {
-      cancelAnimationFrame(raf);
-      raf = requestAnimationFrame(() => {
-        try {
-          const doc = iframe.contentDocument;
-          if (!doc) return;
-          const h = Math.max(
-            doc.body?.scrollHeight || 0,
-            doc.documentElement?.scrollHeight || 0
-          );
-          if (h > 0) {
-            iframe.style.height = h + "px";
-          }
-        } catch {
-          // cross-origin — ignore
+    const applyHeight = () => {
+      raf = 0;
+      try {
+        const doc = iframe.contentDocument;
+        if (!doc) return;
+        const h = Math.max(
+          doc.body?.scrollHeight || 0,
+          doc.documentElement?.scrollHeight || 0
+        );
+        if (h <= 0) return;
+
+        // Only grow, unless shrink is significant (>100px).
+        // This is what kills the "vibration" — small reflows no longer
+        // yank the scrollbar.
+        if (lastAppliedH === 0) {
+          // first measurement on this page
+          iframe.style.height = h + "px";
+          lastAppliedH = h;
+        } else if (h > lastAppliedH) {
+          iframe.style.height = h + "px";
+          lastAppliedH = h;
+        } else if (lastAppliedH - h > 100) {
+          // significant shrink (navigated to shorter page) — apply
+          iframe.style.height = h + "px";
+          lastAppliedH = h;
         }
-      });
+        // else: ignore small shrink — keep current height
+      } catch {
+        // cross-origin — ignore
+      }
+    };
+
+    const scheduleResize = () => {
+      if (raf) return; // already scheduled
+      raf = requestAnimationFrame(applyHeight);
     };
 
     const attachObservers = () => {
       try {
         const doc = iframe.contentDocument;
-        if (!doc) return;
+        if (!doc || !doc.body) return;
 
-        // Observe body size changes (images loading, font swaps, etc.)
-        if (typeof ResizeObserver !== "undefined") {
-          resizeObs = new ResizeObserver(resize);
-          resizeObs.observe(doc.body);
-          resizeObs.observe(doc.documentElement);
-        }
-
-        // Observe DOM mutations (Tailwind CDN injecting styles late)
         if (typeof MutationObserver !== "undefined") {
-          mutObs = new MutationObserver(resize);
+          mutObs = new MutationObserver(scheduleResize);
           mutObs.observe(doc.body, {
             childList: true,
             subtree: true,
             attributes: true,
-            attributeFilter: ["class", "style"],
+            attributeFilter: ["class", "style", "src"],
           });
         }
       } catch {
@@ -198,25 +223,28 @@ export default function LearnPage({
     };
 
     const onLoad = () => {
-      resize();
+      // Reset state for the new page
+      lastAppliedH = 0;
+      settled = false;
+      iframe.style.height = ""; // clear inline height so we re-measure cleanly
+      applyHeight();
       attachObservers();
-      // Re-resize on a few ticks because Tailwind CDN + images load asynchronously
-      setTimeout(resize, 100);
-      setTimeout(resize, 500);
-      setTimeout(resize, 1500);
-      setTimeout(resize, 3000);
-      pollTimer = setTimeout(resize, 6000);
+      // Single late poll to catch any final async layout shift
+      // (Tailwind CDN, web fonts, lazy-loaded images).
+      latePoll = setTimeout(() => {
+        scheduleResize();
+        settled = true;
+      }, 2500);
     };
 
     iframe.addEventListener("load", onLoad);
     // Try an early resize in case load already fired
-    setTimeout(onLoad, 200);
+    setTimeout(onLoad, 150);
 
     return () => {
       iframe.removeEventListener("load", onLoad);
-      cancelAnimationFrame(raf);
-      if (pollTimer) clearTimeout(pollTimer);
-      resizeObs?.disconnect();
+      if (raf) cancelAnimationFrame(raf);
+      if (latePoll) clearTimeout(latePoll);
       mutObs?.disconnect();
     };
   }, [slug]);
