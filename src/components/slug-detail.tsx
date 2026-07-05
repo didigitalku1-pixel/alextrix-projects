@@ -92,12 +92,17 @@ export default function SlugDetail({
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
   const [dark, setDark] = useState(false);
-  // Fixed iframe height — content scrolls inside iframe (mirrors aura.build)
-  // No auto-resize postMessage (caused infinite scroll loop in previous version)
-  // 70vh gives roughly 630px on a 900px viewport, similar to aura.build's ~757px
-  const iframeHeight = "70vh";
+  // Device toggle: desktop (full width), tablet (768px), mobile (375px)
+  const [device, setDevice] = useState<"desktop" | "tablet" | "mobile">("desktop");
   const [related, setRelated] = useState<{ moreFromAuthor: any[]; related: any[] }>({ moreFromAuthor: [], related: [] });
   const iframeRef = useRef<HTMLIFrameElement>(null);
+
+  // Device widths (mirrors aura.build)
+  const deviceWidths = {
+    desktop: "100%",
+    tablet: "768px",
+    mobile: "375px",
+  };
 
   // Theme
   useEffect(() => {
@@ -264,8 +269,9 @@ export default function SlugDetail({
             </div>
           </div>
 
-          {/* === Preview section (simplified frame — mirrors aura.build) === */}
+          {/* === Preview section (mirrors aura.build — aspect-ratio 16:10, device toggle) === */}
           <div className="preview-frame">
+            {/* Tab bar — separate from iframe container */}
             <div className="preview-chrome">
               <div className="preview-tabs">
                 {visibleTabs.map(t => (
@@ -279,11 +285,48 @@ export default function SlugDetail({
                   </button>
                 ))}
               </div>
-              {contentStatus === "loaded" && (tab === "code" || tab === "design" || tab === "prompt" || tab === "content") && (
-                <button className="preview-copy-btn" onClick={copy}>
-                  {copied ? "✓ Copied!" : "Copy"}
-                </button>
+              {/* Device toggle — only for Preview tab */}
+              {tab === "preview" && item.type !== "asset" && (
+                <div className="preview-device-toggle">
+                  {([
+                    { id: "desktop" as const, icon: "🖥️", label: "Desktop" },
+                    { id: "tablet" as const, icon: "📋", label: "Tablet" },
+                    { id: "mobile" as const, icon: "📱", label: "Mobile" },
+                  ]).map(d => (
+                    <button
+                      key={d.id}
+                      className={`preview-device-btn ${device === d.id ? "active" : ""}`}
+                      onClick={() => setDevice(d.id)}
+                      title={d.label}
+                    >
+                      {d.icon}
+                    </button>
+                  ))}
+                </div>
               )}
+              {/* Action buttons */}
+              <div className="preview-actions">
+                {tab === "preview" && item.type !== "asset" && contentStatus === "loaded" && (
+                  <button
+                    className="preview-copy-btn"
+                    onClick={() => {
+                      const w = window.open("", "_blank");
+                      if (w) {
+                        w.document.write(withAutoResize(content));
+                        w.document.close();
+                      }
+                    }}
+                    title="Open in New Tab"
+                  >
+                    ↗ Open
+                  </button>
+                )}
+                {contentStatus === "loaded" && (tab === "code" || tab === "design" || tab === "prompt" || tab === "content") && (
+                  <button className="preview-copy-btn" onClick={copy}>
+                    {copied ? "✓ Copied!" : "Copy"}
+                  </button>
+                )}
+              </div>
             </div>
 
             {/* Content area */}
@@ -339,16 +382,28 @@ export default function SlugDetail({
                 </div>
               )}
 
+              {/* === Preview iframe — aspect-ratio 16:10, device width toggle === */}
               {contentStatus === "loaded" && tab === "preview" && item.type !== "asset" && (
-                <iframe
-                  ref={iframeRef}
-                  srcDoc={withAutoResize(content)}
-                  title="Preview"
-                  sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals"
-                  className="preview-iframe"
-                  style={{ height: iframeHeight }}
-                  loading="eager"
-                />
+                <div className="preview-iframe-wrap" style={{ aspectRatio: "16 / 10" }}>
+                  <div
+                    className="preview-iframe-device"
+                    style={{
+                      width: deviceWidths[device],
+                      maxWidth: "100%",
+                      margin: device === "desktop" ? "0" : "0 auto",
+                      height: "100%",
+                    }}
+                  >
+                    <iframe
+                      ref={iframeRef}
+                      srcDoc={withAutoResize(content)}
+                      title="Preview"
+                      sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals"
+                      className="preview-iframe"
+                      loading="eager"
+                    />
+                  </div>
+                </div>
               )}
 
               {contentStatus === "loaded" && tab === "code" && (

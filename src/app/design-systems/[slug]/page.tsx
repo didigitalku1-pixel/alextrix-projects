@@ -56,7 +56,7 @@ export default function DesignSystemDetailPage({
   const [loading, setLoading] = useState(true);
   const [dark, setDark] = useState(false);
   // Fixed iframe height — content scrolls inside iframe (mirrors aura.build)
-  const iframeHeight = "70vh";
+  // No fixed height — use aspect-ratio in CSS (mirrors aura.build)
   const [copied, setCopied] = useState<string | null>(null);
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
@@ -202,15 +202,16 @@ export default function DesignSystemDetailPage({
                 <div className="markdown-viewer" dangerouslySetInnerHTML={{ __html: renderMarkdown(item.content) }} />
               )}
               {tab === "html" && item.preview_html && (
-                <iframe
-                  ref={iframeRef}
-                  srcDoc={withTailwindAndAutoResize(item.preview_html)}
-                  title="HTML Preview"
-                  sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals"
-                  className="preview-iframe"
-                  style={{ height: iframeHeight }}
-                  loading="eager"
-                />
+                <div className="preview-iframe-wrap" style={{ aspectRatio: "16 / 10" }}>
+                  <iframe
+                    ref={iframeRef}
+                    srcDoc={withTailwindAndAutoResize(item.preview_html)}
+                    title="HTML Preview"
+                    sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals"
+                    className="preview-iframe"
+                    loading="eager"
+                  />
+                </div>
               )}
               {tab === "design" && !item.content && (
                 <div className="artifact-empty">
