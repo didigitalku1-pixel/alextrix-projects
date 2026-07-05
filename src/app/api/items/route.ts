@@ -103,7 +103,7 @@ export async function GET(req: NextRequest) {
   const premium = p.get("premium") === "true";
   const featured = p.get("featured") === "true";
   const page = Math.max(parseInt(p.get("page") || "1", 10), 1);
-  const limit = Math.min(Math.max(parseInt(p.get("limit") || "24", 10), 1), 100);
+  const limit = Math.min(Math.max(parseInt(p.get("limit") || "24", 10), 1), 500);
 
   try {
     // === Templates & Components ===
