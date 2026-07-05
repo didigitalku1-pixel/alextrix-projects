@@ -1,104 +1,18 @@
 "use client";
 
-import { use, useState, useEffect, useRef } from "react";
-import Link from "next/link";
+import { use, useState, useEffect } from "react";
+import { notFound } from "next/navigation";
+import Sidebar from "../_components/Sidebar";
+import { getLearnPage } from "../_content";
+import { VALID_LEARN_SLUGS } from "../_content/types";
 
 /**
- * Learn page — renders scraped HTML from aura.build in an iframe.
+ * Learn detail page.
  *
- * The HTML files in /public/learn-data/ are scraped directly from
- * https://www.aura.build/learn/<page> and include Tailwind CDN.
- * This guarantees 100% visual identity with aura.build.
- *
- * Sidebar links are hardcoded to match aura.build's exact structure:
- *   GETTING STARTED (10 pages)
- *   VIDEOS (24 video entries — link to /learn/video-tutorials#<hash>)
- *   RESOURCES (3 pages)
+ * Renders the original content for each learn slug directly in React — no
+ * iframe, no scraped HTML. The sidebar is sticky and uses next/link for
+ * navigation, so back/forward and cmd-click all work as expected.
  */
-
-const LEARN_SLUGS = new Set([
-  "introduction",
-  "how-to-design",
-  "custom-domain",
-  "seo-settings",
-  "selling-templates",
-  "tips-for-prompting",
-  "prompt-for-typography",
-  "prompt-for-styling",
-  "prompt-for-animation",
-  "prompt-for-layout",
-  "video-tutorials",
-  "documentation",
-  "faq",
-]);
-
-interface SidebarEntry {
-  label: string;
-  slug?: string;
-  hash?: string;
-  isVideo?: boolean;
-}
-
-interface SidebarGroup {
-  title: string;
-  entries: SidebarEntry[];
-}
-
-const SIDEBAR: SidebarGroup[] = [
-  {
-    title: "GETTING STARTED",
-    entries: [
-      { label: "Introduction", slug: "introduction" },
-      { label: "How to Edit Designs", slug: "how-to-design" },
-      { label: "Custom Domain", slug: "custom-domain" },
-      { label: "SEO Settings", slug: "seo-settings" },
-      { label: "Selling Templates", slug: "selling-templates" },
-      { label: "Tips for Prompting", slug: "tips-for-prompting" },
-      { label: "Typography Prompting", slug: "prompt-for-typography" },
-      { label: "Styling Prompting", slug: "prompt-for-styling" },
-      { label: "Animation Prompting", slug: "prompt-for-animation" },
-      { label: "Layout Prompting", slug: "prompt-for-layout" },
-    ],
-  },
-  {
-    title: "VIDEOS",
-    entries: [
-      { label: "Interactive Rain Hero", isVideo: true, hash: "interactive-rain-hero-opus-48" },
-      { label: "Brutalist Landing Page", isVideo: true, hash: "design-to-website-brutalist-landing-page" },
-      { label: "$20K Website Prompt", isVideo: true, hash: "one-prompt-20000-website-claude-fable-5" },
-      { label: "$20K AI Workflow", isVideo: true, hash: "recreate-20000-website-ai-workflow" },
-      { label: "GPT Images + Grok", isVideo: true, hash: "gpt-images-grok-imagine-landing-page-workflow" },
-      { label: "Avoid AI Slop", isVideo: true, hash: "avoid-ai-slop-vibe-coded-landing-pages" },
-      { label: "Claude 4.8 vs GPT-5.5", isVideo: true, hash: "claude-opus-48-vs-gpt-55-landing-pages" },
-      { label: "AI Landing Pages with Media", isVideo: true, hash: "ai-landing-pages-images-videos" },
-      { label: "GPT Image to Landing Page", isVideo: true, hash: "gpt-image-2-gpt-55-landing-page" },
-      { label: "DESIGN.md Workflow", isVideo: true, hash: "design-md-ai-web-design-workflow" },
-      { label: "GPT 5.5 + DESIGN.md", isVideo: true, hash: "better-landing-pages-gpt-55-design-md" },
-      { label: "Complex Animations", isVideo: true, hash: "complex-animations-chatgpt-design-md" },
-      { label: "DESIGN.md Better AI Design", isVideo: true, hash: "design-md-file-ai-design-better" },
-      { label: "Animated WebGL Pages", isVideo: true, hash: "animated-webgl-gemini-design-md" },
-      { label: "Gemini 3 Landing Pages", isVideo: true, hash: "gemini-3-pro-level-landing-page" },
-      { label: "Gemini 3 Animations", isVideo: true, hash: "gemini-3-animations" },
-      { label: "Gemini 3 Changes Everything", isVideo: true, hash: "gemini-3-changes-web-design" },
-      { label: "Using GPT 5.1 for Creating UIs", isVideo: true, hash: "gpt-51-creating-uis" },
-      { label: "Aura Compose Workflow", isVideo: true, hash: "aura-compose-workflow" },
-      { label: "Turn AI Designs to Pro-level", isVideo: true, hash: "turn-ai-designs-pro-level" },
-      { label: "Master Customizations", isVideo: true, hash: "master-customizations" },
-      { label: "Image to HTML with AI", isVideo: true, hash: "image-to-html-ai" },
-      { label: "Improve your AI Designs", isVideo: true, hash: "improve-ai-designs" },
-      { label: "How to Prompt for UI", isVideo: true, hash: "how-to-prompt-ui" },
-    ],
-  },
-  {
-    title: "RESOURCES",
-    entries: [
-      { label: "Video Tutorials", slug: "video-tutorials" },
-      { label: "Documentation", slug: "documentation" },
-      { label: "FAQ", slug: "faq" },
-    ],
-  },
-];
-
 export default function LearnPage({
   params,
 }: {
@@ -106,12 +20,11 @@ export default function LearnPage({
 }) {
   const { slug } = use(params);
   const [dark, setDark] = useState(false);
-  const iframeRef = useRef<HTMLIFrameElement>(null);
 
-  // Validate slug — redirect invalid slugs to introduction
+  // Validate slug — if unknown, 404
   useEffect(() => {
-    if (!LEARN_SLUGS.has(slug)) {
-      window.location.href = "/learn/introduction";
+    if (!VALID_LEARN_SLUGS.has(slug)) {
+      notFound();
     }
   }, [slug]);
 
@@ -124,132 +37,10 @@ export default function LearnPage({
     localStorage.setItem("aura-theme", dark ? "dark" : "light");
   }, [dark]);
 
-  // Listen for navigation messages from iframe (sidebar link clicks)
-  useEffect(() => {
-    const handler = (e: MessageEvent) => {
-      if (e.data && e.data.type === "learn-navigate" && e.data.href) {
-        // Navigate parent window to the requested URL
-        window.location.href = e.data.href;
-      }
-    };
-    window.addEventListener("message", handler);
-    return () => window.removeEventListener("message", handler);
-  }, []);
+  const page = getLearnPage(slug);
+  if (!page) return null;
 
-  // === iframe auto-resize — anti-shake version ===
-  //
-  // Background: the previous version resized on every ResizeObserver +
-  // MutationObserver callback + 5 setTimeout polls. This caused 60+ height
-  // changes per page-load (513 → 8308 → 8324 → 8325 → 8326 → ... → 8381px),
-  // and the scrollbar jumping made the page feel like it was "vibrating".
-  //
-  // New approach:
-  //   1. Debounce — collapse bursts of resize events into a single rAF tick.
-  //   2. Only GROW — once we've set a height, we never shrink by <100px.
-  //      This prevents minor reflows (font swap, lazy-image settle) from
-  //      yanking the scrollbar. We do allow large shrinks (>100px) so that
-  //      navigating from a tall page (e.g. tips-for-prompting, 18,968px)
-  //      to a short one (e.g. documentation, 5,167px) still shrinks correctly.
-  //   3. Drop ResizeObserver on <body>/<html> — those trigger on every
-  //      height change INCLUDING our own setHeight, creating a feedback
-  //      loop. MutationObserver on body subtree is enough to catch the
-  //      things that actually matter (Tailwind CDN injecting styles late,
-  //      images loading and changing intrinsic size).
-  //   4. Single late poll (2.5s) instead of 5 polls.
-  useEffect(() => {
-    const iframe = iframeRef.current;
-    if (!iframe) return;
-
-    let raf = 0;
-    let lastAppliedH = 0;
-    let mutObs: MutationObserver | undefined;
-    let latePoll: ReturnType<typeof setTimeout> | undefined;
-    let settled = false;
-
-    const applyHeight = () => {
-      raf = 0;
-      try {
-        const doc = iframe.contentDocument;
-        if (!doc) return;
-        const h = Math.max(
-          doc.body?.scrollHeight || 0,
-          doc.documentElement?.scrollHeight || 0
-        );
-        if (h <= 0) return;
-
-        // Only grow, unless shrink is significant (>100px).
-        // This is what kills the "vibration" — small reflows no longer
-        // yank the scrollbar.
-        if (lastAppliedH === 0) {
-          // first measurement on this page
-          iframe.style.height = h + "px";
-          lastAppliedH = h;
-        } else if (h > lastAppliedH) {
-          iframe.style.height = h + "px";
-          lastAppliedH = h;
-        } else if (lastAppliedH - h > 100) {
-          // significant shrink (navigated to shorter page) — apply
-          iframe.style.height = h + "px";
-          lastAppliedH = h;
-        }
-        // else: ignore small shrink — keep current height
-      } catch {
-        // cross-origin — ignore
-      }
-    };
-
-    const scheduleResize = () => {
-      if (raf) return; // already scheduled
-      raf = requestAnimationFrame(applyHeight);
-    };
-
-    const attachObservers = () => {
-      try {
-        const doc = iframe.contentDocument;
-        if (!doc || !doc.body) return;
-
-        if (typeof MutationObserver !== "undefined") {
-          mutObs = new MutationObserver(scheduleResize);
-          mutObs.observe(doc.body, {
-            childList: true,
-            subtree: true,
-            attributes: true,
-            attributeFilter: ["class", "style", "src"],
-          });
-        }
-      } catch {
-        // cross-origin — ignore
-      }
-    };
-
-    const onLoad = () => {
-      // Reset state for the new page
-      lastAppliedH = 0;
-      settled = false;
-      iframe.style.height = ""; // clear inline height so we re-measure cleanly
-      applyHeight();
-      attachObservers();
-      // Single late poll to catch any final async layout shift
-      // (Tailwind CDN, web fonts, lazy-loaded images).
-      latePoll = setTimeout(() => {
-        scheduleResize();
-        settled = true;
-      }, 2500);
-    };
-
-    iframe.addEventListener("load", onLoad);
-    // Try an early resize in case load already fired
-    setTimeout(onLoad, 150);
-
-    return () => {
-      iframe.removeEventListener("load", onLoad);
-      if (raf) cancelAnimationFrame(raf);
-      if (latePoll) clearTimeout(latePoll);
-      mutObs?.disconnect();
-    };
-  }, [slug]);
-
-  const iframeSrc = `/learn-data/${slug}.html`;
+  const Body = page.body;
 
   return (
     <div className="app" style={{ minHeight: "100vh" }}>
@@ -273,15 +64,65 @@ export default function LearnPage({
         </div>
       </header>
 
-      {/* Full-page iframe — 100% identical to aura.build */}
-      <iframe
-        ref={iframeRef}
-        src={iframeSrc}
-        title="Learn"
-        className="learn-iframe"
-        sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox"
-        loading="eager"
-      />
+      {/* Main layout — sidebar + content */}
+      <div className="learn-layout learn-layout-react">
+        <Sidebar activeSlug={slug} />
+
+        <main className="learn-content learn-content-react">
+          <div className="learn-breadcrumb">
+            Learn / <span className="learn-breadcrumb-active">{page.title}</span>
+          </div>
+
+          <h1 className="learn-h1">{page.title}</h1>
+          <div className="learn-underline" />
+
+          <div className="learn-markdown learn-markdown-react">
+            <Body />
+          </div>
+
+          {/* Footer nav — prev/next */}
+          <LearnFooterNav activeSlug={slug} />
+        </main>
+      </div>
     </div>
+  );
+}
+
+/**
+ * Inline prev/next footer nav.
+ * Reads from SIDEBAR to find neighbors of the current page.
+ */
+function LearnFooterNav({ activeSlug }: { activeSlug: string }) {
+  // Lazy import to avoid circular issues at module load time.
+  // SIDEBAR is small and static so the cost is negligible.
+  const { SIDEBAR } = require("../_content/types") as typeof import("../_content/types");
+
+  // Flatten all sidebar entries into a single ordered list of slugs
+  const flat: { slug: string; label: string }[] = [];
+  for (const group of SIDEBAR) {
+    for (const entry of group.entries) {
+      if (entry.slug) flat.push({ slug: entry.slug, label: entry.label });
+    }
+  }
+  const idx = flat.findIndex((e) => e.slug === activeSlug);
+  if (idx < 0) return null;
+  const prev = idx > 0 ? flat[idx - 1] : null;
+  const next = idx < flat.length - 1 ? flat[idx + 1] : null;
+
+  return (
+    <nav className="learn-footer-nav">
+      {prev && (
+        <a href={`/learn/${prev.slug}`} className="learn-footer-nav-item learn-footer-nav-prev">
+          <div className="learn-footer-nav-label">Previous</div>
+          <div className="learn-footer-nav-title">← {prev.label}</div>
+        </a>
+      )}
+      {next && (
+        <a href={`/learn/${next.slug}`} className="learn-footer-nav-item learn-footer-nav-next">
+          <div className="learn-footer-nav-label">Next</div>
+          <div className="learn-footer-nav-title">{next.label} →</div>
+        </a>
+      )}
+    </nav>
   );
 }

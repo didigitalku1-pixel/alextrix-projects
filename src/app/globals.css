@@ -1767,6 +1767,250 @@ img { display: block; max-width: 100%; }
 }
 
 /* =========================================================================
+   LEARN PAGE (REFACTORED) — native React, no iframe
+   ========================================================================= */
+
+/* Override the old iframe rule — no longer needed but kept for safety */
+.learn-iframe { display: none !important; }
+
+/* React layout uses the same .learn-layout but with a small top offset
+   to clear the fixed header */
+.learn-layout-react {
+  margin-top: 64px;
+  padding: 0 24px;
+  box-sizing: border-box;
+}
+
+.learn-content-react {
+  padding: 48px 56px 96px;
+  max-width: 800px;
+}
+
+.learn-breadcrumb-active {
+  color: hsl(var(--foreground));
+  font-weight: 500;
+}
+
+.learn-markdown-react {
+  font-size: 15px;
+  line-height: 1.7;
+  color: hsl(var(--foreground));
+}
+
+/* Lead paragraph at the top of each page */
+.learn-lead {
+  font-size: 18px;
+  line-height: 1.65;
+  color: hsl(var(--foreground));
+  margin: 0 0 32px;
+  font-weight: 400;
+}
+
+/* Content blocks — Section, Subsection, Tip, Callout, Step */
+.learn-section { margin: 0 0 40px; }
+.learn-section-title {
+  font-size: 24px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  margin: 0 0 16px;
+  color: hsl(var(--foreground));
+}
+.learn-section-body > p,
+.learn-section-body > ul,
+.learn-section-body > ol,
+.learn-section-body > pre { margin: 0 0 14px; }
+
+.learn-subsection { margin: 0 0 20px; }
+.learn-subsection-title {
+  font-size: 17px;
+  font-weight: 600;
+  margin: 0 0 10px;
+  color: hsl(var(--foreground));
+}
+.learn-subsection-body > p,
+.learn-subsection-body > ul { margin: 0 0 10px; }
+
+.learn-tip {
+  display: flex;
+  gap: 16px;
+  background: hsl(var(--secondary));
+  border-left: 3px solid #3b82f6;
+  border-radius: 6px;
+  padding: 14px 18px;
+  margin: 16px 0;
+  font-size: 14px;
+  line-height: 1.6;
+}
+.learn-tip-label {
+  flex-shrink: 0;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #3b82f6;
+  padding-top: 2px;
+}
+.learn-tip-body { color: hsl(var(--foreground)); }
+.learn-tip-body p { margin: 0 0 8px; }
+.learn-tip-body p:last-child { margin: 0; }
+
+.learn-callout {
+  background: hsl(var(--secondary));
+  border-radius: 8px;
+  padding: 18px 22px;
+  margin: 20px 0;
+  font-size: 14px;
+  line-height: 1.6;
+}
+.learn-callout-title {
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: hsl(var(--muted-foreground));
+  margin-bottom: 8px;
+}
+.learn-callout-body { color: hsl(var(--foreground)); }
+.learn-callout-body p { margin: 0 0 8px; }
+.learn-callout-body p:last-child { margin: 0; }
+
+.learn-step {
+  display: flex;
+  gap: 16px;
+  margin: 18px 0;
+  padding: 14px 0;
+  border-top: 1px solid hsl(var(--border));
+}
+.learn-step:first-child { border-top: none; padding-top: 0; }
+.learn-step-num {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: hsl(var(--foreground));
+  color: hsl(var(--background));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 600;
+}
+.learn-step-body { flex: 1; min-width: 0; }
+.learn-step-title {
+  font-size: 15px;
+  font-weight: 600;
+  margin: 0 0 6px;
+  color: hsl(var(--foreground));
+}
+.learn-step-content { font-size: 14px; line-height: 1.6; }
+.learn-step-content p { margin: 0 0 8px; }
+.learn-step-content p:last-child { margin: 0; }
+
+.learn-code {
+  background: hsl(var(--secondary));
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-family: 'SF Mono', Monaco, Consolas, 'Liberation Mono', monospace;
+  font-size: 0.88em;
+  color: hsl(var(--foreground));
+}
+
+.learn-code-block {
+  background: #1e1e1e;
+  color: #d4d4d4;
+  padding: 16px 20px;
+  border-radius: 8px;
+  overflow-x: auto;
+  margin: 16px 0;
+  font-family: 'SF Mono', Monaco, Consolas, 'Liberation Mono', monospace;
+  font-size: 13px;
+  line-height: 1.6;
+  position: relative;
+}
+.learn-code-block code { background: transparent; padding: 0; color: inherit; }
+.learn-code-lang {
+  position: absolute;
+  top: 8px;
+  right: 12px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #888;
+}
+
+.learn-markdown-react ul,
+.learn-markdown-react ol { padding-left: 24px; margin: 0 0 14px; }
+.learn-markdown-react li { margin: 6px 0; }
+.learn-markdown-react strong { font-weight: 600; color: hsl(var(--foreground)); }
+
+/* Video tutorial list — used on the video-tutorials page */
+.learn-video-list {
+  list-style: none;
+  padding: 0;
+  margin: 16px 0;
+}
+.learn-video-list li {
+  padding: 14px 0;
+  border-top: 1px solid hsl(var(--border));
+  font-size: 14px;
+  line-height: 1.6;
+  scroll-margin-top: 80px; /* so anchor links land below the fixed header */
+}
+.learn-video-list li:first-child { border-top: none; padding-top: 0; }
+.learn-video-list li strong { display: block; margin-bottom: 4px; font-size: 15px; }
+
+/* Sidebar list — react-rendered */
+.learn-sidebar-list { list-style: none; padding: 0; margin: 0; }
+.learn-sidebar-list li { margin: 0; }
+
+/* Footer prev/next nav */
+.learn-footer-nav {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  margin-top: 64px;
+  padding-top: 24px;
+  border-top: 1px solid hsl(var(--border));
+}
+.learn-footer-nav-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  text-decoration: none;
+  padding: 12px 16px;
+  border: 1px solid hsl(var(--border));
+  border-radius: 8px;
+  flex: 1;
+  transition: background 0.15s, border-color 0.15s;
+}
+.learn-footer-nav-item:hover {
+  background: hsl(var(--secondary));
+  border-color: hsl(var(--foreground));
+}
+.learn-footer-nav-next { text-align: right; margin-left: auto; }
+.learn-footer-nav-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: hsl(var(--muted-foreground));
+}
+.learn-footer-nav-title {
+  font-size: 14px;
+  font-weight: 500;
+  color: hsl(var(--foreground));
+}
+
+@media (max-width: 768px) {
+  .learn-layout-react { padding: 0 16px; }
+  .learn-content-react { padding: 32px 16px 64px; }
+  .learn-footer-nav { flex-direction: column; }
+  .learn-footer-nav-next { text-align: left; margin-left: 0; }
+  .learn-section-title { font-size: 20px; }
+  .learn-lead { font-size: 16px; }
+}
+
+/* =========================================================================
    FOOTER — mirrors aura.build
    ========================================================================= */
 
