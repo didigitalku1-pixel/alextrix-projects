@@ -42,28 +42,134 @@
   </div>
 </div>
 </main></div></div><div role="region" aria-label="Notifications (F8)" tabindex="-1" style="pointer-events: none;"><ol tabindex="-1" class="fixed top-8 left-1/2 -translate-x-1/2 z-[100] flex max-h-screen flex-col-reverse p-4 max-w-[420px]"></ol></div>
-<script>
-// Intercept all link clicks inside iframe for sidebar navigation
-document.addEventListener('click', function(e) {
-  var link = e.target.closest('a[href]');
-  if (!link) return;
-  var href = link.getAttribute('href');
-  if (!href || href.startsWith('http') || href.startsWith('mailto:') || href.startsWith('#')) {
-    // Allow same-page hash links (video sections)
-    if (href && href.startsWith('#')) return;
-    e.preventDefault();
-    return;
-  }
-  // For internal navigation links, send to parent
-  e.preventDefault();
-  if (href.startsWith('/learn/')) {
-    // Navigate parent to /learn/<slug>
-    parent.postMessage({ type: 'learn-navigate', href: href }, '*');
-  } else {
-    // Navigate parent to other pages
-    parent.postMessage({ type: 'learn-navigate', href: href }, '*');
-  }
-});
-</script>
 
+
+<!--LEARN-NAV-INTERCEPTOR-START-->
+<script>
+// === Learn sidebar navigation interceptor ===
+// Injected by scripts/fix_learn_sidebar.py
+// Wires up clicks on plain <button> sidebar items + <a href> links
+// to navigate the PARENT window via postMessage.
+(function () {
+  var LEARN_TARGETS = {
+    "Introduction": "/learn/introduction",
+    "How to Edit Designs": "/learn/how-to-design",
+    "Custom Domain": "/learn/custom-domain",
+    "SEO Settings": "/learn/seo-settings",
+    "Selling Templates": "/learn/selling-templates",
+    "Tips for Prompting": "/learn/tips-for-prompting",
+    "Typography Prompting": "/learn/prompt-for-typography",
+    "Styling Prompting": "/learn/prompt-for-styling",
+    "Animation Prompting": "/learn/prompt-for-animation",
+    "Layout Prompting": "/learn/prompt-for-layout",
+    "Interactive Rain Hero": "/learn/video-tutorials#interactive-rain-hero-opus-48",
+    "Brutalist Landing Page": "/learn/video-tutorials#design-to-website-brutalist-landing-page",
+    "$20K Website Prompt": "/learn/video-tutorials#one-prompt-20000-website-claude-fable-5",
+    "$20K AI Workflow": "/learn/video-tutorials#recreate-20000-website-ai-workflow",
+    "GPT Images + Grok": "/learn/video-tutorials#gpt-images-grok-imagine-landing-page-workflow",
+    "Avoid AI Slop": "/learn/video-tutorials#avoid-ai-slop-vibe-coded-landing-pages",
+    "Claude 4.8 vs GPT-5.5": "/learn/video-tutorials#claude-opus-48-vs-gpt-55-landing-pages",
+    "AI Landing Pages with Media": "/learn/video-tutorials#ai-landing-pages-images-videos",
+    "GPT Image to Landing Page": "/learn/video-tutorials#gpt-image-2-gpt-55-landing-page",
+    "DESIGN.md Workflow": "/learn/video-tutorials#design-md-ai-web-design-workflow",
+    "GPT 5.5 + DESIGN.md": "/learn/video-tutorials#better-landing-pages-gpt-55-design-md",
+    "Complex Animations": "/learn/video-tutorials#complex-animations-chatgpt-design-md",
+    "DESIGN.md Better AI Design": "/learn/video-tutorials#design-md-file-ai-design-better",
+    "Animated WebGL Pages": "/learn/video-tutorials#animated-webgl-gemini-design-md",
+    "Gemini 3 Landing Pages": "/learn/video-tutorials#gemini-3-pro-level-landing-page",
+    "Gemini 3 Animations": "/learn/video-tutorials#gemini-3-animations",
+    "Gemini 3 Changes Everything": "/learn/video-tutorials#gemini-3-changes-web-design",
+    "Using GPT 5.1 for Creating UIs": "/learn/video-tutorials#gpt-51-creating-uis",
+    "Aura Compose Workflow": "/learn/video-tutorials#aura-compose-workflow",
+    "Turn AI Designs to Pro-level": "/learn/video-tutorials#turn-ai-designs-pro-level",
+    "Master Customizations": "/learn/video-tutorials#master-customizations",
+    "Image to HTML with AI": "/learn/video-tutorials#image-to-html-ai",
+    "Improve your AI Designs": "/learn/video-tutorials#improve-ai-designs",
+    "How to Prompt for UI": "/learn/video-tutorials#how-to-prompt-ui",
+    "Video Tutorials": "/learn/video-tutorials",
+    "Documentation": "/learn/documentation",
+    "FAQ": "/learn/faq"
+  };
+
+  function getButtonLabel(btn) {
+    // Clone, strip svg + nested tags, return trimmed text
+    var clone = btn.cloneNode(true);
+    var svgs = clone.querySelectorAll('svg');
+    for (var i = 0; i < svgs.length; i++) svgs[i].remove();
+    var txt = (clone.innerText || clone.textContent || '').trim();
+    return txt;
+  }
+
+  function navigateParent(href) {
+    if (!href) return;
+    try {
+      parent.postMessage({ type: 'learn-navigate', href: href }, '*');
+    } catch (e) {
+      // Fallback: try direct parent location
+      try { parent.location.href = href; } catch (e2) {}
+    }
+  }
+
+  // 1. Wire up sidebar <button class="w-full flex..."> elements
+  function wireButtons() {
+    var buttons = document.querySelectorAll('button.w-full.flex');
+    for (var i = 0; i < buttons.length; i++) {
+      var btn = buttons[i];
+      if (btn.getAttribute('data-learn-wired') === '1') continue;
+      var label = getButtonLabel(btn);
+      var target = LEARN_TARGETS[label];
+      if (!target) continue;
+      btn.setAttribute('data-learn-wired', '1');
+      btn.setAttribute('data-learn-target', target);
+      btn.style.cursor = 'pointer';
+      (function (t) {
+        btn.addEventListener('click', function (e) {
+          e.preventDefault();
+          navigateParent(t);
+        });
+      })(target);
+    }
+  }
+
+  // 2. Intercept <a href> clicks (footer + in-content links)
+  document.addEventListener('click', function (e) {
+    var link = e.target.closest && e.target.closest('a[href]');
+    if (!link) return;
+    var href = link.getAttribute('href');
+    if (!href) return;
+    // Allow same-page hash links (e.g. jumping to a section)
+    if (href.charAt(0) === '#') return;
+    // Block external links
+    if (/^(https?:)?\/\//.test(href) || href.startsWith('mailto:')) {
+      e.preventDefault();
+      return;
+    }
+    e.preventDefault();
+    navigateParent(href);
+  });
+
+  // Run once on DOMContentLoaded, then again after a tick (Tailwind CDN
+  // can cause late re-rendering), and observe future mutations.
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', wireButtons);
+  } else {
+    wireButtons();
+  }
+  setTimeout(wireButtons, 100);
+  setTimeout(wireButtons, 500);
+  setTimeout(wireButtons, 2000);
+
+  if (typeof MutationObserver !== 'undefined') {
+    var obs = new MutationObserver(function () { wireButtons(); });
+    if (document.body) {
+      obs.observe(document.body, { childList: true, subtree: true });
+    } else {
+      document.addEventListener('DOMContentLoaded', function () {
+        obs.observe(document.body, { childList: true, subtree: true });
+      });
+    }
+  }
+})();
+</script>
+<!--LEARN-NAV-INTERCEPTOR-END-->
 </body></html>
