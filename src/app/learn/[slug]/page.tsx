@@ -3,20 +3,19 @@
 import { use, useState, useEffect } from "react";
 import { notFound } from "next/navigation";
 import Sidebar from "../_components/Sidebar";
+import { ScrollSpy } from "../_components/ScrollSpy";
 import { getLearnPage } from "../_content";
-import { VALID_LEARN_SLUGS, SIDEBAR } from "../_content/types";
+import { VALID_LEARN_SLUGS } from "../_content/types";
 
 /**
  * Learn detail page.
  *
- * Renders the article body scraped verbatim from
- * https://www.aura.build/learn/<slug> via dangerouslySetInnerHTML.
+ * Layout: 3-column desktop (sidebar | article | TOC), responsive.
+ * - Left: 256px learn navigation sidebar (transparent, sticky)
+ * - Center: 720px article (optimal reading width)
+ * - Right: 240px TOC with scroll-spy (sticky)
  *
- * Layout matches aura.build:
- *  - 256px sidebar (transparent, no border, sticky independent scroll)
- *  - Wide content area, breathing room
- *  - Mobile: hamburger button → slide-in drawer with backdrop
- *  - Smooth scroll, scroll-padding-top for sticky header offset
+ * Mobile: hamburger button opens sidebar drawer; TOC collapses below article.
  */
 export default function LearnPage({
   params,
@@ -71,11 +70,10 @@ export default function LearnPage({
 
   return (
     <div className="app" style={{ minHeight: "100vh" }}>
-      {/* Header — our branding */}
+      {/* Header */}
       <header className="header">
         <div className="header-inner">
           <div className="header-left">
-            {/* Mobile hamburger button */}
             <button
               className="learn-mobile-menu-btn"
               onClick={() => setMobileNavOpen(true)}
@@ -121,7 +119,7 @@ export default function LearnPage({
         />
       )}
 
-      {/* Layout: sidebar + verbatim aura.build content */}
+      {/* 3-column layout */}
       <div className="learn-layout-react">
         <Sidebar
           activeSlug={slug}
@@ -129,11 +127,17 @@ export default function LearnPage({
           mobileOpen={mobileNavOpen}
         />
 
-        {/* The Body component renders the verbatim scraped HTML inside a
-            div.aura-learn-content. CSS for that class is minimal — we want
-            aura.build's Tailwind classes to apply directly. */}
-        <main className="learn-content-react learn-content-verbatim">
-          <Body />
+        <main className="learn-content-react">
+          <div className="docs-container">
+            <Body />
+
+            {/* Right-side TOC (desktop only) */}
+            {page.toc && page.toc.length > 0 && (
+              <aside className="docs-toc-aside">
+                <ScrollSpy items={page.toc} />
+              </aside>
+            )}
+          </div>
         </main>
       </div>
     </div>

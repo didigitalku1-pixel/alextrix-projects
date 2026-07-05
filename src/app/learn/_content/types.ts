@@ -1,8 +1,17 @@
 import type { ReactNode } from "react";
 
 /**
+ * TOC item — used by ScrollSpy for the right-side "On this page" nav.
+ */
+export interface TocItem {
+  id: string;
+  label: string;
+  level?: number; // 2 = H2, 3 = H3
+}
+
+/**
  * Content metadata for a learn page.
- * Each learn page registers its slug, sidebar label, group, and body.
+ * Each learn page registers its slug, sidebar label, group, body, and optional TOC.
  */
 export interface LearnPageContent {
   slug: string;
@@ -11,6 +20,8 @@ export interface LearnPageContent {
   group: "getting-started" | "videos" | "resources";
   /** Optional hash anchor (only used by video entries that point to /learn/video-tutorials#<hash>) */
   videoHash?: string;
+  /** Optional table-of-contents items (for the right-side TOC nav). */
+  toc?: TocItem[];
   /** Render the page body */
   body: () => ReactNode;
 }
