@@ -1,7 +1,6 @@
 "use client";
 
 import { use, useState, useEffect } from "react";
-import Script from "next/script";
 import { notFound } from "next/navigation";
 import Sidebar from "../_components/Sidebar";
 import { getLearnPage } from "../_content";
@@ -40,6 +39,26 @@ export default function LearnPage({
     localStorage.setItem("aura-theme", dark ? "dark" : "light");
   }, [dark]);
 
+  // Load Tailwind Play CDN on this page only. The CDN scans the DOM at
+  // runtime and generates CSS for every Tailwind class it finds —
+  // including the ones inside the scraped aura.build HTML. This is the
+  // same approach the old iframe used and guarantees 100% visual match.
+  // We inject the script tag manually (not via next/script) because the
+  // CDN needs to execute synchronously to style the page before paint.
+  useEffect(() => {
+    if (document.querySelector('script[data-tailwind-cdn]')) return;
+    const script = document.createElement("script");
+    script.src = "https://cdn.tailwindcss.com";
+    script.async = false;
+    script.setAttribute("data-tailwind-cdn", "true");
+    document.head.appendChild(script);
+    return () => {
+      // Don't remove on unmount — the CDN adds a <style> tag that
+      // would lose its source. The script itself is harmless if it
+      // stays, and it'll be reused on next learn page navigation.
+    };
+  }, []);
+
   const page = getLearnPage(slug);
   if (!page) return null;
 
@@ -47,18 +66,6 @@ export default function LearnPage({
 
   return (
     <div className="app" style={{ minHeight: "100vh" }}>
-      {/* Load Tailwind Play CDN so ALL classes in the scraped aura.build
-          HTML are styled at runtime. This is the same approach the old
-          iframe used and guarantees 100% visual match with aura.build.
-          The CDN scans the DOM after render and generates CSS for every
-          class it finds, including ones inside dangerouslySetInnerHTML.
-          It also watches for DOM changes via MutationObserver, so
-          navigation between learn pages re-scans automatically. */}
-      <Script
-        src="https://cdn.tailwindcss.com"
-        strategy="afterInteractive"
-      />
-
       {/* Header — our branding */}
       <header className="header">
         <div className="header-inner">
