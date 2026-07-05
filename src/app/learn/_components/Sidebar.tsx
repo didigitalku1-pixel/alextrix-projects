@@ -12,14 +12,13 @@ interface SidebarProps {
 /**
  * Learn sidebar — 3 groups (Getting Started, Videos, Resources).
  * Video entries anchor to /learn/video-tutorials#<hash>.
+ *
+ * No "LEARN" header — aura.build starts directly with the group titles,
+ * which gives the sidebar more vertical room for the 37 entries.
  */
 export default function Sidebar({ activeSlug, onNavigate }: SidebarProps) {
   return (
     <aside className="learn-sidebar" aria-label="Learn navigation">
-      <div className="learn-sidebar-header">
-        <h2>Learn</h2>
-      </div>
-
       {SIDEBAR.map((group) => (
         <div key={group.title} className="learn-sidebar-group">
           <div className="learn-sidebar-group-title">{group.title}</div>

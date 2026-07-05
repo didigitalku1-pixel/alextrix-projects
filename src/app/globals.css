@@ -1779,15 +1779,31 @@ img { display: block; max-width: 100%; }
 /* Override the old iframe rule — no longer needed but kept for safety */
 .learn-iframe { display: none !important; }
 
-/* React layout — sidebar + content area, flex row.
-   No max-width: aura.build content uses its own max-w-* classes.
-   margin-top clears the fixed 64px header. */
+/* =========================================================================
+   LEARN PAGE — COMPREHENSIVE OVERHAUL
+   Goals (see audit doc):
+   - Base font 16px scoped to learn pages (project default is 14px elsewhere)
+   - Article max-width 768px for optimal line length (60-80 chars)
+   - Override aura.build's max-w-7xl (1280px) so it doesn't overflow sidebar
+   - Strong typographic hierarchy: H1 48px/700, H2 28px/600, H3 18px/600
+   - 64px breathing room between major sections
+   - Sidebar width 256px, link font 14px, active state without text shift
+   - Eyebrow label AA-compliant at 10px (blue-700 not blue-600)
+   - scroll-margin-top on headings so anchor links clear fixed header
+   - focus-visible outlines for keyboard navigation
+   ========================================================================= */
+
+/* Layout shell */
 .learn-layout-react {
   display: flex;
   margin-top: 64px;
   padding: 0;
   box-sizing: border-box;
   min-height: calc(100vh - 64px);
+  /* Base font for learn pages only — 16px so Tailwind rem-based classes
+     in scraped HTML render at their intended sizes (aura.build uses 16px). */
+  font-size: 16px;
+  line-height: 1.6;
 }
 
 .learn-content-react {
@@ -1797,74 +1813,305 @@ img { display: block; max-width: 100%; }
   min-width: 0;
 }
 
-/* When rendering verbatim aura.build content, drop the old 800px cap and
-   let the article body fill the available width. The scraped HTML already
-   has its own max-w-* classes that handle line length. */
 .learn-content-verbatim {
   padding: 0 !important;
   max-width: none !important;
 }
 
-/* The scraped aura.build article body — let it render as-is. Only override
-   the things that need to integrate with our app shell (dark mode is
-   handled by the .dark class on <html>, which is the same convention
-   aura.build uses, so nothing to do here). */
+/* === ARTICLE CONTAINER (Priority 1 fixes #2 + #3) ===
+   The scraped HTML wraps everything in <div class="relative max-w-7xl mx-auto">.
+   max-w-7xl = 1280px, which is wider than our ~1000px main area, causing
+   overflow into the sidebar. We override max-w-7xl inside the article to
+   fit the available width, and constrain the article itself to 768px
+   (industry standard for documentation content). */
 .aura-learn-content {
   width: 100%;
+  max-width: 820px;
+  margin: 0 auto;
+  padding: 0 24px;
+  box-sizing: border-box;
+  /* Use 16px base so all rem-based Tailwind classes render correctly */
+  font-size: 16px;
+  line-height: 1.6;
+  color: hsl(var(--foreground));
 }
 
+/* Override max-w-7xl (and other max-w-* used by aura.build) inside the
+   article so they don't overflow our narrower content area. */
+.aura-learn-content [class*="max-w-7xl"],
+.aura-learn-content [class*="max-w-6xl"],
+.aura-learn-content [class*="max-w-5xl"],
+.aura-learn-content [class*="max-w-4xl"] {
+  max-width: 100% !important;
+}
+
+/* === H1 (Priority 2 fix #4) ===
+   Page title.aura.build uses 48px/400/-2.4px. We go bolder: 48px/700/-0.025em
+   for stronger hierarchy and professional feel (Stripe/Vercel/Linear style). */
+.aura-learn-content h1 {
+  font-size: 48px;
+  line-height: 1.1;
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  margin: 48px 0 16px;
+  color: hsl(var(--foreground));
+  scroll-margin-top: 80px;
+}
+
+/* === LEAD PARAGRAPH (Priority 2 fix #5) ===
+   The first paragraph after H1. aura.build: 24px/300/1.33.
+   We use 22px/400/1.5 with max-width 65ch for optimal readability. */
+.aura-learn-content h1 + p,
+.aura-learn-content p.text-2xl,
+.aura-learn-content p[class*="text-2xl"] {
+  font-size: 22px;
+  line-height: 1.5;
+  font-weight: 400;
+  color: hsl(var(--muted-foreground));
+  max-width: 65ch;
+  margin: 0 0 48px;
+}
+
+/* === SECTION H2 (Priority 2 fix #6) ===
+   Major section headings. aura.build: 24px/500.
+   We use 28px/600 with 64px top margin for clear section separation. */
+.aura-learn-content h2 {
+  font-size: 28px;
+  line-height: 1.25;
+  font-weight: 600;
+  letter-spacing: -0.015em;
+  margin: 64px 0 16px;
+  color: hsl(var(--foreground));
+  scroll-margin-top: 80px;
+}
+
+/* Special case: "On this page" TOC heading — keep smaller, like aura.build */
+.aura-learn-content h2.text-base,
+.aura-learn-content h2[class*="text-base"] {
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: 0;
+  margin: 0 0 12px;
+}
+
+/* === SUBSECTION H3 ===
+   Subsection headings inside a section.aura.build: ~18px/500.
+   We use 18px/600 with 32px top margin. */
+.aura-learn-content h3 {
+  font-size: 18px;
+  line-height: 1.35;
+  font-weight: 600;
+  letter-spacing: -0.005em;
+  margin: 32px 0 12px;
+  color: hsl(var(--foreground));
+  scroll-margin-top: 80px;
+}
+
+/* === BODY PARAGRAPHS ===
+   Default body text. 16px/1.6/16px bottom margin for breathing room. */
+.aura-learn-content p {
+  font-size: 16px;
+  line-height: 1.6;
+  margin: 0 0 16px;
+  color: hsl(var(--foreground));
+  max-width: 70ch;
+}
+
+/* Lists inside article */
+.aura-learn-content ul,
+.aura-learn-content ol {
+  margin: 0 0 16px;
+  padding-left: 24px;
+  max-width: 70ch;
+}
+.aura-learn-content li {
+  margin: 6px 0;
+  line-height: 1.6;
+}
+.aura-learn-content li > p {
+  margin: 0 0 8px;
+}
+
+/* Links inside article */
+.aura-learn-content a {
+  color: #2563eb;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  transition: color 0.15s;
+}
+.aura-learn-content a:hover {
+  color: #1d4ed8;
+}
+
+/* === EYEBROW LABELS (Priority 4 fix #12) ===
+   Small uppercase labels like "AI DESIGN QUALITY". These are 10px text
+   so they need blue-700 (#1d4ed8, contrast 6.92:1) not blue-600
+   (#2563eb, contrast 4.93:1) to pass WCAG AA for small text. */
+.aura-learn-content [class*="text-blue-600"] {
+  color: #1d4ed8 !important;
+}
+.dark .aura-learn-content [class*="text-blue-600"] {
+  color: #60a5fa !important;
+}
+
+/* === CODE BLOCKS === */
+.aura-learn-content code {
+  font-family: 'SF Mono', Monaco, Consolas, 'Liberation Mono', monospace;
+  font-size: 0.875em;
+  background: hsl(var(--secondary));
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+.aura-learn-content pre {
+  background: #1e1e1e;
+  color: #d4d4d4;
+  padding: 16px 20px;
+  border-radius: 8px;
+  overflow-x: auto;
+  margin: 16px 0;
+  font-size: 14px;
+  line-height: 1.6;
+}
+.aura-learn-content pre code {
+  background: transparent;
+  padding: 0;
+  color: inherit;
+  font-size: inherit;
+}
+
+/* === SIDEBAR (Priority 3 fixes #7-#11) === */
+
+/* Fix #7: sidebar width 280px → 256px */
+.learn-sidebar {
+  width: 256px;
+  flex-shrink: 0;
+  border-right: 1px solid hsl(var(--border));
+  padding: 24px 0;
+  position: sticky;
+  top: 64px;
+  height: fit-content;
+  max-height: calc(100vh - 64px);
+  overflow-y: auto;
+  background: hsl(var(--secondary) / 0.5);
+}
+
+/* Fix #11: hide the "LEARN" sidebar header — aura.build doesn't have it */
+.learn-sidebar-header {
+  display: none;
+}
+
+/* Fix #10: group title 11px → 12px, letter-spacing 0.08em → 0.05em */
+.learn-sidebar-group {
+  margin-bottom: 20px;
+}
+.learn-sidebar-group-title {
+  padding: 8px 16px 6px;
+  font-size: 12px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: hsl(var(--muted-foreground));
+}
+
+.learn-sidebar-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+/* Fix #8: sidebar link 13px → 14px, padding compact, with horizontal margin */
+.learn-sidebar-link {
+  display: block;
+  padding: 8px 12px;
+  margin: 2px 8px;
+  font-size: 14px;
+  color: hsl(var(--muted-foreground));
+  text-decoration: none;
+  transition: all 0.15s;
+  line-height: 1.4;
+  border-radius: 6px;
+  border-left: none;
+}
+
+.learn-sidebar-link:hover {
+  color: hsl(var(--foreground));
+  background: hsl(var(--secondary));
+}
+
+/* Fix #9: active state — no text shift, no border-left, blue accent */
+.learn-sidebar-link.active {
+  color: #1d4ed8;
+  font-weight: 500;
+  background: #dbeafe;
+  border-left: none;
+  padding-left: 12px; /* same as inactive — no shift */
+}
+.dark .learn-sidebar-link.active {
+  color: #60a5fa;
+  background: rgba(37, 99, 235, 0.15);
+}
+
+/* Fix #15: focus-visible for keyboard navigation */
+.learn-sidebar-link:focus-visible {
+  outline: 2px solid #2563eb;
+  outline-offset: 2px;
+}
+
+/* === BREADCRUMB (removed from page.tsx, kept for safety) === */
 .learn-breadcrumb-active {
   color: hsl(var(--foreground));
   font-weight: 500;
 }
 
+/* === Legacy content blocks (kept for backward compat) === */
 .learn-markdown-react {
-  font-size: 15px;
-  line-height: 1.7;
+  font-size: 16px;
+  line-height: 1.6;
   color: hsl(var(--foreground));
 }
 
-/* Lead paragraph at the top of each page */
 .learn-lead {
-  font-size: 18px;
-  line-height: 1.65;
-  color: hsl(var(--foreground));
-  margin: 0 0 32px;
+  font-size: 22px;
+  line-height: 1.5;
+  color: hsl(var(--muted-foreground));
+  margin: 0 0 48px;
   font-weight: 400;
+  max-width: 65ch;
 }
 
-/* Content blocks — Section, Subsection, Tip, Callout, Step */
-.learn-section { margin: 0 0 40px; }
+.learn-section { margin: 0 0 64px; }
 .learn-section-title {
-  font-size: 24px;
+  font-size: 28px;
   font-weight: 600;
-  letter-spacing: -0.01em;
+  letter-spacing: -0.015em;
   margin: 0 0 16px;
   color: hsl(var(--foreground));
+  scroll-margin-top: 80px;
 }
 .learn-section-body > p,
 .learn-section-body > ul,
 .learn-section-body > ol,
-.learn-section-body > pre { margin: 0 0 14px; }
+.learn-section-body > pre { margin: 0 0 16px; }
 
-.learn-subsection { margin: 0 0 20px; }
+.learn-subsection { margin: 0 0 24px; }
 .learn-subsection-title {
-  font-size: 17px;
+  font-size: 18px;
   font-weight: 600;
-  margin: 0 0 10px;
+  margin: 32px 0 12px;
   color: hsl(var(--foreground));
+  scroll-margin-top: 80px;
 }
 .learn-subsection-body > p,
-.learn-subsection-body > ul { margin: 0 0 10px; }
+.learn-subsection-body > ul { margin: 0 0 12px; }
 
 .learn-tip {
   display: flex;
   gap: 16px;
   background: hsl(var(--secondary));
-  border-left: 3px solid #3b82f6;
+  border-left: 3px solid #1d4ed8;
   border-radius: 6px;
   padding: 14px 18px;
-  margin: 16px 0;
+  margin: 20px 0;
   font-size: 14px;
   line-height: 1.6;
 }
@@ -1872,9 +2119,9 @@ img { display: block; max-width: 100%; }
   flex-shrink: 0;
   font-size: 11px;
   font-weight: 700;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: #3b82f6;
+  color: #1d4ed8;
   padding-top: 2px;
 }
 .learn-tip-body { color: hsl(var(--foreground)); }
@@ -1885,15 +2132,15 @@ img { display: block; max-width: 100%; }
   background: hsl(var(--secondary));
   border-radius: 8px;
   padding: 18px 22px;
-  margin: 20px 0;
+  margin: 24px 0;
   font-size: 14px;
   line-height: 1.6;
 }
 .learn-callout-title {
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.05em;
   color: hsl(var(--muted-foreground));
   margin-bottom: 8px;
 }
@@ -1924,7 +2171,7 @@ img { display: block; max-width: 100%; }
 }
 .learn-step-body { flex: 1; min-width: 0; }
 .learn-step-title {
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 600;
   margin: 0 0 6px;
   color: hsl(var(--foreground));
@@ -1938,7 +2185,7 @@ img { display: block; max-width: 100%; }
   padding: 2px 6px;
   border-radius: 4px;
   font-family: 'SF Mono', Monaco, Consolas, 'Liberation Mono', monospace;
-  font-size: 0.88em;
+  font-size: 0.875em;
   color: hsl(var(--foreground));
 }
 
@@ -1967,11 +2214,11 @@ img { display: block; max-width: 100%; }
 }
 
 .learn-markdown-react ul,
-.learn-markdown-react ol { padding-left: 24px; margin: 0 0 14px; }
+.learn-markdown-react ol { padding-left: 24px; margin: 0 0 16px; }
 .learn-markdown-react li { margin: 6px 0; }
 .learn-markdown-react strong { font-weight: 600; color: hsl(var(--foreground)); }
 
-/* Video tutorial list — used on the video-tutorials page */
+/* Video tutorial list */
 .learn-video-list {
   list-style: none;
   padding: 0;
@@ -1982,14 +2229,10 @@ img { display: block; max-width: 100%; }
   border-top: 1px solid hsl(var(--border));
   font-size: 14px;
   line-height: 1.6;
-  scroll-margin-top: 80px; /* so anchor links land below the fixed header */
+  scroll-margin-top: 80px;
 }
 .learn-video-list li:first-child { border-top: none; padding-top: 0; }
 .learn-video-list li strong { display: block; margin-bottom: 4px; font-size: 15px; }
-
-/* Sidebar list — react-rendered */
-.learn-sidebar-list { list-style: none; padding: 0; margin: 0; }
-.learn-sidebar-list li { margin: 0; }
 
 /* Footer prev/next nav */
 .learn-footer-nav {
@@ -2015,11 +2258,15 @@ img { display: block; max-width: 100%; }
   background: hsl(var(--secondary));
   border-color: hsl(var(--foreground));
 }
+.learn-footer-nav-item:focus-visible {
+  outline: 2px solid #2563eb;
+  outline-offset: 2px;
+}
 .learn-footer-nav-next { text-align: right; margin-left: auto; }
 .learn-footer-nav-label {
   font-size: 11px;
   text-transform: uppercase;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.05em;
   color: hsl(var(--muted-foreground));
 }
 .learn-footer-nav-title {
@@ -2029,13 +2276,27 @@ img { display: block; max-width: 100%; }
 }
 
 @media (max-width: 768px) {
-  .learn-layout-react { padding: 0; }
-  .learn-content-react,
-  .learn-content-verbatim { padding: 0; }
+  .learn-layout-react {
+    flex-direction: column;
+    font-size: 16px;
+  }
+  .learn-sidebar {
+    width: 100%;
+    position: relative;
+    top: 0;
+    max-height: none;
+    border-right: none;
+    border-bottom: 1px solid hsl(var(--border));
+    background: hsl(var(--background));
+  }
+  .aura-learn-content {
+    padding: 0 20px;
+  }
+  .aura-learn-content h1 { font-size: 32px; margin: 32px 0 12px; }
+  .aura-learn-content h2 { font-size: 22px; margin: 48px 0 12px; }
+  .aura-learn-content h3 { font-size: 16px; }
   .learn-footer-nav { flex-direction: column; }
   .learn-footer-nav-next { text-align: left; margin-left: 0; }
-  .learn-section-title { font-size: 20px; }
-  .learn-lead { font-size: 16px; }
 }
 
 /* =========================================================================
