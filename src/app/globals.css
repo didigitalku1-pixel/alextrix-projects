@@ -101,7 +101,9 @@ img { display: block; max-width: 100%; }
 .app { display: flex; flex-direction: column; min-height: 100vh; }
 
 /* === Header (fixed, backdrop-blur) — matches aura.build ===
-   aura.build uses transparent bg + blur(24px), taller (73px), 48px horizontal padding. */
+   aura.build uses transparent bg + blur(24px), taller (73px), 48px horizontal padding.
+   Note: backdrop-filter requires a non-fully-transparent background to work in Chromium.
+   We use a near-transparent value (0.01) so blur applies but the page shows through. */
 .header {
   position: fixed;
   top: 0; left: 0; right: 0;
@@ -110,7 +112,7 @@ img { display: block; max-width: 100%; }
   backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);
   border-bottom: 1px solid hsl(var(--border) / 0.3);
-  background: hsl(var(--background) / 0.001); /* transparent — let blur show through */
+  background: hsl(var(--background) / 0.7);
 }
 @media (max-width: 768px) { .header { padding: 12px 16px; } }
 
