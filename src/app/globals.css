@@ -1632,27 +1632,32 @@ img { display: block; max-width: 100%; }
 
 /* === ARTICLE CONTAINER (Priority 1 fixes #2 + #3) ===
    The scraped HTML wraps everything in <div class="relative max-w-7xl mx-auto">.
-   max-w-7xl = 1280px, which is wider than our ~1000px main area, causing
-   overflow into the sidebar. We override max-w-7xl inside the article to
-   fit the available width, and constrain the article itself to 768px
-   (industry standard for documentation content). */
+   aura.build's main is 1168px wide (1280 - 256 sidebar + padding). They don't
+   constrain article to 768px — content is wide. We match their layout:
+   article fills main (1024px) with 24px horizontal padding.
+   We override all max-w-* + container classes to 100% so they don't
+   overflow, and convert inline-block elements to block to prevent
+   content-sized overflow into the sidebar. */
 .aura-learn-content {
   width: 100%;
-  max-width: 820px;
-  margin: 0 auto;
+  max-width: none;
+  margin: 0;
   padding: 0 24px;
   box-sizing: border-box;
   /* Use 16px base so all rem-based Tailwind classes render correctly */
   font-size: 16px;
   line-height: 1.6;
   color: hsl(var(--foreground));
+  /* Safety net: clip any residual overflow so content never bleeds
+     into the sidebar area. */
+  overflow: hidden;
 }
 
 /* Override ALL max-width classes inside the article so they don't
    overflow our narrower content area. aura.build uses max-w-7xl (1280px),
    max-w-6xl (1152px), container (1120px+), and screen-based max widths.
    We force everything to 100% so the article body stays within our
-   820px container and doesn't bleed into the sidebar. */
+   container and doesn't bleed into the sidebar. */
 .aura-learn-content .container,
 .aura-learn-content [class*="max-w-"],
 .aura-learn-content [class*="max-w-screen"] {
@@ -1661,6 +1666,20 @@ img { display: block; max-width: 100%; }
   padding-right: 0 !important;
   margin-left: 0 !important;
   margin-right: 0 !important;
+}
+
+/* Convert inline-block elements to block — inline-block shrinks to
+   content width which can exceed parent and overflow into sidebar.
+   Block elements fill parent width. */
+.aura-learn-content [class*="inline-block"] {
+  display: block !important;
+}
+
+/* Don't center wide content — it causes overflow when content is wider
+   than parent. Left-align everything. */
+.aura-learn-content .justify-center,
+.aura-learn-content [class*="justify-center"] {
+  justify-content: flex-start !important;
 }
 
 /* === H1 (Priority 2 fix #4) ===
@@ -1837,12 +1856,13 @@ img { display: block; max-width: 100%; }
   margin: 0;
 }
 
-/* Fix #8: sidebar link 13px → 14px, padding compact, with horizontal margin */
+/* Fix #8: sidebar link 13px → 14px, padding compact, with horizontal margin.
+   Use !important because Tailwind v4 preflight or cascade may override. */
 .learn-sidebar-link {
   display: block;
   padding: 8px 12px;
   margin: 2px 8px;
-  font-size: 14px;
+  font-size: 14px !important;
   color: hsl(var(--muted-foreground));
   text-decoration: none;
   transition: all 0.15s;
