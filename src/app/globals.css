@@ -3844,3 +3844,203 @@ img { display: block; max-width: 100%; }
   margin: 20px 0 8px;
   scroll-margin-top: 96px;
 }
+
+/* =========================================================================
+   DOCS COMPONENTS — Font grid, color psychology, video lessons
+   ========================================================================= */
+
+/* Font showcase grid */
+.docs-font-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 12px;
+  margin: 16px 0 24px;
+  max-width: 70ch;
+}
+.docs-font-card {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 16px 18px;
+  border: 1px solid hsl(var(--border));
+  border-radius: 8px;
+  background: hsl(var(--background));
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.docs-font-card:hover {
+  border-color: hsl(var(--foreground) / 0.3);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+.docs-font-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: hsl(var(--foreground));
+}
+.docs-font-sample {
+  font-size: 15px;
+  line-height: 1.5;
+  color: hsl(0 0% 40%);
+  letter-spacing: 0.01em;
+}
+.dark .docs-font-sample { color: hsl(0 0% 70%); }
+.docs-font-desc {
+  font-size: 12px;
+  line-height: 1.5;
+  color: hsl(var(--muted-foreground));
+  margin-top: 4px;
+}
+
+/* Color psychology grid */
+.docs-color-psych-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 10px;
+  margin: 16px 0 24px;
+  max-width: 70ch;
+}
+.docs-color-psych-card {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 14px 16px;
+  border: 1px solid hsl(var(--border));
+  border-radius: 8px;
+  background: hsl(var(--background));
+}
+.docs-color-psych-name {
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: capitalize;
+  color: hsl(var(--foreground));
+}
+.docs-color-psych-desc {
+  font-size: 12px;
+  line-height: 1.5;
+  color: hsl(var(--muted-foreground));
+}
+
+/* =========================================================================
+   VIDEO LESSONS — for /learn/prompt-for-layout
+   ========================================================================= */
+
+.docs-lessons-list {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+  margin-top: 24px;
+}
+.docs-lesson {
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  gap: 24px;
+  padding-bottom: 32px;
+  border-bottom: 1px solid hsl(var(--border) / 0.5);
+  scroll-margin-top: 96px;
+}
+.docs-lesson:last-child { border-bottom: none; }
+@media (max-width: 768px) {
+  .docs-lesson { grid-template-columns: 1fr; gap: 16px; }
+}
+
+.docs-lesson-thumb {
+  position: relative;
+  display: block;
+  aspect-ratio: 16 / 9;
+  border-radius: 10px;
+  overflow: hidden;
+  background: #000;
+  border: 1px solid hsl(var(--border));
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+.docs-lesson-thumb:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+}
+.docs-lesson-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.docs-lesson-play {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.95);
+  color: #000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s, background 0.2s;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+}
+.docs-lesson-play svg {
+  width: 24px;
+  height: 24px;
+  margin-left: 3px;
+}
+.docs-lesson-thumb:hover .docs-lesson-play {
+  transform: translate(-50%, -50%) scale(1.08);
+  background: #fff;
+}
+.docs-lesson-num {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  padding: 3px 10px;
+  background: rgba(0, 0, 0, 0.7);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  border-radius: 4px;
+  backdrop-filter: blur(4px);
+}
+
+.docs-lesson-body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+.docs-lesson-eyebrow {
+  font-size: 11px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: hsl(var(--muted-foreground));
+}
+.docs-lesson-title {
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 1.3;
+  letter-spacing: -0.01em;
+  color: hsl(var(--foreground));
+  margin: 0;
+}
+.docs-lesson-desc {
+  font-size: 14px;
+  line-height: 1.65;
+  color: hsl(0 0% 35%);
+  margin: 0;
+}
+.dark .docs-lesson-desc { color: hsl(0 0% 70%); }
+.docs-lesson-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  color: hsl(var(--foreground));
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-color: hsl(var(--muted-foreground) / 0.4);
+  transition: text-decoration-color 0.15s;
+  align-self: flex-start;
+}
+.docs-lesson-link:hover { text-decoration-color: hsl(var(--foreground)); }
