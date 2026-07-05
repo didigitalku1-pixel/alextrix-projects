@@ -60,6 +60,15 @@ export function DocH3({ id, children, className = "" }: { id?: string; children:
   );
 }
 
+/** H4 — sub-subsection heading. 15px / weight 600. */
+export function DocH4({ id, children, className = "" }: { id?: string; children: ReactNode; className?: string }) {
+  return (
+    <h4 id={id} className={`docs-h4 ${className}`}>
+      {children}
+    </h4>
+  );
+}
+
 /** Eyebrow — small uppercase label above feature description. */
 export function DocEyebrow({ children, className = "" }: { children: ReactNode; className?: string }) {
   return <p className={`docs-eyebrow ${className}`}>{children}</p>;

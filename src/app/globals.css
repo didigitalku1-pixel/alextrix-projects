@@ -3687,3 +3687,160 @@ img { display: block; max-width: 100%; }
   background: hsl(var(--foreground));
   color: hsl(var(--background));
 }
+
+/* =========================================================================
+   DOCS COMPONENTS — DNS table, registrar grid, FAQ accordion
+   ========================================================================= */
+
+/* DNS table — for custom-domain page */
+.docs-dns-table {
+  margin: 16px 0 24px;
+  border: 1px solid hsl(var(--border));
+  border-radius: 8px;
+  overflow: hidden;
+  max-width: 70ch;
+}
+.docs-dns-row {
+  display: grid;
+  grid-template-columns: 100px 100px 1fr;
+  gap: 16px;
+  padding: 12px 16px;
+  border-bottom: 1px solid hsl(var(--border) / 0.5);
+  font-size: 14px;
+  align-items: center;
+}
+.docs-dns-row:last-child { border-bottom: none; }
+.docs-dns-row-header {
+  background: hsl(var(--secondary) / 0.5);
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: hsl(var(--muted-foreground));
+}
+.docs-dns-type {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 700;
+  font-family: 'SF Mono', 'JetBrains Mono', monospace;
+  letter-spacing: 0.04em;
+}
+.docs-dns-type-a { background: #fee2e2; color: #991b1b; }
+.docs-dns-type-cname { background: #dbeafe; color: #1e40af; }
+.dark .docs-dns-type-a { background: rgba(239, 68, 68, 0.2); color: #fca5a5; }
+.dark .docs-dns-type-cname { background: rgba(59, 130, 246, 0.2); color: #93c5fd; }
+.docs-dns-host {
+  font-family: 'SF Mono', 'JetBrains Mono', monospace;
+  font-size: 13px;
+  color: hsl(var(--foreground));
+}
+.docs-dns-value {
+  font-family: 'SF Mono', 'JetBrains Mono', monospace;
+  font-size: 13px;
+  color: hsl(0 0% 35%);
+  word-break: break-all;
+}
+.dark .docs-dns-value { color: hsl(0 0% 70%); }
+
+/* Registrar grid — for custom-domain & seo-settings links */
+.docs-registrar-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 10px;
+  margin: 16px 0 24px;
+  max-width: 70ch;
+}
+.docs-registrar-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border: 1px solid hsl(var(--border));
+  border-radius: 8px;
+  background: hsl(var(--background));
+  text-decoration: none;
+  color: inherit;
+  transition: border-color 0.15s, box-shadow 0.15s, transform 0.1s;
+}
+.docs-registrar-card:hover {
+  border-color: hsl(var(--foreground) / 0.4);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  transform: translateY(-1px);
+}
+.docs-registrar-name {
+  font-size: 14px;
+  font-weight: 500;
+  color: hsl(var(--foreground));
+}
+.docs-registrar-arrow {
+  color: hsl(var(--muted-foreground));
+  transition: color 0.15s;
+}
+.docs-registrar-card:hover .docs-registrar-arrow { color: hsl(var(--foreground)); }
+
+/* FAQ accordion — for seo-settings */
+.docs-faq {
+  border: 1px solid hsl(var(--border));
+  border-radius: 8px;
+  margin: 8px 0;
+  overflow: hidden;
+  max-width: 70ch;
+  transition: border-color 0.15s;
+}
+.docs-faq[open] { border-color: hsl(var(--foreground) / 0.3); }
+.docs-faq-q {
+  padding: 14px 18px;
+  font-size: 15px;
+  font-weight: 500;
+  color: hsl(var(--foreground));
+  cursor: pointer;
+  list-style: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  user-select: none;
+}
+.docs-faq-q::-webkit-details-marker { display: none; }
+.docs-faq-q::after {
+  content: '+';
+  font-size: 18px;
+  font-weight: 400;
+  color: hsl(var(--muted-foreground));
+  transition: transform 0.2s;
+  flex-shrink: 0;
+}
+.docs-faq[open] .docs-faq-q::after {
+  content: '−';
+}
+.docs-faq-a {
+  padding: 0 18px 16px;
+  border-top: 1px solid hsl(var(--border) / 0.5);
+}
+.docs-faq-a .docs-p { margin-top: 12px; font-size: 14px; }
+
+/* Code styling inside lists (for seo-settings URLs) */
+.docs-li code,
+.docs-p code {
+  font-family: 'SF Mono', 'JetBrains Mono', Monaco, Consolas, monospace;
+  font-size: 0.88em;
+  background: hsl(var(--secondary));
+  padding: 2px 6px;
+  border-radius: 4px;
+  color: hsl(var(--foreground));
+}
+
+/* H4 — sub-subsection heading. 15px / weight 600, smaller than H3 */
+.docs-h4 {
+  font-size: 15px;
+  line-height: 1.4;
+  font-weight: 600;
+  letter-spacing: -0.005em;
+  color: hsl(var(--foreground));
+  margin: 20px 0 8px;
+  scroll-margin-top: 96px;
+}
