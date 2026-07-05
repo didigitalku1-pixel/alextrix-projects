@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { VideoWithPoster } from "./VideoWithPoster";
 
 /* ============================================================================
    Documentation primitives — used to compose learn pages with a native,
@@ -190,7 +191,7 @@ export function DocLink({
   );
 }
 
-/** Featured video block — large 16:9 iframe with optional title. */
+/** Featured video block — large 16:9 with click-to-play poster (avoids YouTube bot detection). */
 export function DocVideo({
   src,
   title,
@@ -202,21 +203,28 @@ export function DocVideo({
   poster?: string;
   className?: string;
 }) {
+  // Extract YouTube video ID for thumbnail
+  const ytMatch = src.match(/youtube\.com\/embed\/([a-zA-Z0-9_-]{11})/);
+  const ytId = ytMatch?.[1];
+  // Build a clean URL without autoplay (autoplay triggers YouTube bot detection)
+  const cleanSrc = src
+    .replace("autoplay=1", "autoplay=0")
+    .replace(/&autoplay=0&/g, "&")
+    .replace(/[?&]autoplay=0/g, "");
+  const thumb = poster ?? (ytId ? `https://img.youtube.com/vi/${ytId}/maxresdefault.jpg` : undefined);
+
   return (
     <figure className={`docs-video ${className}`}>
       <div className="docs-video-frame">
-        <iframe
-          src={src}
-          title={title ?? "Embedded video"}
-          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-          allowFullScreen
-          loading="lazy"
-        />
+        <VideoWithPoster src={cleanSrc} thumb={thumb} title={title} />
       </div>
       {title && <figcaption className="docs-video-caption">{title}</figcaption>}
     </figure>
   );
 }
+
+/** Client-side video with poster — shows thumbnail + play button, loads iframe on click. */
+// (Moved to VideoWithPoster.tsx to keep Doc.tsx as server components)
 
 /** Embedded iframe (for Figma widgets, demo sites, etc.). */
 export function DocEmbed({
@@ -230,6 +238,35 @@ export function DocEmbed({
   aspect?: string;
   className?: string;
 }) {
+  // For external embeds (Figma, etc.) keep iframe.
+  // For internal aura.build paths (start with /s/), show a styled placeholder
+  // with link instead of broken iframe.
+  const isInternal = src.startsWith("/s/") || src.startsWith("/embed/");
+
+  if (isInternal) {
+    return (
+      <figure className={`docs-embed docs-embed-placeholder ${className}`} style={{ aspectRatio: aspect }}>
+        <div className="docs-embed-placeholder-content">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <rect x="3" y="3" width="18" height="18" rx="2" />
+            <path d="M3 9h18" />
+            <path d="M9 21V9" />
+          </svg>
+          <p className="docs-embed-placeholder-title">{title ?? "Interactive demo"}</p>
+          <p className="docs-embed-placeholder-desc">This interactive template is available on aura.build.</p>
+          <a
+            href={`https://www.aura.build${src}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="docs-embed-placeholder-link"
+          >
+            Open demo on aura.build →
+          </a>
+        </div>
+      </figure>
+    );
+  }
+
   return (
     <figure className={`docs-embed ${className}`} style={{ aspectRatio: aspect }}>
       <iframe src={src} title={title ?? "Embedded content"} loading="lazy" allowFullScreen />

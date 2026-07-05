@@ -3352,3 +3352,170 @@ img { display: block; max-width: 100%; }
   .docs-header { margin-top: 32px; }
   .docs-h2 { margin-top: 40px; }
 }
+
+/* === Video poster (click-to-play) === */
+.docs-video-poster {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  background: #000 center/cover no-repeat;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 16px;
+  padding: 24px;
+  transition: background-color 0.2s;
+}
+.docs-video-poster:hover { background-color: rgba(0, 0, 0, 0.85); }
+.docs-video-poster::before {
+  /* Subtle gradient overlay so play button is visible on any thumbnail */
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(0,0,0,0) 40%, rgba(0,0,0,0.6) 100%);
+  pointer-events: none;
+}
+.docs-video-play {
+  position: relative;
+  z-index: 1;
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.95);
+  color: #000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s, background 0.2s;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+}
+.docs-video-play svg {
+  width: 28px;
+  height: 28px;
+  margin-left: 4px; /* optical centering of triangle */
+}
+.docs-video-poster:hover .docs-video-play {
+  transform: scale(1.06);
+  background: #fff;
+}
+.docs-video-poster-title {
+  position: relative;
+  z-index: 1;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 500;
+  text-align: center;
+  max-width: 80%;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.6);
+}
+
+/* === Embed placeholder (for internal aura.build paths that 404 on our domain) === */
+.docs-embed-placeholder {
+  background: linear-gradient(135deg, hsl(var(--secondary)) 0%, hsl(var(--secondary) / 0.5) 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  border: 1px dashed hsl(var(--border));
+}
+.docs-embed-placeholder-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  text-align: center;
+  max-width: 360px;
+  color: hsl(var(--muted-foreground));
+}
+.docs-embed-placeholder-content svg { opacity: 0.5; }
+.docs-embed-placeholder-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: hsl(var(--foreground));
+  margin: 4px 0 0;
+}
+.docs-embed-placeholder-desc {
+  font-size: 13px;
+  margin: 0;
+}
+.docs-embed-placeholder-link {
+  margin-top: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  color: hsl(var(--foreground));
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* === Feature block polish — make it feel like a card === */
+.docs-feature-block {
+  padding: 16px 20px;
+  border-left: 2px solid hsl(var(--border));
+  background: hsl(var(--secondary) / 0.3);
+  border-radius: 0 8px 8px 0;
+  transition: border-color 0.15s, background 0.15s;
+}
+.docs-feature-block:hover {
+  border-left-color: hsl(var(--foreground) / 0.4);
+  background: hsl(var(--secondary) / 0.5);
+}
+.docs-feature-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: hsl(var(--foreground));
+  margin: 0 0 8px;
+}
+.docs-feature-title::before {
+  content: "";
+  display: inline-block;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: hsl(var(--foreground));
+  opacity: 0.4;
+}
+.docs-feature-body {
+  font-size: 15px;
+  line-height: 1.65;
+  color: hsl(0 0% 30%);
+  margin: 0;
+}
+.dark .docs-feature-body { color: hsl(0 0% 70%); }
+
+/* === Code block — modern dark theme === */
+.docs-codeblock {
+  background: #0d0d0d;
+  color: #e5e5e5;
+  border: 1px solid #1f1f1f;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+}
+.dark .docs-codeblock {
+  background: #000;
+  border-color: hsl(var(--border));
+}
+
+/* === Article max-width tighten + spacing rhythm === */
+.docs-article { max-width: 720px; }
+.docs-article > section + section,
+.docs-article > .docs-h2 + .docs-feature-block { margin-top: 0; }
+
+/* === TOC title smaller (no uppercase scream) === */
+.docs-toc-title {
+  font-size: 11px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: hsl(var(--muted-foreground));
+  margin: 0 0 10px;
+  padding: 0 12px;
+}
+.docs-toc-list { border-left-color: hsl(var(--border) / 0.6); }
