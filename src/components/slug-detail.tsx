@@ -256,13 +256,12 @@ export default function SlugDetail({
                 )}
                 <span className="detail-stat">👁 {formatCount(item.views)} views</span>
                 {item.forks > 0 && <span className="detail-stat">⑂ {formatCount(item.forks)} remixes</span>}
-                {item.premium && <span className="detail-stat">👑 Pro</span>}
+                </div>
               </div>
-            </div>
             <div className="detail-hero-right">
-              {item.premium && (
+              {item.featured && (
                 <a href="/" className="btn-pro">
-                  Upgrade to Pro
+                  ★ Featured
                   <span style={{ marginLeft: 6 }}>→</span>
                 </a>
               )}
@@ -445,8 +444,8 @@ export default function SlugDetail({
             <div className="about-grid">
               <div className="about-left">
                 <h2 className="about-h2">About</h2>
-                {item.premium && (
-                  <div className="about-pro-badge">👑 Pro {item.type}</div>
+                {item.featured && (
+                  <div className="about-pro-badge">★ Featured {item.type}</div>
                 )}
                 {item.desc ? (
                   <p className="about-desc">{item.desc}</p>
@@ -475,7 +474,7 @@ export default function SlugDetail({
                   </div>
                   <div>
                     <div className="about-author-name">Creator</div>
-                    <div className="about-author-sub">{item.premium ? "Pro Member" : "Member"}</div>
+                    <div className="about-author-sub">Member</div>
                   </div>
                 </div>
                 <h3 className="about-h3" style={{ marginTop: 24 }}>Details</h3>
@@ -624,7 +623,7 @@ function RelatedCard({ item }: { item: any }) {
             className="related-card-image"
           />
         )}
-        {item.premium && <span className="related-card-pro">PRO</span>}
+        {item.featured && <span className="related-card-pro">★</span>}
       </div>
       <div className="related-card-footer">
         <h3 className="related-card-title" title={item.title}>{item.title}</h3>

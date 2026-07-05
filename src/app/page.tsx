@@ -118,13 +118,13 @@ function HomeInner() {
     if (sort !== "views") params.set("sort", sort);
     if (tag) params.set("tag", tag);
     if (debouncedQ) params.set("q", debouncedQ);
-    if (premium) params.set("premium", "true");
+
     if (featured) params.set("featured", "true");
     if (page > 1) params.set("page", String(page));
     const qs = params.toString();
     const newUrl = qs ? `/?${qs}` : "/";
     router.replace(newUrl, { scroll: false });
-  }, [tab, sort, tag, debouncedQ, premium, featured, page, router]);
+  }, [tab, sort, tag, debouncedQ, featured, page, router]);
 
   // Theme
   useEffect(() => {
@@ -143,7 +143,7 @@ function HomeInner() {
   }, [q]);
 
   // Reset page on filter change
-  useEffect(() => setPage(1), [tab, sort, tag, debouncedQ, premium, featured]);
+  useEffect(() => setPage(1), [tab, sort, tag, debouncedQ, featured]);
 
   // Load stats and tags
   useEffect(() => {
@@ -159,7 +159,7 @@ function HomeInner() {
     const params = new URLSearchParams({ type: apiType, sort, page: String(page), limit: "24" });
     if (tag) params.set("tag", tag);
     if (debouncedQ) params.set("q", debouncedQ);
-    if (premium) params.set("premium", "true");
+
     if (featured) params.set("featured", "true");
     try {
       const r = await fetch(`/api/items?${params}`);
@@ -169,12 +169,12 @@ function HomeInner() {
       setTotalPages(d.totalPages || 0);
     } catch { setItems([]); }
     setLoading(false);
-  }, [tab, sort, tag, debouncedQ, premium, featured, page]);
+  }, [tab, sort, tag, debouncedQ, featured, page]);
 
   useEffect(() => { loadItems(); }, [loadItems]);
 
   const resetFilters = () => {
-    setQ(""); setTag(null); setPremium(false); setFeatured(false); setPage(1);
+    setQ(""); setTag(null); setFeatured(false); setPage(1);
   };
 
   const formatCount = (n: number) => {
@@ -195,9 +195,8 @@ function HomeInner() {
 
   const info = PAGE_INFO[tab] || PAGE_INFO.templates;
   const pulseItems = tab === "templates" ? [
-    { label: "Free", count: stats?.templates ? Math.floor(stats.templates * 0.95) : 0, color: "#10b981" },
-    { label: "Pro", count: 496, color: "#f59e0b" },
-    { label: "Paid", count: 58, color: "#a855f7" },
+    { label: "All", count: stats?.templates || 0, color: "#3b82f6" },
+    { label: "Featured", count: stats?.featured || 0, color: "#10b981" },
   ] : [
     { label: "All", count: stats ? (stats as any)[tab === "design-md" ? "templates" : tab] || 0 : 0, color: "#3b82f6" },
   ];
@@ -282,10 +281,9 @@ function HomeInner() {
             </div>
 
             {/* Filter chips */}
-            {(tag || premium || featured) && (
+            {(tag || featured) && (
               <div className="filter-chips">
                 {tag && <span className="chip" onClick={() => setTag(null)}>#{tag} ✕</span>}
-                {premium && <span className="chip" onClick={() => setPremium(false)}>Premium ✕</span>}
                 {featured && <span className="chip" onClick={() => setFeatured(false)}>Featured ✕</span>}
               </div>
             )}
@@ -306,13 +304,6 @@ function HomeInner() {
                     {s === "views" ? "Popular" : s === "forks" ? "Most forked" : s === "recent" ? "Recent" : "A → Z"}
                   </button>
                 ))}
-                <button
-                  className={`pulse-item ${premium ? "active" : ""}`}
-                  style={{ padding: "4px 10px", fontSize: 12, marginBottom: 0 }}
-                  onClick={() => setPremium(!premium)}
-                >
-                  ★ Premium
-                </button>
                 <button
                   className={`pulse-item ${featured ? "active" : ""}`}
                   style={{ padding: "4px 10px", fontSize: 12, marginBottom: 0 }}
@@ -408,7 +399,7 @@ function HomeInner() {
                         />
                       )}
                       <div className="card-overlay"></div>
-                      {item.premium && <span className="card-badge badge-pro">PRO</span>}
+                      {item.featured && <span className="card-badge badge-featured">★</span>}
                       {(item.type === "template" || item.type === "component") && (
                         <div className="card-actions">
                           <span className="card-action-btn">📄 DESIGN.md</span>
@@ -542,7 +533,7 @@ function DesignSystemsView() {
               <a key={item.id} className="card" href={`/detail/template/${item.id}`} style={{ maxWidth: "none" }}>
                 <div className="card-image-wrap" style={{ aspectRatio: "21 / 9" }}>
                   {item.image ? <img src={`/api/image?url=${encodeURIComponent(item.image)}`} alt={item.title} className="card-image" loading="lazy" onError={(e) => { const t = e.target as HTMLImageElement; t.style.display = "none"; const p = t.parentElement; if (p && !p.querySelector(".card-image-placeholder")) { const d = document.createElement("div"); d.className = "card-image-placeholder"; d.textContent = item.title.substring(0, 20); p.appendChild(d); } }} /> : <div className="card-image-placeholder">{item.title.substring(0, 20)}</div>}
-                  {item.premium && <span className="card-badge badge-pro">PRO</span>}
+                  {item.featured && <span className="card-badge badge-featured">★</span>}
                 </div>
                 <div className="card-footer" style={{ padding: 20 }}>
                   <h2 style={{ fontSize: 20, fontWeight: 600, marginBottom: 8 }}>{item.title}</h2>
