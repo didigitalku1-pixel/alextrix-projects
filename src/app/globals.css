@@ -2022,12 +2022,12 @@ img { display: block; max-width: 100%; }
 
 .skills-doc-search-input {
   width: 100%;
-  padding: 8px 12px;
-  font-size: 13px;
-  border: 1px solid hsl(var(--border));
+  padding: 10px 16px;
+  font-size: 15px;
+  border: 1px solid #333;
   border-radius: 8px;
-  background: hsl(var(--background));
-  color: hsl(var(--foreground));
+  background: #1a1a1a;
+  color: #ffffff;
   outline: none;
   transition: border-color 0.15s;
 }
@@ -2037,7 +2037,7 @@ img { display: block; max-width: 100%; }
 }
 
 .skills-doc-search-input::placeholder {
-  color: hsl(var(--muted-foreground));
+  color: #888;
 }
 
 /* === Tag filter === */
@@ -2049,8 +2049,8 @@ img { display: block; max-width: 100%; }
 }
 
 .skills-doc-tag {
-  padding: 3px 8px;
-  font-size: 11px;
+  padding: 5px 12px;
+  font-size: 13px;
   border-radius: 999px;
   border: 1px solid hsl(var(--border));
   background: transparent;
@@ -2074,7 +2074,7 @@ img { display: block; max-width: 100%; }
 }
 
 .skills-doc-tag-count {
-  font-size: 10px;
+  font-size: 11px;
   opacity: 0.7;
 }
 
@@ -2121,7 +2121,7 @@ img { display: block; max-width: 100%; }
 }
 
 .skills-doc-item-title {
-  font-size: 13px;
+  font-size: 15px;
   font-weight: 500;
   color: hsl(var(--foreground));
   margin-bottom: 2px;
@@ -2139,7 +2139,7 @@ img { display: block; max-width: 100%; }
 }
 
 .skills-doc-item-tag {
-  font-size: 10px;
+  font-size: 12px;
   color: hsl(var(--muted-foreground));
   padding: 1px 6px;
   border-radius: 4px;
@@ -2147,7 +2147,7 @@ img { display: block; max-width: 100%; }
 }
 
 .skills-doc-item-stats {
-  font-size: 11px;
+  font-size: 13px;
   color: hsl(var(--muted-foreground));
   display: flex;
   gap: 8px;
@@ -2210,7 +2210,7 @@ img { display: block; max-width: 100%; }
   padding: 0;
   max-width: none;
   line-height: 1.7;
-  font-size: 14px;
+  font-size: 15px;
   color: hsl(var(--foreground));
 }
 
@@ -2272,24 +2272,37 @@ img { display: block; max-width: 100%; }
 .skills-doc-toolbar {
   position: sticky;
   top: 64px;
-  z-index: 10;
-  background: hsl(var(--background));
-  padding: 16px 0 12px;
-  border-bottom: 1px solid hsl(var(--border));
+  z-index: 50;
+  background: #0a0a0a;
+  padding: 16px 0 14px;
+  border-bottom: 1px solid #222;
   margin-bottom: 24px;
 }
 
 .skills-doc-toolbar .skills-doc-search {
   padding: 0;
-  margin-bottom: 8px;
+  margin-bottom: 10px;
 }
 
 .skills-doc-toolbar .skills-doc-tags {
   padding: 0;
   flex-wrap: wrap;
-  gap: 4px;
+  gap: 6px;
 }
 
 .skills-doc-toolbar .skills-doc-tag {
   white-space: nowrap;
+  border-color: #333;
+  color: #999;
+}
+
+.skills-doc-toolbar .skills-doc-tag:hover {
+  border-color: #555;
+  color: #fff;
+}
+
+.skills-doc-toolbar .skills-doc-tag.active {
+  background: #fff;
+  color: #000;
+  border-color: #fff;
 }
