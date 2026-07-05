@@ -1908,11 +1908,16 @@ img { display: block; max-width: 100%; }
 }
 
 /* === Learn page — full-page iframe (100% aura.build identity) === */
+/* iframe height is set dynamically by JS (see learn/[slug]/page.tsx)
+   to match its content. min-height acts as a fallback while the
+   content is still loading, so users never see a "blank" page. */
 .learn-iframe {
   width: 100%;
-  height: calc(100vh - 64px);
+  min-height: calc(100vh - 64px);
+  height: auto;
   border: none;
   display: block;
+  margin-top: 64px; /* push below fixed header */
 }
 
 /* === Device toggle (Desktop/Tablet/Mobile) — NEW === */

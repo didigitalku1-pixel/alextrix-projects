@@ -1,6 +1,6 @@
 "use client";
 
-import { use, useState, useEffect } from "react";
+import { use, useState, useEffect, useRef } from "react";
 import Link from "next/link";
 
 /**
@@ -106,6 +106,7 @@ export default function LearnPage({
 }) {
   const { slug } = use(params);
   const [dark, setDark] = useState(false);
+  const iframeRef = useRef<HTMLIFrameElement>(null);
 
   // Validate slug — redirect invalid slugs to introduction
   useEffect(() => {
@@ -135,6 +136,91 @@ export default function LearnPage({
     return () => window.removeEventListener("message", handler);
   }, []);
 
+  // === CRITICAL FIX: dynamically resize iframe to fit its content ===
+  // The iframe HTML files are ~13,000px tall but the iframe element was
+  // previously fixed at calc(100vh - 64px) (~513px) with overflow:clip,
+  // which clipped 96% of the content and made pages look "empty".
+  // This effect measures the iframe's content height and grows the
+  // iframe element to fit, so the parent page scrolls naturally.
+  useEffect(() => {
+    const iframe = iframeRef.current;
+    if (!iframe) return;
+
+    let raf = 0;
+    let pollTimer: ReturnType<typeof setTimeout> | undefined;
+    let resizeObs: ResizeObserver | undefined;
+    let mutObs: MutationObserver | undefined;
+
+    const resize = () => {
+      cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(() => {
+        try {
+          const doc = iframe.contentDocument;
+          if (!doc) return;
+          const h = Math.max(
+            doc.body?.scrollHeight || 0,
+            doc.documentElement?.scrollHeight || 0
+          );
+          if (h > 0) {
+            iframe.style.height = h + "px";
+          }
+        } catch {
+          // cross-origin — ignore
+        }
+      });
+    };
+
+    const attachObservers = () => {
+      try {
+        const doc = iframe.contentDocument;
+        if (!doc) return;
+
+        // Observe body size changes (images loading, font swaps, etc.)
+        if (typeof ResizeObserver !== "undefined") {
+          resizeObs = new ResizeObserver(resize);
+          resizeObs.observe(doc.body);
+          resizeObs.observe(doc.documentElement);
+        }
+
+        // Observe DOM mutations (Tailwind CDN injecting styles late)
+        if (typeof MutationObserver !== "undefined") {
+          mutObs = new MutationObserver(resize);
+          mutObs.observe(doc.body, {
+            childList: true,
+            subtree: true,
+            attributes: true,
+            attributeFilter: ["class", "style"],
+          });
+        }
+      } catch {
+        // cross-origin — ignore
+      }
+    };
+
+    const onLoad = () => {
+      resize();
+      attachObservers();
+      // Re-resize on a few ticks because Tailwind CDN + images load asynchronously
+      setTimeout(resize, 100);
+      setTimeout(resize, 500);
+      setTimeout(resize, 1500);
+      setTimeout(resize, 3000);
+      pollTimer = setTimeout(resize, 6000);
+    };
+
+    iframe.addEventListener("load", onLoad);
+    // Try an early resize in case load already fired
+    setTimeout(onLoad, 200);
+
+    return () => {
+      iframe.removeEventListener("load", onLoad);
+      cancelAnimationFrame(raf);
+      if (pollTimer) clearTimeout(pollTimer);
+      resizeObs?.disconnect();
+      mutObs?.disconnect();
+    };
+  }, [slug]);
+
   const iframeSrc = `/learn-data/${slug}.html`;
 
   return (
@@ -161,6 +247,7 @@ export default function LearnPage({
 
       {/* Full-page iframe — 100% identical to aura.build */}
       <iframe
+        ref={iframeRef}
         src={iframeSrc}
         title="Learn"
         className="learn-iframe"
