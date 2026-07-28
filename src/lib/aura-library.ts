@@ -1,6 +1,5 @@
 import { promises as fs } from "fs";
 import path from "path";
-import { unstable_cache } from "next/cache";
 
 const LIBRARY_DIR = process.env.AURA_LIBRARY_DIR || path.join(process.cwd(), "download", "aura_library");
 const MANIFEST_PATH = path.join(LIBRARY_DIR, "manifest.json");
@@ -26,7 +25,7 @@ export interface ManifestItem {
   created_at: string | null;
   has_code: boolean;
   code_chars: number;
-  file: string; // e.g. "000002_lT8Te4"
+  file: string;
 }
 
 export interface Manifest {
@@ -61,21 +60,34 @@ export interface FullItem extends ManifestItem {
   updated_at?: string | null;
 }
 
+// === TTL cache (5 minutes) ===
+// Replaces indefinite cache that could serve stale data in long-running servers.
 let _manifestCache: Manifest | null = null;
+let _manifestCacheTime = 0;
 let _statsCache: Stats | null = null;
+let _statsCacheTime = 0;
+const CACHE_TTL = 5 * 60 * 1000;
 
 export async function getManifest(): Promise<Manifest> {
-  if (_manifestCache) return _manifestCache;
+  const now = Date.now();
+  if (_manifestCache && now - _manifestCacheTime < CACHE_TTL) {
+    return _manifestCache;
+  }
   const raw = await fs.readFile(MANIFEST_PATH, "utf-8");
   _manifestCache = JSON.parse(raw) as Manifest;
-  return _manifestCache!;
+  _manifestCacheTime = now;
+  return _manifestCache;
 }
 
 export async function getStats(): Promise<Stats> {
-  if (_statsCache) return _statsCache;
+  const now = Date.now();
+  if (_statsCache && now - _statsCacheTime < CACHE_TTL) {
+    return _statsCache;
+  }
   const raw = await fs.readFile(STATS_PATH, "utf-8");
   _statsCache = JSON.parse(raw) as Stats;
-  return _statsCache!;
+  _statsCacheTime = now;
+  return _statsCache;
 }
 
 export async function getItem(
@@ -83,7 +95,6 @@ export async function getItem(
   id: number,
 ): Promise<FullItem | null> {
   const subdir = type === "component" ? "components" : "templates";
-  // Find the file by id prefix
   const dir = path.join(LIBRARY_DIR, subdir);
   const files = await fs.readdir(dir);
   const prefix = `${String(id).padStart(6, "0")}_`;
@@ -162,19 +173,17 @@ export async function queryItems(params: QueryParams): Promise<QueryResult> {
   const manifest = await getManifest();
   let items = manifest.items;
 
-  // Filter by type
   if (params.type && params.type !== "all") {
     items = items.filter((i) => i.type === params.type);
   }
 
-  // Filter by tag
   if (params.tag) {
+    const tagL = params.tag.toLowerCase();
     items = items.filter((i) =>
-      i.tags.some((t) => t.toLowerCase() === params.tag!.toLowerCase()),
+      i.tags.some((t) => t.toLowerCase() === tagL),
     );
   }
 
-  // Search query
   if (params.q) {
     const q = params.q.toLowerCase();
     items = items.filter(
@@ -185,17 +194,14 @@ export async function queryItems(params: QueryParams): Promise<QueryResult> {
     );
   }
 
-  // Filter premium
   if (params.premium) {
     items = items.filter((i) => i.premium);
   }
 
-  // Filter featured
   if (params.featured) {
     items = items.filter((i) => i.featured);
   }
 
-  // Sort
   const sort = params.sort || "views";
   switch (sort) {
     case "views":

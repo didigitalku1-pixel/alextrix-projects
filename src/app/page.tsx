@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback, useMemo, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useTheme } from "@/hooks/use-theme";
 
 type ItemType = "template" | "component" | "asset" | "skill";
 type TabType = "templates" | "components" | "assets" | "skills" | "design-md" | "learn" ;
@@ -21,6 +22,7 @@ interface Item {
   created_at: string | null;
   code_chars: number;
   file: string;
+  slug?: string | null;
 }
 
 interface Stats {
@@ -91,7 +93,6 @@ function HomeInner() {
   const [premium, setPremium] = useState(searchParams.get("premium") === "true");
   const [featured, setFeatured] = useState(searchParams.get("featured") === "true");
   const [page, setPageState] = useState(() => Math.max(1, parseInt(searchParams.get("page") || "1", 10) || 1));
-  const [dark, setDark] = useState(false);
   const [items, setItems] = useState<Item[]>([]);
   const [total, setTotal] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
@@ -100,6 +101,7 @@ function HomeInner() {
   const [tags, setTags] = useState<{ tag: string; count: number }[]>([]);
   const [debouncedQ, setDebouncedQ] = useState("");
   const [showFilters, setShowFilters] = useState(false);
+  const { isDark, toggle: toggleTheme } = useTheme();
 
   // Wrapper setters that also sync to URL
   const setTab = useCallback((t: TabType) => { setTabState(t); setPageState(1); }, []);
@@ -126,15 +128,7 @@ function HomeInner() {
     router.replace(newUrl, { scroll: false });
   }, [tab, sort, tag, debouncedQ, featured, page, router]);
 
-  // Theme
-  useEffect(() => {
-    const saved = localStorage.getItem("aura-theme");
-    if (saved === "dark") setDark(true);
-  }, []);
-  useEffect(() => {
-    document.documentElement.classList.toggle("dark", dark);
-    localStorage.setItem("aura-theme", dark ? "dark" : "light");
-  }, [dark]);
+  // Theme handled by useTheme hook
 
   // Debounce search
   useEffect(() => {
@@ -151,9 +145,9 @@ function HomeInner() {
     fetch("/api/tags").then(r => r.json()).then(d => setTags(d.tags || [])).catch(() => {});
   }, []);
 
-  // Load items
+  // Load items - skip for tabs that have their own routes
   const loadItems = useCallback(async () => {
-    if (tab === "skills" || tab === "learn" ) return;
+    if (tab === "skills" || tab === "learn" || tab === "design-md") return;
     setLoading(true);
     const apiType = tab === "templates" ? "template" : tab === "components" ? "component" : tab === "assets" ? "asset" : "skill";
     const params = new URLSearchParams({ type: apiType, sort, page: String(page), limit: "24" });
@@ -163,11 +157,15 @@ function HomeInner() {
     if (featured) params.set("featured", "true");
     try {
       const r = await fetch(`/api/items?${params}`);
+      if (!r.ok) throw new Error("Failed");
       const d = await r.json();
       setItems(d.items || []);
       setTotal(d.total || 0);
       setTotalPages(d.totalPages || 0);
-    } catch { setItems([]); }
+    } catch (e) {
+      console.error("Items fetch error:", e);
+      setItems([]);
+    }
     setLoading(false);
   }, [tab, sort, tag, debouncedQ, featured, page]);
 
@@ -239,8 +237,8 @@ function HomeInner() {
               />
               {q && <button className="header-search-clear" onClick={() => setQ("")}>✕</button>}
             </div>
-            <button className="header-icon-btn" onClick={() => setDark(!dark)}>
-              {dark ? "☀️" : "🌙"}
+            <button className="header-icon-btn" onClick={toggleTheme} aria-label="Toggle theme">
+              {isDark ? "☀️" : "🌙"}
             </button>
           </div>
         </div>
@@ -601,16 +599,7 @@ function SkillsView() {
   const [loadingContent, setLoadingContent] = useState(false);
   const [search, setSearch] = useState("");
   const [activeTag, setActiveTag] = useState<string | null>(null);
-  const [dark, setDark] = useState(false);
-
-  useEffect(() => {
-    const saved = localStorage.getItem("aura-theme");
-    if (saved === "dark") setDark(true);
-  }, []);
-  useEffect(() => {
-    document.documentElement.classList.toggle("dark", dark);
-    localStorage.setItem("aura-theme", dark ? "dark" : "light");
-  }, [dark]);
+  const { isDark, toggle: toggleTheme } = useTheme();
 
   // Load all skills
   useEffect(() => {

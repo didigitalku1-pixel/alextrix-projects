@@ -59,7 +59,7 @@ export async function getManifest(): Promise<Manifest> {
   for (const p of [MANIFEST_PATH_LITE, MANIFEST_PATH]) {
     try {
       const raw = await fs.readFile(p, "utf-8");
-      _manifest = JSON.parse(raw);
+      _manifest = JSON.parse(raw) as Manifest;
       return _manifest;
     } catch {}
   }
@@ -80,7 +80,8 @@ export async function getStats(): Promise<Stats> {
   if (_stats) return _stats;
   try {
     const raw = await fs.readFile(STATS_PATH, "utf-8");
-    _stats = JSON.parse(raw);
+    _stats = JSON.parse(raw) as Stats;
+    return _stats;
   } catch {
     const m = await getManifest();
     _stats = {
@@ -93,8 +94,8 @@ export async function getStats(): Promise<Stats> {
       premium: 0,
       top_tags: [],
     };
+    return _stats;
   }
-  return _stats;
 }
 
 export interface QueryParams {

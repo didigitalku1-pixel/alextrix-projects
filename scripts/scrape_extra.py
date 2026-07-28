@@ -17,7 +17,7 @@ from datetime import datetime
 SUPA_URL = "https://hoirqrkdgbmvpwutwuwj.supabase.co"
 ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhvaXJxcmtkZ2JtdnB3dXR3dXdqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDM2Nzc2NTAsImV4cCI6MjA1OTI1MzY1MH0._UsCSHsTELn7m54tOhX3ySm67WEhcyHAPbuxEQZsl3c"
 
-LIBRARY_DIR = Path("/home/z/my-project/download/aura_library")
+import os; LIBRARY_DIR = Path(os.environ.get("AURA_LIBRARY_DIR", os.environ.get("AURA_LIBRARY_DIR", "/home/z/my-project/download/aura_library")))
 SESSION_FILE = LIBRARY_DIR / "_meta" / "session.json"
 
 HEADERS = {

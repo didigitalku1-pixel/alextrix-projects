@@ -1,15 +1,19 @@
 "use client";
 
 import { use, useState, useEffect, useRef } from "react";
+import ReactMarkdown from "react-markdown";
+import { useTheme } from "@/hooks/use-theme";
 
 /**
  * Wraps raw HTML in full document with Tailwind CDN + dark bg (mirrors aura.build).
- * No auto-resize postMessage — content scrolls inside fixed-height iframe.
+ *
+ * SECURITY: No allow-same-origin in sandbox — content is user-controlled.
  */
 function withTailwindAndAutoResize(html: string): string {
-  // Only inject Tailwind CDN if not already present
   const hasTailwind = /cdn\.tailwindcss\.com/i.test(html);
-  const tailwindScript = hasTailwind ? "" : `<script src="https://cdn.tailwindcss.com"></script>`;
+  const tailwindScript = hasTailwind
+    ? ""
+    : `<script src="https://cdn.tailwindcss.com"></script>`;
 
   const headInjection = `
     <meta charset="UTF-8">
@@ -23,17 +27,18 @@ function withTailwindAndAutoResize(html: string): string {
     </style>
   `;
 
-  // Case 1: Full HTML document — inject into existing <head>
   if (/<html[^>]*>/i.test(html) && /<\/html>/i.test(html)) {
     if (/<head[^>]*>/i.test(html)) {
       html = html.replace(/<head[^>]*>/i, (match) => match + headInjection);
     } else {
-      html = html.replace(/<html[^>]*>/i, (match) => match + "<head>" + headInjection + "</head>");
+      html = html.replace(
+        /<html[^>]*>/i,
+        (match) => match + "<head>" + headInjection + "</head>",
+      );
     }
     return html;
   }
 
-  // Case 2: Raw HTML fragment — wrap in full document
   return `<!DOCTYPE html>
 <html lang="en">
 <head>${headInjection}</head>
@@ -54,28 +59,26 @@ export default function DesignSystemDetailPage({
   const [item, setItem] = useState<any>(null);
   const [tab, setTab] = useState<"design" | "html">("design");
   const [loading, setLoading] = useState(true);
-  const [dark, setDark] = useState(false);
-  // Fixed iframe height — content scrolls inside iframe (mirrors aura.build)
-  // No fixed height — use aspect-ratio in CSS (mirrors aura.build)
+  const { isDark, toggle: toggleTheme } = useTheme();
   const [copied, setCopied] = useState<string | null>(null);
   const iframeRef = useRef<HTMLIFrameElement>(null);
-
-  useEffect(() => {
-    const saved = localStorage.getItem("aura-theme");
-    if (saved === "dark") setDark(true);
-  }, []);
-  useEffect(() => {
-    document.documentElement.classList.toggle("dark", dark);
-    localStorage.setItem("aura-theme", dark ? "dark" : "light");
-  }, [dark]);
 
   useEffect(() => {
     setLoading(true);
     setItem(null);
     fetch(`/api/design-systems/${slug}`)
-      .then(r => { if (!r.ok) throw new Error("Failed"); return r.json(); })
-      .then(d => { setItem(d); setLoading(false); })
-      .catch(() => setLoading(false));
+      .then((r) => {
+        if (!r.ok) throw new Error("Failed");
+        return r.json();
+      })
+      .then((d) => {
+        setItem(d);
+        setLoading(false);
+      })
+      .catch((e) => {
+        console.error("DS detail fetch error:", e);
+        setLoading(false);
+      });
   }, [slug]);
 
   const copyToClipboard = async (text: string, label: string) => {
@@ -83,14 +86,27 @@ export default function DesignSystemDetailPage({
       await navigator.clipboard.writeText(text);
       setCopied(label);
       setTimeout(() => setCopied(null), 2000);
-    } catch {}
+    } catch (e) {
+      console.error("Clipboard error:", e);
+      alert("Copy failed. Please select and copy manually.");
+    }
   };
 
   if (loading) {
     return (
       <div className="app">
-        <header className="header"><div className="header-inner"><a href="/" className="header-logo"><div className="header-logo-icon">A</div></a></div></header>
-        <main className="main"><div className="loading-spinner"><div className="spinner" /></div></main>
+        <header className="header">
+          <div className="header-inner">
+            <a href="/" className="header-logo">
+              <div className="header-logo-icon">A</div>
+            </a>
+          </div>
+        </header>
+        <main className="main">
+          <div className="loading-spinner">
+            <div className="spinner" />
+          </div>
+        </main>
       </div>
     );
   }
@@ -98,8 +114,26 @@ export default function DesignSystemDetailPage({
   if (!item) {
     return (
       <div className="app">
-        <header className="header"><div className="header-inner"><a href="/" className="header-logo"><div className="header-logo-icon">A</div></a></div></header>
-        <main className="main"><div className="empty"><div className="empty-icon">🔍</div><p className="empty-title">Design system not found</p><a href="/design-systems" className="btn btn-outline" style={{ marginTop: 16 }}>← Back to Design Systems</a></div></main>
+        <header className="header">
+          <div className="header-inner">
+            <a href="/" className="header-logo">
+              <div className="header-logo-icon">A</div>
+            </a>
+          </div>
+        </header>
+        <main className="main">
+          <div className="empty">
+            <div className="empty-icon">🔍</div>
+            <p className="empty-title">Design system not found</p>
+            <a
+              href="/design-systems"
+              className="btn btn-outline"
+              style={{ marginTop: 16 }}
+            >
+              ← Back to Design Systems
+            </a>
+          </div>
+        </main>
       </div>
     );
   }
@@ -121,22 +155,34 @@ export default function DesignSystemDetailPage({
     <div className="app">
       <header className="header">
         <div className="header-inner">
-          <a href="/" className="header-logo"><div className="header-logo-icon">A</div></a>
+          <a href="/" className="header-logo">
+            <div className="header-logo-icon">A</div>
+          </a>
           <nav className="header-nav">
-            {tabs.map(t => (
-              <a key={t.id} href={t.href || "/design-systems"}
-                 className={`header-tab ${t.active ? "active" : ""}`}>{t.label}</a>
+            {tabs.map((t) => (
+              <a
+                key={t.id}
+                href={t.href || "/design-systems"}
+                className={`header-tab ${t.active ? "active" : ""}`}
+              >
+                {t.label}
+              </a>
             ))}
           </nav>
           <div className="header-right">
-            <button className="header-icon-btn" onClick={() => setDark(!dark)}>{dark ? "☀️" : "🌙"}</button>
+            <button
+              className="header-icon-btn"
+              onClick={toggleTheme}
+              aria-label="Toggle theme"
+            >
+              {isDark ? "☀️" : "🌙"}
+            </button>
           </div>
         </div>
       </header>
 
       <main className="main detail-main">
         <div className="detail-container">
-          {/* === Hero section === */}
           <div className="detail-hero">
             <div className="detail-hero-left">
               <nav className="detail-breadcrumb-nav">
@@ -149,12 +195,26 @@ export default function DesignSystemDetailPage({
                 )}
               </nav>
               <h1 className="detail-h1">{item.title}</h1>
-              {item.desc && <p className="about-desc" style={{ maxWidth: 800, marginTop: 12 }}>{item.desc}</p>}
+              {item.desc && (
+                <p className="about-desc" style={{ maxWidth: 800, marginTop: 12 }}>
+                  {item.desc}
+                </p>
+              )}
               <div className="detail-meta-row" style={{ marginTop: 16 }}>
-                <span className="detail-stat">👁 {item.views?.toLocaleString() || 0} views</span>
-                {item.forks > 0 && <span className="detail-stat">⑂ {item.forks} remixes</span>}
-                {item.featured && <span className="detail-stat">★ Featured</span>}
-                {item.created_at && <span className="detail-stat">📅 {new Date(item.created_at).toLocaleDateString()}</span>}
+                <span className="detail-stat">
+                  👁 {item.views?.toLocaleString() || 0} views
+                </span>
+                {item.forks > 0 && (
+                  <span className="detail-stat">⑂ {item.forks} remixes</span>
+                )}
+                {item.featured && (
+                  <span className="detail-stat">★ Featured</span>
+                )}
+                {item.created_at && (
+                  <span className="detail-stat">
+                    📅 {new Date(item.created_at).toLocaleDateString()}
+                  </span>
+                )}
               </div>
             </div>
             <div className="detail-hero-right">
@@ -170,7 +230,6 @@ export default function DesignSystemDetailPage({
             </div>
           </div>
 
-          {/* === Preview frame (browser chrome) === */}
           <div className="preview-frame">
             <div className="preview-chrome">
               <div className="preview-traffic-lights">
@@ -179,19 +238,24 @@ export default function DesignSystemDetailPage({
                 <span className="traffic-light green" />
               </div>
               <div className="preview-tabs">
-                {visibleTabs.filter(t => t.show).map(t => (
-                  <button
-                    key={t.id}
-                    className={`preview-tab ${tab === t.id ? "active" : ""}`}
-                    onClick={() => setTab(t.id)}
-                  >
-                    <span className="preview-tab-icon">{t.icon}</span>
-                    {t.label}
-                  </button>
-                ))}
+                {visibleTabs
+                  .filter((t) => t.show)
+                  .map((t) => (
+                    <button
+                      key={t.id}
+                      className={`preview-tab ${tab === t.id ? "active" : ""}`}
+                      onClick={() => setTab(t.id)}
+                    >
+                      <span className="preview-tab-icon">{t.icon}</span>
+                      {t.label}
+                    </button>
+                  ))}
               </div>
               {tab === "design" && item.content && (
-                <button className="preview-copy-btn" onClick={() => copyToClipboard(item.content, "DESIGN.md")}>
+                <button
+                  className="preview-copy-btn"
+                  onClick={() => copyToClipboard(item.content, "DESIGN.md")}
+                >
                   {copied === "DESIGN.md" ? "✓ Copied!" : "Copy"}
                 </button>
               )}
@@ -199,7 +263,9 @@ export default function DesignSystemDetailPage({
 
             <div className="preview-content">
               {tab === "design" && item.content && (
-                <div className="markdown-viewer" dangerouslySetInnerHTML={{ __html: renderMarkdown(item.content) }} />
+                <div className="markdown-viewer">
+                  <ReactMarkdown>{item.content}</ReactMarkdown>
+                </div>
               )}
               {tab === "html" && item.preview_html && (
                 <div className="preview-iframe-wrap" style={{ aspectRatio: "16 / 10" }}>
@@ -207,9 +273,10 @@ export default function DesignSystemDetailPage({
                     ref={iframeRef}
                     srcDoc={withTailwindAndAutoResize(item.preview_html)}
                     title="HTML Preview"
-                    sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals"
+                    // SECURITY: NO allow-same-origin
+                    sandbox="allow-scripts allow-popups"
                     className="preview-iframe"
-                    loading="eager"
+                    loading="lazy"
                   />
                 </div>
               )}
@@ -222,7 +289,6 @@ export default function DesignSystemDetailPage({
             </div>
           </div>
 
-          {/* === About section === */}
           <section className="detail-section">
             <div className="about-grid">
               <div className="about-left">
@@ -230,8 +296,8 @@ export default function DesignSystemDetailPage({
                 <p className="about-desc">{item.desc || "No description available."}</p>
                 {item.tags && item.tags.length > 0 && (
                   <div className="about-tags">
-                    {item.tags.map((t: string) => (
-                      <span key={t} className="about-tag">{t}</span>
+                    {item.tags.map((t: string, i: number) => (
+                      <span key={`${t}-${i}`} className="about-tag">{t}</span>
                     ))}
                   </div>
                 )}
@@ -239,12 +305,38 @@ export default function DesignSystemDetailPage({
               <div className="about-right">
                 <h3 className="about-h3">Details</h3>
                 <div className="about-stats">
-                  <div className="about-stat-row"><span>Views</span><span>{(item.views || 0).toLocaleString()}</span></div>
-                  {item.forks > 0 && <div className="about-stat-row"><span>Remixes</span><span>{item.forks}</span></div>}
-                  <div className="about-stat-row"><span>Type</span><span>Design System</span></div>
-                  {item.created_at && <div className="about-stat-row"><span>Created</span><span>{new Date(item.created_at).toLocaleDateString()}</span></div>}
-                  {item.updated_at && <div className="about-stat-row"><span>Updated</span><span>{new Date(item.updated_at).toLocaleDateString()}</span></div>}
-                  {item.source_name && <div className="about-stat-row"><span>Source</span><span>{item.source_name}</span></div>}
+                  <div className="about-stat-row">
+                    <span>Views</span>
+                    <span>{(item.views || 0).toLocaleString()}</span>
+                  </div>
+                  {item.forks > 0 && (
+                    <div className="about-stat-row">
+                      <span>Remixes</span>
+                      <span>{item.forks}</span>
+                    </div>
+                  )}
+                  <div className="about-stat-row">
+                    <span>Type</span>
+                    <span>Design System</span>
+                  </div>
+                  {item.created_at && (
+                    <div className="about-stat-row">
+                      <span>Created</span>
+                      <span>{new Date(item.created_at).toLocaleDateString()}</span>
+                    </div>
+                  )}
+                  {item.updated_at && (
+                    <div className="about-stat-row">
+                      <span>Updated</span>
+                      <span>{new Date(item.updated_at).toLocaleDateString()}</span>
+                    </div>
+                  )}
+                  {item.source_name && (
+                    <div className="about-stat-row">
+                      <span>Source</span>
+                      <span>{item.source_name}</span>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -253,57 +345,4 @@ export default function DesignSystemDetailPage({
       </main>
     </div>
   );
-}
-
-function renderMarkdown(content: string): string {
-  const lines = content.split("\n");
-  const out: string[] = [];
-  let inCode = false;
-  let codeLines: string[] = [];
-  let inFrontmatter = false;
-  const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-  const renderInline = (text: string) => {
-    let r = esc(text);
-    r = r.replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>");
-    r = r.replace(/`([^`]+)`/g, "<code>$1</code>");
-    r = r.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank">$1</a>');
-    r = r.replace(/\*([^*]+)\*/g, "<em>$1</em>");
-    return r;
-  };
-  lines.forEach((line, i) => {
-    if (i === 0 && line.trim() === "---") { inFrontmatter = true; return; }
-    if (inFrontmatter) {
-      if (line.trim() === "---") { inFrontmatter = false; return; }
-      if (line.includes(":") && !line.startsWith(" ")) {
-        const [key, ...valParts] = line.split(":");
-        const val = valParts.join(":").trim();
-        out.push(`<div style="display:flex;gap:12px;padding:4px 0;border-bottom:1px solid hsl(var(--border))"><strong style="min-width:120px;color:hsl(var(--muted-foreground))">${esc(key)}</strong><span>${renderInline(val)}</span></div>`);
-        return;
-      }
-      if (line.startsWith("  ") && line.includes(":")) {
-        const [key, ...valParts] = line.trim().split(":");
-        const val = valParts.join(":").trim();
-        out.push(`<div style="display:flex;gap:12px;padding:2px 0 2px 24px"><span style="min-width:120px;color:hsl(var(--muted-foreground));font-size:13px">${esc(key)}</span><span style="font-size:13px">${renderInline(val)}</span></div>`);
-        return;
-      }
-      return;
-    }
-    if (line.startsWith("```")) {
-      if (inCode) { out.push(`<pre><code>${esc(codeLines.join("\n"))}</code></pre>`); codeLines = []; inCode = false; }
-      else { inCode = true; }
-      return;
-    }
-    if (inCode) { codeLines.push(line); return; }
-    if (line.startsWith("# ")) out.push(`<h1>${esc(line.slice(2))}</h1>`);
-    else if (line.startsWith("## ")) out.push(`<h2>${esc(line.slice(3))}</h2>`);
-    else if (line.startsWith("### ")) out.push(`<h3>${esc(line.slice(4))}</h3>`);
-    else if (line.startsWith("#### ")) out.push(`<h4>${esc(line.slice(5))}</h4>`);
-    else if (line.startsWith("- ") || line.startsWith("* ")) out.push(`<li>${renderInline(line.slice(2))}</li>`);
-    else if (/^\d+\.\s/.test(line)) out.push(`<li>${renderInline(line.replace(/^\d+\.\s/, ""))}</li>`);
-    else if (line.startsWith("> ")) out.push(`<blockquote>${renderInline(line.slice(2))}</blockquote>`);
-    else if (line.trim() === "") out.push(`<div style="height:12px"></div>`);
-    else out.push(`<p>${renderInline(line)}</p>`);
-  });
-  if (inCode && codeLines.length) out.push(`<pre><code>${esc(codeLines.join("\n"))}</code></pre>`);
-  return out.join("");
 }

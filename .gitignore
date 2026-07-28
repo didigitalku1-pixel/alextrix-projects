@@ -98,3 +98,12 @@ cookies.json
 *_session.json
 *_cookies.json
 __pycache__/
+
+# === Security: never commit session tokens or service-role keys ===
+download/aura_library/_meta/session.json
+download/aura_library/_meta/dst_service_key.txt
+.env.local
+.env.production
+.env.development
+scripts/legacy/
+.vercel/

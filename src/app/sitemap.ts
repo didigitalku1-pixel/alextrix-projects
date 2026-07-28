@@ -1,13 +1,12 @@
 import type { MetadataRoute } from "next";
+import { SUPA_URL, SUPA_ANON_KEY, fetchWithTimeout } from "@/lib/supabase";
 
-const SUPA_URL = process.env.USER_SUPABASE_URL || "https://njgtmqwyabfknyktuwzc.supabase.co";
-const SUPA_KEY = process.env.USER_SUPABASE_ANON_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5qZ3RtcXd5YWJma255a3R1d3pjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMxMDM3MDcsImV4cCI6MjA5ODY3OTcwN30.10WHq_NOsG0wLJfsgHNSp0j4CPCqqZ12_bY9Q1h5kOI";
+const BASE_URL =
+  process.env.NEXT_PUBLIC_BASE_URL || "https://web-library-coral.vercel.app";
 
-const BASE_URL = "https://web-library-coral.vercel.app";
-
-export const dynamic = "force-dynamic";
-export const maxDuration = 30;
+// ISR: revalidate every 24 hours (NOT force-dynamic — that would conflict with ISR)
 export const revalidate = 86400;
+export const maxDuration = 60;
 
 /**
  * Sitemap index — returns a list of child sitemaps.
@@ -45,17 +44,18 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
 async function countRows(table: string): Promise<number> {
   try {
-    const r = await fetch(
+    const r = await fetchWithTimeout(
       `${SUPA_URL}/rest/v1/${table}?select=id`,
       {
         method: "GET",
         headers: {
-          apikey: SUPA_KEY,
-          Authorization: `Bearer ${SUPA_KEY}`,
+          apikey: SUPA_ANON_KEY,
+          Authorization: `Bearer ${SUPA_ANON_KEY}`,
           Range: "0-0",
           Prefer: "count=exact",
         },
-      }
+      },
+      8000,
     );
     if (!r.ok) return 0;
     const cr = r.headers.get("content-range") || "";

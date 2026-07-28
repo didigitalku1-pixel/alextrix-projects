@@ -84,7 +84,7 @@ async function main() {
       console.log(`  [${page}] ✓ Saved natural Indonesian version`);
       
       await new Promise(r => setTimeout(r, 3000));
-    } catch (e) {
+    } catch (e: any) {
       console.error(`  [${page}] ERROR: ${e.message}`);
     }
   }

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
+import { useTheme } from "@/hooks/use-theme";
 
 interface DSItem {
   id: string;
@@ -17,12 +18,12 @@ interface DSItem {
   tags?: string[];
 }
 
-// Static pulse stats (would normally come from API, but values from aura.build)
-const PULSE_STATS = [
-  { label: "Systems", value: 725, color: "#3b82f6" },
-  { label: "Colors", value: 5820, color: "#ef4444" },
-  { label: "Type", value: 2172, color: "#f59e0b" },
-  { label: "Spacing", value: 2946, color: "#10b981" },
+// Pulse stats are fetched from API to avoid stale hardcoded numbers
+const DEFAULT_PULSE_STATS = [
+  { label: "Systems", value: 0, color: "#3b82f6" },
+  { label: "Colors", value: 0, color: "#ef4444" },
+  { label: "Type", value: 0, color: "#f59e0b" },
+  { label: "Spacing", value: 0, color: "#10b981" },
 ];
 
 export default function DesignSystemsPage() {
@@ -32,26 +33,40 @@ export default function DesignSystemsPage() {
   const [page, setPage] = useState(1);
   const [sort, setSort] = useState("popular");
   const [loading, setLoading] = useState(true);
-  const [dark, setDark] = useState(false);
+  const [pulseStats, setPulseStats] = useState(DEFAULT_PULSE_STATS);
+  const { isDark, toggle: toggleTheme } = useTheme();
 
+  // Fetch pulse stats from /api/stats once
   useEffect(() => {
-    const saved = localStorage.getItem("aura-theme");
-    if (saved === "dark") setDark(true);
+    fetch("/api/stats")
+      .then((r) => r.json())
+      .then((d) => {
+        if (d.design_systems) {
+          setPulseStats((prev) =>
+            prev.map((p) =>
+              p.label === "Systems" ? { ...p, value: d.design_systems } : p,
+            ),
+          );
+        }
+      })
+      .catch(() => {
+        // Silent fail — stats are non-critical
+      });
   }, []);
-  useEffect(() => {
-    document.documentElement.classList.toggle("dark", dark);
-    localStorage.setItem("aura-theme", dark ? "dark" : "light");
-  }, [dark]);
 
   const loadItems = useCallback(async () => {
     setLoading(true);
     try {
       const r = await fetch(`/api/design-systems?sort=${sort}&page=${page}&limit=24`);
+      if (!r.ok) throw new Error("Failed to fetch");
       const d = await r.json();
       setItems(d.items || []);
       setTotal(d.total || 0);
       setTotalPages(d.totalPages || 0);
-    } catch { setItems([]); }
+    } catch (e) {
+      console.error("Design systems fetch error:", e);
+      setItems([]);
+    }
     setLoading(false);
   }, [sort, page]);
 
@@ -85,7 +100,7 @@ export default function DesignSystemsPage() {
             ))}
           </nav>
           <div className="header-right">
-            <button className="header-icon-btn" onClick={() => setDark(!dark)}>{dark ? "☀️" : "🌙"}</button>
+            <button className="header-icon-btn" onClick={toggleTheme} aria-label="Toggle theme">{isDark ? "☀️" : "🌙"}</button>
           </div>
         </div>
       </header>
@@ -97,13 +112,13 @@ export default function DesignSystemsPage() {
             <p className="hero-eyebrow">DESIGN.md LIBRARY</p>
             <h1 className="hero-title">DESIGN.md templates for AI web design</h1>
             <p className="hero-desc">Browse, upload, or generate DESIGN.md systems for typography, colors, spacing, components, motion, and style rules. Aura turns websites and templates into reusable prompt context for stronger generated UIs.</p>
-            {/* CTA buttons */}
+          {/* CTA buttons - disabled until upload feature is implemented */}
             <div className="ds-cta-row">
-              <button className="ds-cta-primary">
+              <button className="ds-cta-primary" disabled title="Coming soon">
                 <span className="ds-cta-icon">+</span>
                 Add DESIGN.md
               </button>
-              <button className="ds-cta-secondary">
+              <button className="ds-cta-secondary" disabled title="Coming soon">
                 <span className="ds-cta-icon">⬆</span>
                 Import from Templates
               </button>
@@ -117,7 +132,7 @@ export default function DesignSystemsPage() {
               <span className="ds-pulse-title">LIBRARY PULSE</span>
             </div>
             <div className="ds-pulse-stats">
-              {PULSE_STATS.map(stat => (
+              {pulseStats.map(stat => (
                 <div key={stat.label} className="ds-pulse-stat">
                   <span className="ds-pulse-label">
                     <span className="ds-pulse-dot-sm" style={{ background: stat.color }}></span>

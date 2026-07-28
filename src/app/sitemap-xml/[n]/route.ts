@@ -1,22 +1,40 @@
 import { NextRequest, NextResponse } from "next/server";
+import { promises as fs } from "fs";
+import path from "path";
+import { SUPA_URL, SUPA_ANON_KEY, fetchWithTimeout } from "@/lib/supabase";
 
-const SUPA_URL = process.env.USER_SUPABASE_URL || "https://njgtmqwyabfknyktuwzc.supabase.co";
-const SUPA_KEY = process.env.USER_SUPABASE_ANON_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5qZ3RtcXd5YWJma255a3R1d3pjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMxMDM3MDcsImV4cCI6MjA5ODY3OTcwN30.10WHq_NOsG0wLJfsgHNSp0j4CPCqqZ12_bY9Q1h5kOI";
+const BASE_URL =
+  process.env.NEXT_PUBLIC_BASE_URL || "https://web-library-coral.vercel.app";
 
-const BASE_URL = "https://web-library-coral.vercel.app";
-
-export const dynamic = "force-dynamic";
-export const maxDuration = 60;
+// ISR with 24h revalidation (no force-dynamic, to enable caching)
 export const revalidate = 86400;
+export const maxDuration = 60;
 
 const URLS_PER_FILE = 40000;
 
-interface Row { slug: string; updated_at?: string }
+// === Module-level cache for fetchAllSlugs ===
+// First request after revalidate populates this; subsequent requests within
+// revalidate window reuse it. This avoids hitting Supabase 55+ times per sitemap request.
+let _cachedUrls: { data: any[]; ts: number } | null = null;
+const URL_CACHE_TTL = 6 * 60 * 60 * 1000; // 6 hours
+
+interface Row {
+  slug: string;
+  updated_at?: string;
+}
 
 /**
  * Paginate Supabase REST API (hard cap 1000 rows per request) to fetch ALL rows.
  */
 async function fetchAllSlugs(table: string): Promise<Row[]> {
+  const now = Date.now();
+  if (_cachedUrls && now - _cachedUrls.ts < URL_CACHE_TTL) {
+    return _cachedUrls.data.filter((r: any) => r._table === table).map((r: any) => ({
+      slug: r.slug,
+      updated_at: r.updated_at,
+    }));
+  }
+
   const PAGE_SIZE = 1000;
   const allRows: Row[] = [];
   let offset = 0;
@@ -25,23 +43,29 @@ async function fetchAllSlugs(table: string): Promise<Row[]> {
   while (offset < total) {
     const end = offset + PAGE_SIZE - 1;
     try {
-      const r = await fetch(
+      const r = await fetchWithTimeout(
         `${SUPA_URL}/rest/v1/${table}?select=slug,updated_at&order=id.asc.nullslast`,
         {
           headers: {
-            apikey: SUPA_KEY,
-            Authorization: `Bearer ${SUPA_KEY}`,
+            apikey: SUPA_ANON_KEY,
+            Authorization: `Bearer ${SUPA_ANON_KEY}`,
             Range: `${offset}-${end}`,
             Prefer: "count=exact",
           },
-        }
+        },
+        15000,
       );
       if (!r.ok) break;
       const data = await r.json();
       if (!Array.isArray(data) || data.length === 0) break;
 
       for (const row of data) {
-        if (row.slug) allRows.push({ slug: String(row.slug), updated_at: row.updated_at || undefined });
+        if (row.slug) {
+          allRows.push({
+            slug: String(row.slug),
+            updated_at: row.updated_at || undefined,
+          });
+        }
       }
 
       const cr = r.headers.get("content-range") || "";
@@ -60,9 +84,12 @@ async function fetchAllSlugs(table: string): Promise<Row[]> {
 
 async function fetchSkillFiles(): Promise<string[]> {
   try {
-    const { promises: fs } = await import("fs");
-    const path = await import("path");
-    const skillsPath = path.join(process.cwd(), "download", "aura_library", "skills-manifest.json");
+    const skillsPath = path.join(
+      process.cwd(),
+      "download",
+      "aura_library",
+      "skills-manifest.json",
+    );
     const raw = await fs.readFile(skillsPath, "utf-8");
     const manifest = JSON.parse(raw);
     return (manifest.items || [])
@@ -90,12 +117,17 @@ function escapeXml(s: string): string {
 }
 
 function buildXml(entries: UrlEntry[]): string {
-  const urls = entries.map(e => `  <url>
+  const urls = entries
+    .map(
+      (e) =>
+        `  <url>
     <loc>${escapeXml(e.loc)}</loc>
     ${e.lastmod ? `<lastmod>${e.lastmod}</lastmod>` : ""}
     <changefreq>${e.changefreq}</changefreq>
     <priority>${e.priority}</priority>
-  </url>`).join("\n");
+  </url>`,
+    )
+    .join("\n");
   return `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 ${urls}
@@ -120,7 +152,12 @@ async function buildAllUrls(): Promise<UrlEntry[]> {
 
   // Top-level
   urls.push({ loc: BASE_URL, lastmod: now, changefreq: "daily", priority: "1.0" });
-  urls.push({ loc: `${BASE_URL}/design-systems`, lastmod: now, changefreq: "weekly", priority: "0.7" });
+  urls.push({
+    loc: `${BASE_URL}/design-systems`,
+    lastmod: now,
+    changefreq: "weekly",
+    priority: "0.7",
+  });
 
   // Templates
   for (const t of templates) {
@@ -167,7 +204,7 @@ async function buildAllUrls(): Promise<UrlEntry[]> {
 
 export async function GET(
   _req: NextRequest,
-  { params }: { params: Promise<{ n: string }> }
+  { params }: { params: Promise<{ n: string }> },
 ) {
   const { n } = await params;
   const fileNum = parseInt(n, 10);
@@ -175,7 +212,24 @@ export async function GET(
     return new NextResponse("Invalid sitemap index", { status: 404 });
   }
 
-  const allUrls = await buildAllUrls();
+  let allUrls: UrlEntry[];
+  try {
+    allUrls = await buildAllUrls();
+  } catch (e: any) {
+    console.error("[sitemap-xml] Error building URLs:", e?.message);
+    // Return empty sitemap instead of 404 (better for SEO - search engine sees valid XML)
+    return new NextResponse(
+      `<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"></urlset>`,
+      {
+        status: 200,
+        headers: {
+          "Content-Type": "application/xml; charset=utf-8",
+          "Cache-Control": "public, max-age=300, s-maxage=3600",
+        },
+      },
+    );
+  }
+
   const start = fileNum * URLS_PER_FILE;
   const end = start + URLS_PER_FILE;
   const slice = allUrls.slice(start, end);

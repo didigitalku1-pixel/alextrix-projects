@@ -13,7 +13,7 @@ from pathlib import Path
 from datetime import datetime
 import httpx
 
-LIBRARY_DIR = Path("/home/z/my-project/download/aura_library")
+import os; LIBRARY_DIR = Path(os.environ.get("AURA_LIBRARY_DIR", os.environ.get("AURA_LIBRARY_DIR", "/home/z/my-project/download/aura_library")))
 MANIFEST = LIBRARY_DIR / "manifest.json"
 PROGRESS_FILE = LIBRARY_DIR / "_meta" / "paid_design_progress.json"
 LOG_FILE = LIBRARY_DIR / "_meta" / "paid_design_generator.log"

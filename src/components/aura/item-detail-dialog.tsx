@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import ReactMarkdown from "react-markdown";
 import { ManifestItem } from "@/lib/aura-library";
 
 interface Props {
@@ -10,7 +11,9 @@ interface Props {
 }
 
 export function ItemDetailDialog({ item, onClose }: Props) {
-  const [activeTab, setActiveTab] = useState<"preview" | "design" | "prompt" | "code">("preview");
+  const [activeTab, setActiveTab] = useState<
+    "preview" | "design" | "prompt" | "code"
+  >("preview");
 
   const { data: fullItem, isLoading } = useQuery({
     queryKey: ["item", item?.type, item?.id],
@@ -33,19 +36,30 @@ export function ItemDetailDialog({ item, onClose }: Props) {
             <span className="line-clamp-1">{item.title}</span>
             {item.premium && <span className="badge badge-pro">Pro</span>}
             {item.featured && <span className="badge badge-featured">★</span>}
-            <span className="badge badge-outline" style={{ textTransform: "capitalize" }}>
+            <span
+              className="badge badge-outline"
+              style={{ textTransform: "capitalize" }}
+            >
               {item.type}
             </span>
           </div>
           {item.desc && <p className="dialog-desc">{item.desc}</p>}
           <div className="dialog-meta">
-            <span className="dialog-meta-item">👁 {item.views.toLocaleString()}</span>
+            <span className="dialog-meta-item">
+              👁 {item.views.toLocaleString()}
+            </span>
             {item.forks > 0 && (
-              <span className="dialog-meta-item">⑂ {item.forks.toLocaleString()}</span>
+              <span className="dialog-meta-item">
+                ⑂ {item.forks.toLocaleString()}
+              </span>
             )}
-            <span className="dialog-meta-item">📝 {item.code_chars.toLocaleString()} chars</span>
+            <span className="dialog-meta-item">
+              📝 {item.code_chars.toLocaleString()} chars
+            </span>
             {item.username && (
-              <span className="dialog-meta-item">by {item.username.slice(0, 16)}</span>
+              <span className="dialog-meta-item">
+                by {item.username.slice(0, 16)}
+              </span>
             )}
             {item.created_at && (
               <span className="dialog-meta-item">
@@ -53,7 +67,11 @@ export function ItemDetailDialog({ item, onClose }: Props) {
               </span>
             )}
           </div>
-          <button className="dialog-close" onClick={onClose} aria-label="Close">
+          <button
+            className="dialog-close"
+            onClick={onClose}
+            aria-label="Close"
+          >
             ✕
           </button>
         </div>
@@ -97,27 +115,28 @@ export function ItemDetailDialog({ item, onClose }: Props) {
                   <iframe
                     srcDoc={fullItem?.code || ""}
                     title="Preview"
-                    sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals"
+                    // SECURITY: NO allow-same-origin — content is user-controlled
+                    sandbox="allow-scripts allow-popups"
                     className="preview-pane"
                   />
                 )}
                 {activeTab === "design" && (
                   <ArtifactPane
-                    type={item.type}
+                    type={item.type as "component" | "template"}
                     file={item.file}
                     artifact="design_md"
-                    language="markdown"
                   />
                 )}
                 {activeTab === "prompt" && (
                   <ArtifactPane
-                    type={item.type}
+                    type={item.type as "component" | "template"}
                     file={item.file}
                     artifact="recreation_prompt"
-                    language="text"
                   />
                 )}
-                {activeTab === "code" && <CodePane code={fullItem?.code || ""} />}
+                {activeTab === "code" && (
+                  <CodePane code={fullItem?.code || ""} />
+                )}
               </>
             )}
           </div>
@@ -135,7 +154,8 @@ function CodePane({ code }: { code: string }) {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch (e) {
-      console.error(e);
+      console.error("Clipboard error:", e);
+      alert("Copy failed. Please select text and copy manually.");
     }
   };
   return (
@@ -154,12 +174,10 @@ function ArtifactPane({
   type,
   file,
   artifact,
-  language,
 }: {
   type: "component" | "template";
   file: string;
   artifact: "design_md" | "recreation_prompt";
-  language: string;
 }) {
   const [copied, setCopied] = useState(false);
 
@@ -186,7 +204,8 @@ function ArtifactPane({
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch (e) {
-      console.error(e);
+      console.error("Clipboard error:", e);
+      alert("Copy failed. Please select text and copy manually.");
     }
   };
 
@@ -218,13 +237,15 @@ function ArtifactPane({
           <div style={{ fontSize: 40 }}>⚠️</div>
           <h3>Artifact not generated yet</h3>
           <p>
-            This <code>{artifact}</code> needs to be generated via Aura&apos;s Edge
-            Function. Once generated, it will appear here automatically.
+            This <code>{artifact}</code> needs to be generated via Aura&apos;s
+            Edge Function. Once generated, it will appear here automatically.
           </p>
           <p style={{ fontSize: 12, marginTop: 12 }}>
             File expected at:{" "}
             <code>
-              {type}s/{file}.{artifact === "design_md" ? "design.md" : "prompt.md"}
+              {type}s/
+              {file}
+              .{artifact === "design_md" ? "design.md" : "prompt.md"}
             </code>
           </p>
         </div>
@@ -239,124 +260,9 @@ function ArtifactPane({
           ? "✓ Copied!"
           : `Copy ${artifact === "design_md" ? "DESIGN.md" : "Prompt"}`}
       </button>
-      {language === "markdown" ? (
-        <div className="markdown code-pane" style={{ background: "#0a0a0a" }}>
-          <MarkdownLite content={data.content} />
-        </div>
-      ) : (
-        <pre className="code-pane">
-          <code>{data.content}</code>
-        </pre>
-      )}
+      <div className="markdown code-pane" style={{ background: "#0a0a0a" }}>
+        <ReactMarkdown>{data.content}</ReactMarkdown>
+      </div>
     </div>
   );
-}
-
-// Lightweight markdown renderer
-function MarkdownLite({ content }: { content: string }) {
-  const lines = content.split("\n");
-  const elements: React.ReactNode[] = [];
-  let inCodeBlock = false;
-  let codeLines: string[] = [];
-
-  lines.forEach((line, i) => {
-    if (line.startsWith("```")) {
-      if (inCodeBlock) {
-        elements.push(
-          <pre key={`code-${i}`}>
-            <code>{codeLines.join("\n")}</code>
-          </pre>,
-        );
-        codeLines = [];
-        inCodeBlock = false;
-      } else {
-        inCodeBlock = true;
-      }
-      return;
-    }
-    if (inCodeBlock) {
-      codeLines.push(line);
-      return;
-    }
-
-    if (line.startsWith("# ")) {
-      elements.push(<h1 key={i}>{line.slice(2)}</h1>);
-    } else if (line.startsWith("## ")) {
-      elements.push(<h2 key={i}>{line.slice(3)}</h2>);
-    } else if (line.startsWith("### ")) {
-      elements.push(<h3 key={i}>{line.slice(4)}</h3>);
-    } else if (line.startsWith("- ") || line.startsWith("* ")) {
-      elements.push(<li key={i}>{renderInline(line.slice(2))}</li>);
-    } else if (/^\d+\.\s/.test(line)) {
-      elements.push(<li key={i}>{renderInline(line.replace(/^\d+\.\s/, ""))}</li>);
-    } else if (line.startsWith("> ")) {
-      elements.push(
-        <blockquote key={i}>{renderInline(line.slice(2))}</blockquote>,
-      );
-    } else if (line.trim() === "") {
-      elements.push(<div key={i} style={{ height: 12 }} />);
-    } else {
-      elements.push(<p key={i}>{renderInline(line)}</p>);
-    }
-  });
-
-  if (inCodeBlock && codeLines.length > 0) {
-    elements.push(
-      <pre key="code-final">
-        <code>{codeLines.join("\n")}</code>
-      </pre>,
-    );
-  }
-
-  return <>{elements}</>;
-}
-
-function renderInline(text: string): React.ReactNode {
-  const parts: React.ReactNode[] = [];
-  let remaining = text;
-  let key = 0;
-  const patterns: Array<[RegExp, (m: RegExpExecArray) => React.ReactNode]> = [
-    [/\*\*([^*]+)\*\*/, (m) => <strong key={key++}>{m[1]}</strong>],
-    [
-      /`([^`]+)`/,
-      (m) => <code key={key++}>{m[1]}</code>,
-    ],
-    [
-      /\[([^\]]+)\]\(([^)]+)\)/,
-      (m) => (
-        <a key={key++} href={m[2]} target="_blank" rel="noopener noreferrer">
-          {m[1]}
-        </a>
-      ),
-    ],
-    [/\*([^*]+)\*/, (m) => <em key={key++}>{m[1]}</em>],
-  ];
-
-  while (remaining.length > 0) {
-    let earliestIdx = -1;
-    let earliestMatch: RegExpExecArray | null = null;
-    let earliestRender: ((m: RegExpExecArray) => React.ReactNode) | null = null;
-
-    for (const [pattern, render] of patterns) {
-      const m = pattern.exec(remaining);
-      if (m && (earliestIdx === -1 || m.index < earliestIdx)) {
-        earliestIdx = m.index;
-        earliestMatch = m;
-        earliestRender = render;
-      }
-    }
-
-    if (earliestIdx === -1 || !earliestMatch || !earliestRender) {
-      parts.push(remaining);
-      break;
-    }
-
-    if (earliestIdx > 0) {
-      parts.push(remaining.slice(0, earliestIdx));
-    }
-    parts.push(earliestRender(earliestMatch));
-    remaining = remaining.slice(earliestIdx + earliestMatch[0].length);
-  }
-
-  return <>{parts}</>;
 }

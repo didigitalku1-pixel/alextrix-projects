@@ -86,7 +86,7 @@ async function main() {
       
       // Brief delay between requests
       await new Promise(r => setTimeout(r, 2000));
-    } catch (e) {
+    } catch (e: any) {
       console.error(`  [${pageName}] ERROR: ${e.message}`);
     }
   }

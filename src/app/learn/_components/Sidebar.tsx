@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactElement } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { SIDEBAR } from "../_content/types";
@@ -17,7 +18,7 @@ interface SidebarProps {
  * Each icon is keyed by slug or videoHash so the sidebar shows a small
  * leading icon per item — matches aura.build's sidebar treatment.
  */
-const ICONS: Record<string, JSX.Element> = {
+const ICONS: Record<string, ReactElement> = {
   // Getting Started
   "introduction": (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>

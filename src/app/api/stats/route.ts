@@ -1,25 +1,38 @@
 import { NextResponse } from "next/server";
-
-const SUPA_URL = process.env.USER_SUPABASE_URL || "https://hoirqrkdgbmvpwutwuwj.supabase.co";
-const ANON_KEY = process.env.USER_SUPABASE_ANON_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhvaXJxcmtkZ2JtdnB3dXR3dXdqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDM2Nzc2NTAsImV4cCI6MjA1OTI1MzY1MH0._UsCSHsTELn7m54tOhX3ySm67WEhcyHAPbuxEQZsl3c";
+import {
+  SUPA_URL,
+  SUPA_ANON_KEY,
+  getTable,
+  fetchWithTimeout,
+} from "@/lib/supabase";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 30;
 
 // Cache stats for 5 minutes
-let _statsCache: any = null;
-let _statsCacheTime = 0;
+interface StatsCache {
+  data: any;
+  ts: number;
+}
+let _statsCache: StatsCache | null = null;
+const STATS_TTL = 5 * 60 * 1000;
 
-async function getCount(table: string): Promise<number> {
+async function getCount(table: string, filter?: string): Promise<number> {
   try {
-    const r = await fetch(`${SUPA_URL}/rest/v1/${table}?select=id`, {
-      headers: {
-        apikey: ANON_KEY,
-        Authorization: `Bearer ${ANON_KEY}`,
-        Prefer: "count=exact",
-        Range: "0-0",
+    let url = `${SUPA_URL}/rest/v1/${table}?select=id`;
+    if (filter) url += `&${filter}`;
+    const r = await fetchWithTimeout(
+      url,
+      {
+        headers: {
+          apikey: SUPA_ANON_KEY,
+          Authorization: `Bearer ${SUPA_ANON_KEY}`,
+          Prefer: "count=exact",
+          Range: "0-0",
+        },
       },
-    });
+      8000,
+    );
     const cr = r.headers.get("content-range") || "";
     if (cr.includes("/")) {
       return parseInt(cr.split("/").pop() || "0", 10);
@@ -30,27 +43,57 @@ async function getCount(table: string): Promise<number> {
   }
 }
 
-// Skills table requires auth - use known count from manifest or hardcoded
+// Skills table requires auth — use count from skills-manifest file
 async function getSkillsCount(): Promise<number> {
-  // Skills table requires auth, so we can't count via anon API
-  // Use the count from our scraped data
   try {
     const { promises: fs } = await import("fs");
     const path = await import("path");
-    const skillsDir = path.join(process.cwd(), "download", "aura_library", "skills");
-    const files = await fs.readdir(skillsDir);
-    return files.filter(f => f.endsWith(".json")).length;
+    const skillsPath = path.join(
+      process.cwd(),
+      "download",
+      "aura_library",
+      "skills-manifest.json",
+    );
+    const raw = await fs.readFile(skillsPath, "utf-8");
+    const manifest = JSON.parse(raw);
+    return (manifest.items || []).length;
   } catch {
-    return 118; // Known count from scraping
+    return 0;
+  }
+}
+
+// Count design_systems from manifest file (no Supabase table)
+async function getDesignSystemsCount(): Promise<number> {
+  try {
+    const { promises: fs } = await import("fs");
+    const path = await import("path");
+    const dsPath = path.join(
+      process.cwd(),
+      "download",
+      "aura_library",
+      "design-systems-manifest.json",
+    );
+    const raw = await fs.readFile(dsPath, "utf-8");
+    const manifest = JSON.parse(raw);
+    return (manifest.items || []).length;
+  } catch {
+    return 0;
   }
 }
 
 async function getTopTags(): Promise<[string, number][]> {
   try {
-    // Fetch tags from shared_code (templates) - sample to get tag counts
-    const r = await fetch(
-      `${SUPA_URL}/rest/v1/shared_code?select=tags&tags=not.is.null&limit=5000`,
-      { headers: { apikey: ANON_KEY, Authorization: `Bearer ${ANON_KEY}` } }
+    // Fetch tags from templates table (shared_code in Aura, templates in user project)
+    const templatesTable = getTable("template");
+    const r = await fetchWithTimeout(
+      `${SUPA_URL}/rest/v1/${templatesTable}?select=tags&tags=not.is.null&limit=5000`,
+      {
+        headers: {
+          apikey: SUPA_ANON_KEY,
+          Authorization: `Bearer ${SUPA_ANON_KEY}`,
+        },
+      },
+      10000,
     );
     if (!r.ok) return [];
     const data = await r.json();
@@ -75,43 +118,82 @@ export async function GET() {
   try {
     // Return cached if fresh (5 min)
     const now = Date.now();
-    if (_statsCache && now - _statsCacheTime < 300000) {
-      return NextResponse.json(_statsCache);
+    if (_statsCache && now - _statsCache.ts < STATS_TTL) {
+      return NextResponse.json(_statsCache.data, {
+        headers: { "Cache-Control": "public, max-age=60, s-maxage=300" },
+      });
     }
 
     // Fetch real counts from Supabase in parallel
-    const [templates, components, assets, skills, topTags] = await Promise.all([
-      getCount(process.env.USER_SUPABASE_URL ? "templates" : "shared_code"),
-      getCount("components"),
-      getCount("assets"),
-      getSkillsCount(),
-      getTopTags(),
-    ]);
+    // Use getTable() so we hit the right table name (shared_code in Aura, templates in user project)
+    const templatesTable = getTable("template");
+    const componentsTable = getTable("component");
+    const assetsTable = getTable("asset");
 
-    const stats = {
-      total_items: templates + components + assets + skills + 725,
+    const [
       templates,
       components,
       assets,
       skills,
-      design_systems: 725,
-      featured: 0,
-      premium: 0,
+      designSystems,
+      featuredTemplates,
+      premiumTemplates,
+      topTags,
+    ] = await Promise.all([
+      getCount(templatesTable),
+      getCount(componentsTable),
+      getCount(assetsTable),
+      getSkillsCount(),
+      getDesignSystemsCount(),
+      getCount(templatesTable, "featured=is.true"),
+      getCount(templatesTable, "premium=is.true"),
+      getTopTags(),
+    ]);
+
+    const featuredTotal =
+      featuredTemplates +
+      (await getCount(componentsTable, "featured=is.true")) +
+      (await getCount(assetsTable, "featured=is.true"));
+
+    const premiumTotal =
+      premiumTemplates +
+      (await getCount(componentsTable, "premium=is.true")) +
+      (await getCount(assetsTable, "premium=is.true"));
+
+    const stats = {
+      total_items: templates + components + assets + skills + designSystems,
+      templates,
+      components,
+      assets,
+      skills,
+      design_systems: designSystems,
+      featured: featuredTotal,
+      premium: premiumTotal,
       top_tags: topTags,
     };
 
-    _statsCache = stats;
-    _statsCacheTime = now;
+    _statsCache = { data: stats, ts: now };
 
-    return NextResponse.json(stats);
+    return NextResponse.json(stats, {
+      headers: { "Cache-Control": "public, max-age=60, s-maxage=300" },
+    });
   } catch (e: any) {
+    console.error("[stats API] Error:", e?.message);
     // Fallback to manifest if Supabase fails
     try {
       const { promises: fs } = await import("fs");
       const path = await import("path");
-      const statsPath = path.join(process.cwd(), "download", "aura_library", "_meta", "stats.json");
+      const statsPath = path.join(
+        process.cwd(),
+        "download",
+        "aura_library",
+        "_meta",
+        "stats.json",
+      );
       const raw = await fs.readFile(statsPath, "utf-8");
-      return NextResponse.json(JSON.parse(raw));
+      return NextResponse.json(JSON.parse(raw), {
+        headers: { "Cache-Control": "public, max-age=60" },
+      });
     } catch {
       return NextResponse.json({
         total_items: 0,
@@ -119,6 +201,7 @@ export async function GET() {
         components: 0,
         assets: 0,
         skills: 0,
+        design_systems: 0,
         featured: 0,
         premium: 0,
         top_tags: [],

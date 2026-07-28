@@ -5,7 +5,7 @@ from pathlib import Path
 from datetime import datetime
 from collections import Counter
 
-LIBRARY_DIR = Path("/home/z/my-project/download/aura_library")
+import os; LIBRARY_DIR = Path(os.environ.get("AURA_LIBRARY_DIR", os.environ.get("AURA_LIBRARY_DIR", "/home/z/my-project/download/aura_library")))
 MANIFEST_FILE = LIBRARY_DIR / "manifest.json"
 STATS_FILE = LIBRARY_DIR / "_meta" / "stats.json"
 

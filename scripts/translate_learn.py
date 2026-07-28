@@ -25,7 +25,7 @@ LEARN_PAGES = [
     "documentation",
 ]
 
-LIBRARY_DIR = Path("/home/z/my-project/download/aura_library")
+import os; LIBRARY_DIR = Path(os.environ.get("AURA_LIBRARY_DIR", os.environ.get("AURA_LIBRARY_DIR", "/home/z/my-project/download/aura_library")))
 EXTRACTED_DIR = LIBRARY_DIR / "learn" / "extracted"
 TRANSLATED_DIR = LIBRARY_DIR / "learn" / "id"
 EXTRACTED_DIR.mkdir(parents=True, exist_ok=True)
