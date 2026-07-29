@@ -356,8 +356,8 @@ async def main():
                         help="Limit assets to migrate (default: all)")
     parser.add_argument("--skip-templates", action="store_true")
     parser.add_argument("--skip-components", action="store_true")
-    parser.add_argument("--skip-assets", action="store_true", default=True,
-                        help="Skip assets by default (30K records, save DB space)")
+    parser.add_argument("--skip-assets", action="store_true", default=False,
+                        help="Skip assets migration")
     parser.add_argument("--skip-skills", action="store_true")
     parser.add_argument("--skip-design-systems", action="store_true")
     args = parser.parse_args()

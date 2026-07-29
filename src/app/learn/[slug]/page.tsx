@@ -89,14 +89,12 @@ export default function LearnPage({
             <a href="/" className="header-logo"><div className="header-logo-icon">A</div></a>
           </div>
           <nav className="header-nav">
-            <a href="/" className="header-tab">CREATE</a>
             <a href="/?tab=templates" className="header-tab">TEMPLATES</a>
             <a href="/?tab=components" className="header-tab">COMPONENTS</a>
             <a href="/?tab=assets" className="header-tab">ASSETS</a>
             <a href="/?tab=skills" className="header-tab">SKILLS</a>
             <a href="/design-systems" className="header-tab">DESIGN.MD</a>
             <a href="/learn/introduction" className="header-tab active">LEARN</a>
-            <a href="/" className="header-tab">PRICING</a>
           </nav>
           <div className="header-right">
             <button className="header-icon-btn" onClick={() => setDark(!dark)} aria-label="Toggle dark mode">
