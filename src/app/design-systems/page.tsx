@@ -86,6 +86,7 @@ export default function DesignSystemsPage() {
     { id: "assets", label: "Assets" },
     { id: "skills", label: "Skills" },
     { id: "design-md", label: "DESIGN.MD", active: true },
+    { id: "learn", label: "Learn" },
   ];
 
   return (
@@ -95,7 +96,7 @@ export default function DesignSystemsPage() {
           <a href="/" className="header-logo"><div className="header-logo-icon">A</div></a>
           <nav className="header-nav">
             {tabs.map(t => (
-              <a key={t.id} href={t.id === "design-md" ? "/design-systems" : `/?tab=${t.id}`}
+              <a key={t.id} href={t.id === "design-md" ? "/design-systems" : t.id === "learn" ? "/learn/introduction" : `/?tab=${t.id}`}
                  className={`header-tab ${t.active ? "active" : ""}`}>{t.label}</a>
             ))}
           </nav>
