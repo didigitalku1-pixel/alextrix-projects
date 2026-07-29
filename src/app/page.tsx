@@ -37,9 +37,9 @@ interface Stats {
 
 const PAGE_INFO: Record<string, { eyebrow: string; title: string; desc: string }> = {
   templates: {
-    eyebrow: "3D Templates",
-    title: "Immersive 3D & WebGL Landing Page Templates",
-    desc: "Browse cutting-edge 3D, WebGL, and interactive landing page templates. Remix designs, export clean HTML, CSS, or React code.",
+    eyebrow: "All Templates",
+    title: "Explore Premium Landing Page Templates",
+    desc: "Discover curated HTML, CSS, and React templates. Filter by category, sort by popularity, and export production-ready code.",
   },
   components: {
     eyebrow: "UI Components",
@@ -412,9 +412,10 @@ function HomeInner() {
                     </div>
                     <div className="card-footer">
                       <h3 className="card-title" title={item.title}>{item.title}</h3>
-                      <div className="card-stats">
-                        <span className="card-stat">👁 {formatCount(item.views)}</span>
-                        {item.forks > 0 && <span className="card-stat">⑂ {formatCount(item.forks)}</span>}
+                      <div className="card-stats alextrix-card-stats">
+                        <span className="card-stat alextrix-stat">{formatCount(item.views)} views</span>
+                        {item.forks > 0 && <span className="card-stat alextrix-stat">↻ {formatCount(item.forks)}</span>}
+                        <span className="card-stat alextrix-stat alextrix-stat-code">{formatCount(item.code_chars)} chars</span>
                       </div>
                     </div>
                   </a>
@@ -542,8 +543,8 @@ function DesignSystemsView() {
                   <h2 style={{ fontSize: 20, fontWeight: 600, marginBottom: 8 }}>{item.title}</h2>
                   {item.desc && <p style={{ color: "hsl(var(--muted-foreground))", fontSize: 14, marginBottom: 12 }}>{item.desc}</p>}
                   <div style={{ display: "flex", alignItems: "center", gap: 16, fontSize: 13, color: "hsl(var(--muted-foreground))" }}>
-                    {item.username && <span>by {item.username.slice(0, 20)}</span>}
-                    <span>👁 {item.views.toLocaleString()} views</span>
+                    {item.username && <span className="alextrix-author">{item.username.slice(0, 16)}</span>}
+                    <span>{item.views.toLocaleString()} views</span>
                     {item.forks > 0 && <span>⑂ {item.forks.toLocaleString()}</span>}
                     {item.created_at && <span>{new Date(item.created_at).toLocaleDateString()}</span>}
                   </div>
@@ -706,7 +707,7 @@ function SkillsView() {
                     </div>
                   )}
                   <div className="skills-doc-item-stats">
-                    <span>👁 {formatCount(skill.views)}</span>
+                    <span>{formatCount(skill.views)} views</span>
                     {skill.forks > 0 && <span>⑂ {formatCount(skill.forks)}</span>}
                   </div>
                 </button>
@@ -762,7 +763,7 @@ function SkillsView() {
               )}
               {/* Meta */}
               <div className="skills-doc-meta">
-                <span>👁 {formatCount(selectedSkill.views)} views</span>
+                <span>{formatCount(selectedSkill.views)} views</span>
                 {selectedSkill.forks > 0 && <span>⑂ {formatCount(selectedSkill.forks)} remixes</span>}
               </div>
               {/* Tags */}

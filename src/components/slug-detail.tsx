@@ -258,7 +258,7 @@ export default function SlugDetail({
     {
       id: "preview",
       label: "Preview",
-      icon: "👁",
+      icon: "eye",
       show: item.type !== "skill" && item.type !== "asset",
     },
     {
@@ -340,10 +340,10 @@ export default function SlugDetail({
                     <span className="detail-author-avatar">
                       {(item.username || "?").slice(0, 2).toUpperCase()}
                     </span>
-                    <span className="detail-author-name">by Creator</span>
+                    <span className="detail-author-name">Alextrix Community</span>
                   </span>
                 )}
-                <span className="detail-stat">👁 {formatCount(item.views)} views</span>
+                <span className="detail-stat">{formatCount(item.views)} views</span>
                 {item.forks > 0 && (
                   <span className="detail-stat">⑂ {formatCount(item.forks)} remixes</span>
                 )}
@@ -797,8 +797,8 @@ const RelatedCard = memo(function RelatedCard({ item }: { item: any }) {
       <div className="related-card-footer">
         <h3 className="related-card-title" title={item.title}>{item.title}</h3>
         <div className="related-card-stats">
-          <span>👁 {formatCount(item.views)}</span>
-          {item.forks > 0 && <span>⑂ {formatCount(item.forks)}</span>}
+          <span>{formatCount(item.views)} views</span>
+          {item.forks > 0 && <span>↻ {formatCount(item.forks)}</span>}
         </div>
       </div>
     </Link>

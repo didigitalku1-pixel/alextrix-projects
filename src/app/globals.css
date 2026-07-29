@@ -5009,8 +5009,8 @@ img { display: block; max-width: 100%; }
 .alextrix-app {
   background: #FDFBF7;
   background-image: 
-    linear-gradient(rgba(230, 92, 0, 0.025) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(230, 92, 0, 0.025) 1px, transparent 1px);
+    linear-gradient(rgba(230, 92, 0, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(230, 92, 0, 0.04) 1px, transparent 1px);
   background-size: 48px 48px;
   background-position: -1px -1px;
   min-height: 100vh;
@@ -5375,8 +5375,8 @@ img { display: block; max-width: 100%; }
 .dark .alextrix-app {
   background: #0A0A0A;
   background-image: 
-    linear-gradient(rgba(255, 179, 128, 0.02) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 179, 128, 0.02) 1px, transparent 1px);
+    linear-gradient(rgba(255, 179, 128, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 179, 128, 0.03) 1px, transparent 1px);
   background-size: 48px 48px;
 }
 
@@ -5427,3 +5427,33 @@ img { display: block; max-width: 100%; }
 .dark .alextrix-app .card:hover {
   box-shadow: 0 8px 24px rgba(255, 179, 128, 0.06);
 }
+
+
+/* === Alextrix Card Stats === */
+.alextrix-card-stats {
+  justify-content: flex-start !important;
+  gap: 8px !important;
+}
+
+.alextrix-stat {
+  font-family: 'JetBrains Mono', ui-monospace, monospace !important;
+  font-size: 11px !important;
+  font-weight: 500 !important;
+  color: #6B7280 !important;
+}
+
+.alextrix-stat-code {
+  margin-left: auto !important;
+  color: #E65C00 !important;
+}
+
+.alextrix-author {
+  font-family: 'Inter', system-ui, sans-serif;
+  font-size: 12px;
+  color: #6B7280;
+  font-weight: 500;
+}
+
+.dark .alextrix-stat { color: #71717A !important; }
+.dark .alextrix-stat-code { color: #FFB380 !important; }
+.dark .alextrix-author { color: #71717A; }
