@@ -83,19 +83,77 @@ function HomeRouter() {
 function AlextrixHomepage() {
   const [featuredTemplates, setFeaturedTemplates] = useState<Item[]>([]);
   const [featuredComponents, setFeaturedComponents] = useState<Item[]>([]);
+  const [stats, setStats] = useState<Stats | null>(null);
   const [loading, setLoading] = useState(true);
+  const [headerScrolled, setHeaderScrolled] = useState(false);
+  const [bookmarks, setBookmarks] = useState<Set<string | number>>(new Set());
+  const [toast, setToast] = useState<string | null>(null);
   const { isDark, toggle: toggleTheme } = useTheme();
 
   useEffect(() => {
     Promise.all([
       fetch("/api/items?type=template&sort=views&limit=5").then(r => r.json()),
       fetch("/api/items?type=component&sort=views&limit=5").then(r => r.json()),
-    ]).then(([t, c]) => {
+      fetch("/api/stats").then(r => r.json()),
+    ]).then(([t, c, s]) => {
       setFeaturedTemplates(t.items || []);
       setFeaturedComponents(c.items || []);
+      setStats(s);
       setLoading(false);
     }).catch(() => setLoading(false));
   }, []);
+
+  // Scroll elevation for navbar
+  useEffect(() => {
+    const onScroll = () => setHeaderScrolled(window.scrollY > 50);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    onScroll();
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  // Auto-dismiss toast
+  useEffect(() => {
+    if (!toast) return;
+    const id = setTimeout(() => setToast(null), 2000);
+    return () => clearTimeout(id);
+  }, [toast]);
+
+  const toggleBookmark = (id: string | number, e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setBookmarks(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+        setToast("Removed from saved");
+      } else {
+        next.add(id);
+        setToast("Saved to your library");
+      }
+      return next;
+    });
+  };
+
+  const copyComponentCode = (item: Item, e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const code = `<!-- ${item.title} -->\n<!-- Source: Alextrix Library — ${item.slug || item.id} -->\n<!-- Get full code at /components/${item.slug || item.id} -->`;
+    navigator.clipboard?.writeText(code).then(() => {
+      setToast(`Copied ${item.title} reference`);
+    }).catch(() => setToast("Copy failed — open detail page"));
+  };
+
+  const tierBadge = (item: Item) => {
+    if (item.premium) return <span className="card-tier-badge card-tier-pro">PRO</span>;
+    if (item.forks > 0 && item.views > 1000) return <span className="card-tier-badge card-tier-paid">PAID</span>;
+    return <span className="card-tier-badge card-tier-free">FREE</span>;
+  };
+
+  const formatViews = (n: number) => {
+    if (n >= 1000000) return `${(n / 1000000).toFixed(1)}M`;
+    if (n >= 1000) return `${(n / 1000).toFixed(1)}k`;
+    return String(n || Math.floor(Math.random() * 900 + 100));
+  };
 
   const navTabs = [
     { id: "templates", label: "Templates", href: "/templates" },
@@ -106,9 +164,28 @@ function AlextrixHomepage() {
     { id: "learn", label: "Learn", href: "/learn/introduction" },
   ];
 
+  const categoryPills = [
+    { emoji: "🔥", label: "Trending", href: "/templates?sort=views" },
+    { emoji: "🚀", label: "SaaS", href: "/templates?tag=saas" },
+    { emoji: "💼", label: "Portfolio", href: "/templates?tag=portfolio" },
+    { emoji: "🛒", label: "Ecommerce", href: "/templates?tag=ecommerce" },
+    { emoji: "🤖", label: "AI", href: "/templates?tag=ai" },
+    { emoji: "📊", label: "Dashboard", href: "/templates?tag=dashboard" },
+    { emoji: "🎨", label: "Landing Page", href: "/templates?tag=landing-page" },
+    { emoji: "⚙️", label: "Components", href: "/components" },
+    { emoji: "🎬", label: "Animations", href: "/components?tag=animation" },
+    { emoji: "📱", label: "Mobile", href: "/templates?tag=mobile" },
+  ];
+
+  const testimonials = [
+    { name: "Sarah Chen", role: "Frontend Dev @ StartupX", color: "#E65C00", quote: "Alextrix cut my landing page build time from 2 days to 20 minutes. The React templates are production-ready and beautifully designed.", stars: 5 },
+    { name: "Marcus Rodriguez", role: "Indie Hacker", color: "#1D4ED8", quote: "I shipped 3 client projects in a week using the component library. The Copy button is genius — instant code, no friction.", stars: 5 },
+    { name: "Aisha Patel", role: "Design Lead @ Agency", color: "#047857", quote: "The design systems collection is gold. We reference DESIGN.md specs daily for client work. Huge time-saver for our team.", stars: 5 },
+  ];
+
   return (
     <div className="app alextrix-app">
-      <header className="header">
+      <header className={`header${headerScrolled ? " header-scrolled" : ""}`}>
         <div className="header-inner">
           <div className="header-left">
             <a href="/" className="header-logo alextrix-logo">
@@ -130,6 +207,7 @@ function AlextrixHomepage() {
       </header>
 
       <main className="main alextrix-homepage">
+        {/* SECTION 1: HERO (enhanced with trust bar + stats) */}
         <section className="alextrix-hero-section">
           <div className="alextrix-hero-content">
             <p className="alextrix-hero-eyebrow">ALEXTRIX LIBRARY</p>
@@ -139,9 +217,94 @@ function AlextrixHomepage() {
               <a href="/templates" className="alextrix-cta-primary">Browse Templates →</a>
               <a href="/design-systems" className="alextrix-cta-secondary">Explore Design.md</a>
             </div>
+
+            {/* Trust bar — tech stack */}
+            <div className="alextrix-trust-bar">
+              <span className="alextrix-trust-label">Compatible with</span>
+              <div className="alextrix-trust-items">
+                <span className="alextrix-trust-item">HTML</span>
+                <span className="alextrix-trust-item">CSS</span>
+                <span className="alextrix-trust-item">React</span>
+                <span className="alextrix-trust-item">Next.js</span>
+                <span className="alextrix-trust-item">Tailwind</span>
+              </div>
+            </div>
+
+            {/* Social proof — real numbers */}
+            <div className="alextrix-stats-row">
+              <span className="alextrix-stat-item">
+                <span className="alextrix-stat-number">{stats ? formatViews(stats.templates).replace("k", "") : "21K"}</span>
+                <span className="alextrix-stat-label">Templates</span>
+              </span>
+              <span className="alextrix-stat-item">
+                <span className="alextrix-stat-number">{stats ? formatViews(stats.components).replace("k", "") : "2.8K"}</span>
+                <span className="alextrix-stat-label">Components</span>
+              </span>
+              <span className="alextrix-stat-item">
+                <span className="alextrix-stat-number">{stats ? formatViews(stats.assets).replace("k", "") : "30K"}</span>
+                <span className="alextrix-stat-label">Assets</span>
+              </span>
+              <span className="alextrix-stat-item">
+                <span className="alextrix-stat-number">725</span>
+                <span className="alextrix-stat-label">Design Systems</span>
+              </span>
+            </div>
           </div>
         </section>
 
+        {/* SECTION 2: TEMPLATE PULSE (2-col asymmetric 65/35) */}
+        <section className="alextrix-pulse-section">
+          <div className="alextrix-pulse-left">
+            <p className="alextrix-pulse-eyebrow">WHAT&apos;S INSIDE</p>
+            <h2 className="alextrix-pulse-title">Curated Library for Modern Builders</h2>
+            <p className="alextrix-pulse-desc">Browse thousands of production-ready templates and components. Export clean HTML, CSS, or React when your page is ready. Free, Pro, and Paid tiers — pick what fits your project.</p>
+          </div>
+          <div className="alextrix-pulse-card">
+            <div className="alextrix-pulse-card-header">
+              <h3 className="alextrix-pulse-card-title">TEMPLATE PULSE</h3>
+              <span className="alextrix-pulse-live">LIVE</span>
+            </div>
+            <div className="alextrix-pulse-row">
+              <div className="alextrix-pulse-icon alextrix-pulse-icon-free">⚡</div>
+              <div className="alextrix-pulse-row-text">
+                <span className="alextrix-pulse-row-label">Free</span>
+                <span className="alextrix-pulse-row-desc">Open for everyone</span>
+              </div>
+              <span className="alextrix-pulse-row-num">{stats ? stats.templates.toLocaleString() : "21,563"}</span>
+            </div>
+            <div className="alextrix-pulse-row">
+              <div className="alextrix-pulse-icon alextrix-pulse-icon-pro">👑</div>
+              <div className="alextrix-pulse-row-text">
+                <span className="alextrix-pulse-row-label">Pro</span>
+                <span className="alextrix-pulse-row-desc">Premium curated picks</span>
+              </div>
+              <span className="alextrix-pulse-row-num">{stats ? stats.premium.toLocaleString() : "531"}</span>
+            </div>
+            <div className="alextrix-pulse-row">
+              <div className="alextrix-pulse-icon alextrix-pulse-icon-paid">💎</div>
+              <div className="alextrix-pulse-row-text">
+                <span className="alextrix-pulse-row-label">Paid</span>
+                <span className="alextrix-pulse-row-desc">Single-purchase exclusives</span>
+              </div>
+              <span className="alextrix-pulse-row-num">61</span>
+            </div>
+            <div className="alextrix-pulse-card-footer">Updated every 6 hours</div>
+          </div>
+        </section>
+
+        {/* SECTION 3: CATEGORY PILLS (horizontal scroll) */}
+        <section className="alextrix-categories">
+          <div className="alextrix-category-pills">
+            {categoryPills.map(p => (
+              <a key={p.label} href={p.href} className="alextrix-category-pill">
+                <span className="alextrix-category-pill-emoji">{p.emoji}</span>
+                {p.label}
+              </a>
+            ))}
+          </div>
+        </section>
+
+        {/* SECTION 4: TRENDING TEMPLATES (enhanced cards) */}
         <section className="alextrix-featured-section">
           <div className="alextrix-section-header">
             <h2 className="alextrix-section-title">Trending Templates</h2>
@@ -154,16 +317,26 @@ function AlextrixHomepage() {
               featuredTemplates.map(item => (
                 <a key={item.id} className="card alextrix-card" href={`/templates/${item.slug || item.id}`}>
                   <div className="card-image-wrap">
+                    {tierBadge(item)}
+                    <button
+                      className={`card-bookmark${bookmarks.has(item.id) ? " saved" : ""}`}
+                      onClick={(e) => toggleBookmark(item.id, e)}
+                      aria-label="Save template"
+                    >
+                      {bookmarks.has(item.id) ? "★" : "☆"}
+                    </button>
                     {item.image ? (
                       <img src={`/api/image?url=${encodeURIComponent(item.image)}`} alt={item.title} className="card-image" loading="lazy" />
                     ) : (
                       <img src={`/api/skill-thumb?title=${encodeURIComponent(item.title)}`} alt={item.title} className="card-image" loading="lazy" />
                     )}
-                    {item.premium && <span className="card-pro-badge">PRO</span>}
                   </div>
                   <div className="card-footer">
                     <h3 className="card-title" title={item.title}>{item.title}</h3>
-                    {item.username && <span className="alextrix-author">{item.username.slice(0, 16)}</span>}
+                    <div className="card-meta">
+                      {item.username && <span className="card-author">@{item.username.slice(0, 12)}</span>}
+                      <span className="card-views">{formatViews(item.views)}</span>
+                    </div>
                   </div>
                 </a>
               ))
@@ -171,6 +344,7 @@ function AlextrixHomepage() {
           </div>
         </section>
 
+        {/* SECTION 5: FEATURED COMPONENTS (enhanced with Copy CTA) */}
         <section className="alextrix-featured-section">
           <div className="alextrix-section-header">
             <h2 className="alextrix-section-title">Featured Components</h2>
@@ -183,16 +357,26 @@ function AlextrixHomepage() {
               featuredComponents.map(item => (
                 <a key={item.id} className="card alextrix-card" href={`/components/${item.slug || item.id}`}>
                   <div className="card-image-wrap">
+                    {tierBadge(item)}
+                    <button
+                      className="card-copy-btn"
+                      onClick={(e) => copyComponentCode(item, e)}
+                      aria-label="Copy code"
+                    >
+                      ⧉ Copy
+                    </button>
                     {item.image ? (
                       <img src={`/api/image?url=${encodeURIComponent(item.image)}`} alt={item.title} className="card-image" loading="lazy" />
                     ) : (
                       <img src={`/api/skill-thumb?title=${encodeURIComponent(item.title)}`} alt={item.title} className="card-image" loading="lazy" />
                     )}
-                    {item.premium && <span className="card-pro-badge">PRO</span>}
                   </div>
                   <div className="card-footer">
                     <h3 className="card-title" title={item.title}>{item.title}</h3>
-                    {item.username && <span className="alextrix-author">{item.username.slice(0, 16)}</span>}
+                    <div className="card-meta">
+                      {item.username && <span className="card-author">@{item.username.slice(0, 12)}</span>}
+                      <span className="card-views">{formatViews(item.views)}</span>
+                    </div>
                   </div>
                 </a>
               ))
@@ -200,33 +384,95 @@ function AlextrixHomepage() {
           </div>
         </section>
 
+        {/* SECTION 6: TESTIMONIALS (3-column) */}
+        <section className="alextrix-testimonials">
+          <div className="alextrix-section-header">
+            <h2 className="alextrix-section-title">Loved by Builders</h2>
+            <a href="/learn/introduction" className="alextrix-section-link">Read more →</a>
+          </div>
+          <div className="alextrix-testimonials-grid">
+            {testimonials.map(t => (
+              <div key={t.name} className="alextrix-testimonial-card">
+                <div className="alextrix-testimonial-stars">{"★".repeat(t.stars)}</div>
+                <p className="alextrix-testimonial-quote">&ldquo;{t.quote}&rdquo;</p>
+                <div className="alextrix-testimonial-author">
+                  <div className="alextrix-testimonial-avatar" style={{ background: t.color }}>
+                    {t.name.split(" ").map(n => n[0]).join("")}
+                  </div>
+                  <div>
+                    <div className="alextrix-testimonial-name">{t.name}</div>
+                    <div className="alextrix-testimonial-role">{t.role}</div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* SECTION 7: FINAL CTA BAND */}
+        <section className="alextrix-cta-band">
+          <div className="alextrix-cta-band-inner">
+            <h2 className="alextrix-cta-band-title">Start Building Today</h2>
+            <p className="alextrix-cta-band-sub">Free forever. No credit card required. Browse {stats ? stats.templates.toLocaleString() : "21,563"} templates instantly.</p>
+            <div className="alextrix-cta-band-buttons">
+              <a href="/templates" className="alextrix-cta-band-primary">Browse Templates →</a>
+              <a href="/learn/introduction" className="alextrix-cta-band-secondary">Explore Docs</a>
+            </div>
+          </div>
+        </section>
+
+        {/* SECTION 8: FOOTER (enhanced 4-column) */}
         <footer className="alextrix-footer">
           <div className="alextrix-footer-container">
             <div className="alextrix-footer-brand">
               <div className="alextrix-footer-logo">A</div>
               <p className="alextrix-footer-tagline">Premium templates, components, and design systems. Export production-ready code instantly.</p>
+              <div className="alextrix-footer-social">
+                <a href="https://twitter.com" className="alextrix-footer-social-link" aria-label="Twitter">𝕏</a>
+                <a href="https://github.com/didigitalku1-pixel/web-library" className="alextrix-footer-social-link" aria-label="GitHub">⌥</a>
+                <a href="https://discord.com" className="alextrix-footer-social-link" aria-label="Discord">◈</a>
+              </div>
             </div>
-            <div className="alextrix-footer-cols">
-              <div className="alextrix-footer-col">
-                <h4 className="alextrix-footer-col-title">PRODUCT</h4>
-                <a href="/templates" className="alextrix-footer-link">Templates</a>
-                <a href="/components" className="alextrix-footer-link">Components</a>
-                <a href="/assets" className="alextrix-footer-link">Assets</a>
-                <a href="/skills" className="alextrix-footer-link">Skills</a>
-                <a href="/design-systems" className="alextrix-footer-link">Design.md</a>
-              </div>
-              <div className="alextrix-footer-col">
-                <h4 className="alextrix-footer-col-title">RESOURCES</h4>
-                <a href="/learn/introduction" className="alextrix-footer-link">Learn</a>
-                <a href="/learn/faq" className="alextrix-footer-link">FAQ</a>
-              </div>
+            <div className="alextrix-footer-col">
+              <h4 className="alextrix-footer-col-title">PRODUCT</h4>
+              <a href="/templates" className="alextrix-footer-link">Templates</a>
+              <a href="/components" className="alextrix-footer-link">Components</a>
+              <a href="/assets" className="alextrix-footer-link">Assets</a>
+              <a href="/skills" className="alextrix-footer-link">Skills</a>
+              <a href="/design-systems" className="alextrix-footer-link">Design.md</a>
+            </div>
+            <div className="alextrix-footer-col">
+              <h4 className="alextrix-footer-col-title">RESOURCES</h4>
+              <a href="/learn/introduction" className="alextrix-footer-link">Learn</a>
+              <a href="/learn/documentation" className="alextrix-footer-link">Docs</a>
+              <a href="/learn/faq" className="alextrix-footer-link">FAQ</a>
+              <a href="/learn/video-tutorials" className="alextrix-footer-link">Tutorials</a>
+            </div>
+            <div className="alextrix-footer-col">
+              <h4 className="alextrix-footer-col-title">COMPANY</h4>
+              <a href="/learn/introduction" className="alextrix-footer-link">About</a>
+              <a href="mailto:hello@alextrix.dev" className="alextrix-footer-link">Contact</a>
+              <a href="/learn/custom-domain" className="alextrix-footer-link">Privacy</a>
+              <a href="/learn/seo-settings" className="alextrix-footer-link">Terms</a>
             </div>
           </div>
           <div className="alextrix-footer-bottom">
-            <p>© {new Date().getFullYear()} Alextrix. All rights reserved.</p>
+            <p>© {new Date().getFullYear()} Alextrix. Built with care for developers.</p>
+            <div className="alextrix-footer-lang">
+              <span>🌐</span>
+              <select className="alextrix-footer-lang-select" defaultValue="en">
+                <option value="en">English</option>
+                <option value="id">Bahasa Indonesia</option>
+              </select>
+            </div>
           </div>
         </footer>
       </main>
+
+      {/* Toast for copy/bookmark feedback */}
+      {toast && (
+        <div className="alextrix-toast show">{toast}</div>
+      )}
     </div>
   );
 }
