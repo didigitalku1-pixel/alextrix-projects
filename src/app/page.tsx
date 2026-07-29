@@ -261,98 +261,108 @@ function HomeInner() {
       ) : tab === "design-md" ? (
         <DesignSystemsView />
       ) : (
-        <main className="main">
+        <main className="main ds-main-browse">
           <div className="main-content">
             {/* Hero */}
-            <div className="hero">
-              <div className="hero-text">
-                <p className="hero-eyebrow">{info.eyebrow}</p>
-                <h1 className="hero-title">{info.title}</h1>
-                <p className="hero-desc">{info.desc}</p>
-              </div>
-              <div className="pulse-box">
-                <p className="pulse-title">{info.pulseTitle}</p>
-                <div>
-                  {pulseItems.map(p => (
-                    <div key={p.label} className="pulse-item">
-                      <span className="pulse-item-label">
-                        <span className="pulse-item-dot" style={{ background: p.color }}></span>
-                        {p.label}
-                      </span>
-                      <span className="pulse-item-count">{p.count.toLocaleString()}</span>
-                    </div>
-                  ))}
-                </div>
+            <div className="ds-hero-section">
+              <div className="ds-hero-text">
+                <p className="ds-hero-eyebrow">{info.eyebrow}</p>
+                <h1 className="ds-hero-title">{info.title}</h1>
+                <p className="ds-hero-desc">{info.desc}</p>
               </div>
             </div>
 
-            {/* Filter chips */}
-            {(tag || featured) && (
-              <div className="filter-chips">
-                {tag && <span className="chip" onClick={() => setTag(null)}>#{tag} ✕</span>}
-                {featured && <span className="chip" onClick={() => setFeatured(false)}>Featured ✕</span>}
-              </div>
-            )}
+            {/* Tier 1: Full-width Search */}
+            <div className="ds-search-bar">
+              <svg className="ds-search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>
+              </svg>
+              <input
+                type="text"
+                className="ds-search-input"
+                placeholder={`Search ${total.toLocaleString()} ${tab}...`}
+                value={q}
+                onChange={e => setQ(e.target.value)}
+              />
+              {q && (
+                <button className="ds-search-clear" onClick={() => setQ("")} aria-label="Clear search">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M18 6 6 18M6 6l12 12"/>
+                  </svg>
+                </button>
+              )}
+            </div>
 
-            {/* Sort + result info */}
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16, flexWrap: "wrap", gap: 12 }}>
-              <div style={{ fontSize: 13, color: "hsl(var(--muted-foreground))" }}>
-                {loading ? "Loading..." : <><strong style={{ color: "hsl(var(--foreground))" }}>{total.toLocaleString()}</strong> items{page > 1 && <span style={{ marginLeft: 8, fontSize: 12 }}>· Page {page} of {totalPages}</span>}</>}
-              </div>
-              <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
-                {(["views", "forks", "recent", "az"] as const).map(s => (
+            {/* Tier 2: Sort Segmented Control + Filter Pills */}
+            <div className="ds-filter-row">
+              <div className="ds-sort-segmented">
+                {([
+                  { id: "recent", label: "Recent", icon: "M12 8v4l3 3M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" },
+                  { id: "views", label: "Popular", icon: "M3 3v18h18M7 12l4-4 4 4 6-6" },
+                  { id: "forks", label: "Most Forked", icon: "M6 3v12M18 9a3 3 0 1 0-3-3M6 21a3 3 0 1 1 3-3M18 21V9" },
+                  { id: "az", label: "A → Z", icon: "M3 7h10M3 12h7M3 17h4M14 17l3-3 3 3M17 4v10" },
+                ] as const).map(s => (
                   <button
-                    key={s}
-                    className={`pulse-item ${sort === s ? "active" : ""}`}
-                    style={{ padding: "4px 10px", fontSize: 12, marginBottom: 0 }}
-                    onClick={() => setSort(s)}
+                    key={s.id}
+                    className={`ds-sort-btn ${sort === s.id ? "active" : ""}`}
+                    onClick={() => setSort(s.id)}
                   >
-                    {s === "views" ? "Popular" : s === "forks" ? "Most forked" : s === "recent" ? "Recent" : "A → Z"}
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d={s.icon}/>
+                    </svg>
+                    {s.label}
                   </button>
                 ))}
+              </div>
+              <div className="ds-filter-pills">
                 <button
-                  className={`pulse-item ${featured ? "active" : ""}`}
-                  style={{ padding: "4px 10px", fontSize: 12, marginBottom: 0 }}
+                  className={`ds-pill-btn ${featured ? "active-featured" : ""}`}
                   onClick={() => setFeatured(!featured)}
                 >
                   ★ Featured
                 </button>
                 <button
-                  className="pulse-item"
-                  style={{ padding: "4px 10px", fontSize: 12, marginBottom: 0 }}
-                  onClick={() => setShowFilters(!showFilters)}
+                  className={`ds-pill-btn ${premium ? "active-premium" : ""}`}
+                  onClick={() => setPremium(!premium)}
                 >
-                  🏷️ Tags
+                  PRO
                 </button>
               </div>
             </div>
 
-            {/* Tag filter (collapsible) */}
-            {showFilters && (
-              <div style={{ marginBottom: 16, padding: 16, background: "hsl(var(--background))", border: "1px solid hsl(var(--border))", borderRadius: 12 }}>
-                <div style={{ fontSize: 11, textTransform: "uppercase", color: "hsl(var(--muted-foreground))", marginBottom: 8, letterSpacing: "0.05em" }}>Tags</div>
-                <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-                  {tags.map(t => (
-                    <button
-                      key={t.tag}
-                      className={`tag-pill ${tag === t.tag ? "active" : ""}`}
-                      style={{
-                        padding: "4px 10px",
-                        borderRadius: 999,
-                        fontSize: 12,
-                        cursor: "pointer",
-                        border: "1px solid hsl(var(--border))",
-                        background: tag === t.tag ? "hsl(var(--primary))" : "transparent",
-                        color: tag === t.tag ? "hsl(var(--primary-foreground))" : "hsl(var(--muted-foreground))",
-                      }}
-                      onClick={() => setTag(tag === t.tag ? null : t.tag)}
-                    >
-                      {t.tag} <span style={{ opacity: 0.6 }}>{t.count}</span>
-                    </button>
-                  ))}
-                </div>
+            {/* Tier 3: Tags (always visible, horizontal scroll) */}
+            {tags.length > 0 && (
+              <div className="ds-tags-scroll">
+                {tags.slice(0, 30).map(t => (
+                  <button
+                    key={t.tag}
+                    className={`ds-tag-pill ${tag === t.tag ? "active" : ""}`}
+                    onClick={() => setTag(tag === t.tag ? null : t.tag)}
+                  >
+                    {t.tag}
+                    <span className="ds-tag-count">{t.count}</span>
+                  </button>
+                ))}
               </div>
             )}
+
+            {/* Result count + active filter chips */}
+            <div className="ds-result-bar">
+              <span className="ds-result-text">
+                {loading ? "Loading..." : (
+                  <>Showing <strong>{Math.min(page * 24, total).toLocaleString()}</strong> of <strong>{total.toLocaleString()}</strong> {tab}{page > 1 && <span className="ds-page-info"> · Page {page} of {totalPages}</span>}</>
+                )}
+              </span>
+              {(tag || featured || premium || q) && (
+                <div className="ds-active-chips">
+                  {q && <span className="ds-chip" onClick={() => setQ("")}>"{q}" ✕</span>}
+                  {tag && <span className="ds-chip" onClick={() => setTag(null)}>#{tag} ✕</span>}
+                  {featured && <span className="ds-chip" onClick={() => setFeatured(false)}>★ Featured ✕</span>}
+                  {premium && <span className="ds-chip" onClick={() => setPremium(false)}>PRO ✕</span>}
+                  <button className="ds-clear-all" onClick={resetFilters}>Clear all</button>
+                </div>
+              )}
+            </div>
 
             {/* Grid */}
             {loading ? (
