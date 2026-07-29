@@ -10,11 +10,21 @@ const nextConfig: NextConfig = {
   reactStrictMode: true,
 
   // Output standalone build for self-hosting / Docker / Vercel
-  // Matches package.json "start" script that uses .next/standalone/server.js
   output: "standalone",
 
   // Allow cross-origin requests from preview domains
   allowedDevOrigins: ["*.space-z.ai"],
+
+  // Clean URLs: /templates → /?tab=templates (internal rewrite, URL stays clean)
+  // /templates/[slug] still works for detail pages (rewrites only match exact paths)
+  async rewrites() {
+    return [
+      { source: "/templates", destination: "/?tab=templates" },
+      { source: "/components", destination: "/?tab=components" },
+      { source: "/assets", destination: "/?tab=assets" },
+      { source: "/skills", destination: "/?tab=skills" },
+    ];
+  },
 };
 
 export default nextConfig;

@@ -217,10 +217,10 @@ export default function DesignSystemDetailPage({
   }
 
   const navTabs = [
-    { id: "templates", label: "Templates", href: "/?tab=templates" },
-    { id: "components", label: "Components", href: "/?tab=components" },
-    { id: "assets", label: "Assets", href: "/?tab=assets" },
-    { id: "skills", label: "Skills", href: "/?tab=skills" },
+    { id: "templates", label: "Templates", href: "/templates" },
+    { id: "components", label: "Components", href: "/components" },
+    { id: "assets", label: "Assets", href: "/assets" },
+    { id: "skills", label: "Skills", href: "/skills" },
     { id: "design-md", label: "DESIGN.MD", active: true },
     { id: "learn", label: "Learn", href: "/learn/introduction" },
   ];
@@ -635,10 +635,10 @@ function DsFooter() {
       title: "PRODUCT",
       links: [
         { text: "Create", href: "/" },
-        { text: "Templates", href: "/?tab=templates" },
-        { text: "Components", href: "/?tab=components" },
-        { text: "Assets", href: "/?tab=assets" },
-        { text: "Skills", href: "/?tab=skills" },
+        { text: "Templates", href: "/templates" },
+        { text: "Components", href: "/components" },
+        { text: "Assets", href: "/assets" },
+        { text: "Skills", href: "/skills" },
         { text: "DESIGN.MD", href: "/design-systems" },
       ],
     },

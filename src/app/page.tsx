@@ -87,7 +87,7 @@ function HomeInner() {
       ? t!
       : "templates";
   });
-  const [sort, setSort] = useState(() => searchParams.get("sort") || "views");
+  const [sort, setSort] = useState(() => searchParams.get("sort") || "recent");
   const [tag, setTag] = useState<string | null>(searchParams.get("tag"));
   const [q, setQ] = useState(searchParams.get("q") || "");
   const [premium, setPremium] = useState(searchParams.get("premium") === "true");
@@ -182,10 +182,10 @@ function HomeInner() {
   };
 
   const tabs: { id: TabType; label: string; count?: string; href?: string }[] = [
-    { id: "templates", label: "Templates", count: stats?.templates?.toLocaleString() },
-    { id: "components", label: "Components", count: stats?.components?.toLocaleString() },
-    { id: "assets", label: "Assets", count: stats?.assets?.toLocaleString() },
-    { id: "skills", label: "Skills", count: stats?.skills?.toLocaleString() },
+    { id: "templates", label: "Templates", href: "/templates", count: stats?.templates?.toLocaleString() },
+    { id: "components", label: "Components", href: "/components", count: stats?.components?.toLocaleString() },
+    { id: "assets", label: "Assets", href: "/assets", count: stats?.assets?.toLocaleString() },
+    { id: "skills", label: "Skills", href: "/skills", count: stats?.skills?.toLocaleString() },
     { id: "design-md", label: "DESIGN.MD", href: "/design-systems" },
     { id: "learn", label: "Learn", href: "/learn/introduction" },
   ];

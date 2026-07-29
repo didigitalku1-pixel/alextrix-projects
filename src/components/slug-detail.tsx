@@ -251,7 +251,7 @@ export default function SlugDetail({
 
   const typeLabel = TYPE_LABEL[item.type] || TYPE_LABEL.template;
   const pluralRoute = typeLabel.plural;
-  const backUrl = `/?tab=${pluralRoute}`;
+  const backUrl = `/${pluralRoute}`;
   const firstTag = item.tags?.[0];
 
   const tabs: { id: typeof tab; label: string; icon: string; show: boolean }[] = [
@@ -297,10 +297,10 @@ export default function SlugDetail({
             <div className="header-logo-icon">A</div>
           </a>
           <nav className="header-nav">
-            <a href="/?tab=templates" className="header-tab">TEMPLATES</a>
-            <a href="/?tab=components" className="header-tab">COMPONENTS</a>
-            <a href="/?tab=assets" className="header-tab">ASSETS</a>
-            <a href="/?tab=skills" className="header-tab">SKILLS</a>
+            <a href="/templates" className="header-tab">TEMPLATES</a>
+            <a href="/components" className="header-tab">COMPONENTS</a>
+            <a href="/assets" className="header-tab">ASSETS</a>
+            <a href="/skills" className="header-tab">SKILLS</a>
             <a href="/design-systems" className="header-tab">DESIGN.MD</a>
             <a href="/learn/introduction" className="header-tab">LEARN</a>
           </nav>
@@ -321,13 +321,13 @@ export default function SlugDetail({
           <div className="detail-hero">
             <div className="detail-hero-left">
               <nav className="detail-breadcrumb-nav">
-                <Link href={`/?tab=${pluralRoute}`}>
+                <Link href={`/${pluralRoute}`}>
                   {typeLabel.title} in HTML / TailwindCSS
                 </Link>
                 {firstTag && (
                   <>
                     <span className="breadcrumb-sep">•</span>
-                    <Link href={`/?tab=${pluralRoute}&tag=${encodeURIComponent(firstTag)}`}>
+                    <Link href={`/${pluralRoute}?tag=${encodeURIComponent(firstTag)}`}>
                       {firstTag}
                     </Link>
                   </>
@@ -590,7 +590,7 @@ export default function SlugDetail({
                     {item.tags.map((t: string, i: number) => (
                       <Link
                         key={`${t}-${i}`}
-                        href={`/?tab=${pluralRoute}&tag=${encodeURIComponent(t)}`}
+                        href={`/${pluralRoute}?tag=${encodeURIComponent(t)}`}
                         className="about-tag"
                       >
                         {t}
@@ -653,7 +653,7 @@ export default function SlugDetail({
             <section className="detail-section">
               <div className="related-header">
                 <h2 className="related-h2">More from this Creator</h2>
-                <Link href={`/?tab=${pluralRoute}`} className="related-view-all">
+                <Link href={`/${pluralRoute}`} className="related-view-all">
                   View all →
                 </Link>
               </div>
@@ -676,7 +676,7 @@ export default function SlugDetail({
                 </h2>
                 {firstTag && (
                   <Link
-                    href={`/?tab=${pluralRoute}&tag=${encodeURIComponent(firstTag)}`}
+                    href={`/${pluralRoute}?tag=${encodeURIComponent(firstTag)}`}
                     className="related-view-all"
                   >
                     Browse all {firstTag} {typeLabel.plural} →
@@ -705,10 +705,10 @@ function SiteFooter() {
       title: "PRODUCT",
       links: [
         { text: "Create", href: "/" },
-        { text: "Templates", href: "/?tab=templates" },
-        { text: "Components", href: "/?tab=components" },
-        { text: "Assets", href: "/?tab=assets" },
-        { text: "Skills", href: "/?tab=skills" },
+        { text: "Templates", href: "/templates" },
+        { text: "Components", href: "/components" },
+        { text: "Assets", href: "/assets" },
+        { text: "Skills", href: "/skills" },
         { text: "DESIGN.MD", href: "/design-systems" },
       ],
     },
