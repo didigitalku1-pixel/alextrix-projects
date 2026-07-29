@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback, useMemo, Suspense } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { useTheme } from "@/hooks/use-theme";
 
 type ItemType = "template" | "component" | "asset" | "skill";
@@ -79,9 +79,16 @@ export default function Home() {
 function HomeInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const pathname = usePathname();
 
-  // Initialize state from URL params (one-time read on mount)
+  // Initialize state from pathname (clean URLs) or URL params
   const [tab, setTabState] = useState<TabType>(() => {
+    // Check pathname first for clean URLs (/templates, /assets, etc.)
+    if (pathname === "/templates") return "templates";
+    if (pathname === "/components") return "components";
+    if (pathname === "/assets") return "assets";
+    if (pathname === "/skills") return "skills";
+    // Fallback to searchParams (?tab=templates)
     const t = searchParams.get("tab") as TabType;
     return ["templates", "components", "assets", "skills", "design-md", "learn"].includes(t || "")
       ? t!
@@ -109,22 +116,26 @@ function HomeInner() {
     setPageState(p);
   }, []);
 
-  // Sync all state → URL (replace history to avoid back/forward spam)
+  // Sync state → URL using clean URLs (/templates, /assets, etc.)
   useEffect(() => {
-    if (tab === "skills" || tab === "learn"  || tab === "design-md") {
-      // These tabs have their own routes; don't pollute URL
+    if (tab === "skills" || tab === "learn" || tab === "design-md") {
       return;
     }
+    const cleanPaths: Record<string, string> = {
+      templates: "/templates",
+      components: "/components",
+      assets: "/assets",
+      skills: "/skills",
+    };
+    const basePath = cleanPaths[tab] || "/";
     const params = new URLSearchParams();
-    params.set("tab", tab);
-    if (sort !== "views") params.set("sort", sort);
+    if (sort !== "recent") params.set("sort", sort);
     if (tag) params.set("tag", tag);
     if (debouncedQ) params.set("q", debouncedQ);
-
     if (featured) params.set("featured", "true");
     if (page > 1) params.set("page", String(page));
     const qs = params.toString();
-    const newUrl = qs ? `/?${qs}` : "/";
+    const newUrl = qs ? `${basePath}?${qs}` : basePath;
     router.replace(newUrl, { scroll: false });
   }, [tab, sort, tag, debouncedQ, featured, page, router]);
 
@@ -181,11 +192,11 @@ function HomeInner() {
     return String(n || 0);
   };
 
-  const tabs: { id: TabType; label: string; count?: string; href?: string }[] = [
-    { id: "templates", label: "Templates", href: "/templates", count: stats?.templates?.toLocaleString() },
-    { id: "components", label: "Components", href: "/components", count: stats?.components?.toLocaleString() },
-    { id: "assets", label: "Assets", href: "/assets", count: stats?.assets?.toLocaleString() },
-    { id: "skills", label: "Skills", href: "/skills", count: stats?.skills?.toLocaleString() },
+  const tabs: { id: TabType; label: string; href?: string }[] = [
+    { id: "templates", label: "Templates", href: "/templates" },
+    { id: "components", label: "Components", href: "/components" },
+    { id: "assets", label: "Assets", href: "/assets" },
+    { id: "skills", label: "Skills", href: "/skills" },
     { id: "design-md", label: "DESIGN.MD", href: "/design-systems" },
     { id: "learn", label: "Learn", href: "/learn/introduction" },
   ];
@@ -212,7 +223,7 @@ function HomeInner() {
             {tabs.map(t => (
               t.href ? (
                 <a key={t.id} href={t.href} className="header-tab">
-                  {t.label}{t.count && <span style={{ opacity: 0.6, marginLeft: 4, fontSize: 10 }}>{t.count}</span>}
+                  {t.label}
                 </a>
               ) : (
                 <button
@@ -220,7 +231,7 @@ function HomeInner() {
                   className={`header-tab ${t.id === tab ? "active" : ""}`}
                   onClick={() => setTab(t.id)}
                 >
-                  {t.label}{t.count && <span style={{ opacity: 0.6, marginLeft: 4, fontSize: 10 }}>{t.count}</span>}
+                  {t.label}
                 </button>
               )
             ))}
