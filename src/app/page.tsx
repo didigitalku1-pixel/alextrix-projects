@@ -35,36 +35,31 @@ interface Stats {
   premium: number;
 }
 
-const PAGE_INFO: Record<string, { eyebrow: string; title: string; desc: string; pulseTitle: string }> = {
+const PAGE_INFO: Record<string, { eyebrow: string; title: string; desc: string }> = {
   templates: {
-    eyebrow: "Landing Page Templates",
-    title: "HTML, CSS, and React landing page templates",
-    desc: "Browse reusable Aura landing page templates for SaaS, portfolio, ecommerce, and AI websites. Remix designs visually, edit templates in Aura, and export HTML, CSS, or React.",
-    pulseTitle: "Template Pulse",
+    eyebrow: "3D Templates",
+    title: "Immersive 3D & WebGL Landing Page Templates",
+    desc: "Browse cutting-edge 3D, WebGL, and interactive landing page templates. Remix designs, export clean HTML, CSS, or React code.",
   },
   components: {
     eyebrow: "UI Components",
     title: "Reusable HTML, CSS, and React components",
-    desc: "Browse reusable Aura UI components — hero sections, navigation, cards, forms, and more. Copy HTML or React code directly, or remix in Aura to customize.",
-    pulseTitle: "Component Pulse",
+    desc: "Browse reusable UI components — hero sections, navigation, cards, forms, and more. Copy HTML or React code directly.",
   },
   assets: {
     eyebrow: "Stock Assets",
     title: "High-quality stock images and visual assets",
-    desc: "Browse thousands of curated stock photos, illustrations, and visual assets for your designs. Filter by color, resolution, and category.",
-    pulseTitle: "Asset Pulse",
+    desc: "Browse thousands of curated stock photos, illustrations, and visual assets for your designs.",
   },
   skills: {
     eyebrow: "AI Skills",
     title: "AI agent skills and prompt templates",
-    desc: "Browse AI agent skills — pre-configured prompt templates for design, coding, content creation, and more. Copy and use with any AI model.",
-    pulseTitle: "Skill Pulse",
+    desc: "Browse AI agent skills — pre-configured prompt templates for design, coding, content creation, and more.",
   },
   "design-md": {
     eyebrow: "Design Systems",
     title: "Design system specifications and documentation",
     desc: "Browse design systems with complete DESIGN.md specifications, color tokens, typography, and component documentation.",
-    pulseTitle: "Design Pulse",
   },
 };
 
@@ -202,21 +197,16 @@ function HomeInner() {
   ];
 
   const info = PAGE_INFO[tab] || PAGE_INFO.templates;
-  const pulseItems = tab === "templates" ? [
-    { label: "All", count: stats?.templates || 0, color: "#3b82f6" },
-    { label: "Featured", count: stats?.featured || 0, color: "#10b981" },
-  ] : [
-    { label: "All", count: stats ? (stats as any)[tab === "design-md" ? "templates" : tab] || 0 : 0, color: "#3b82f6" },
-  ];
 
   return (
-    <div className="app">
+    <div className="app alextrix-app">
       {/* Header */}
       <header className="header">
         <div className="header-inner">
           <div className="header-left">
-            <a href="/" className="header-logo">
+            <a href="/" className="header-logo alextrix-logo">
               <div className="header-logo-icon">A</div>
+              <span className="alextrix-name">Alextrix</span>
             </a>
           </div>
           <nav className="header-nav">
@@ -261,32 +251,29 @@ function HomeInner() {
       ) : tab === "design-md" ? (
         <DesignSystemsView />
       ) : (
-        <main className="main ds-main-browse">
+        <main className="main alextrix-app">
           <div className="main-content">
             {/* Hero */}
-            <div className="ds-hero-section">
-              <div className="ds-hero-text">
-                <p className="ds-hero-eyebrow">{info.eyebrow}</p>
-                <h1 className="ds-hero-title">{info.title}</h1>
-                <p className="ds-hero-desc">{info.desc}</p>
-              </div>
+            <div className="alextrix-hero">
+              <p className="alextrix-hero-eyebrow">{info.eyebrow}</p>
+              <h1 className="alextrix-hero-title">{info.title}</h1>
+              <p className="alextrix-hero-desc">{info.desc}</p>
             </div>
 
             {/* Tier 1: Full-width Search */}
-            <div className="ds-search-bar">
-              <svg className="ds-search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <div className="alextrix-search">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>
               </svg>
               <input
                 type="text"
-                className="ds-search-input"
                 placeholder={`Search ${total.toLocaleString()} ${tab}...`}
                 value={q}
                 onChange={e => setQ(e.target.value)}
               />
               {q && (
-                <button className="ds-search-clear" onClick={() => setQ("")} aria-label="Clear search">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <button className="alextrix-search-clear" onClick={() => setQ("")} aria-label="Clear search">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M18 6 6 18M6 6l12 12"/>
                   </svg>
                 </button>
@@ -294,35 +281,35 @@ function HomeInner() {
             </div>
 
             {/* Tier 2: Sort Segmented Control + Filter Pills */}
-            <div className="ds-filter-row">
-              <div className="ds-sort-segmented">
+            <div className="alextrix-filter-row">
+              <div className="alextrix-sort">
                 {([
                   { id: "recent", label: "Recent", icon: "M12 8v4l3 3M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" },
                   { id: "views", label: "Popular", icon: "M3 3v18h18M7 12l4-4 4 4 6-6" },
-                  { id: "forks", label: "Most Forked", icon: "M6 3v12M18 9a3 3 0 1 0-3-3M6 21a3 3 0 1 1 3-3M18 21V9" },
-                  { id: "az", label: "A → Z", icon: "M3 7h10M3 12h7M3 17h4M14 17l3-3 3 3M17 4v10" },
+                  { id: "forks", label: "Forked", icon: "M6 3v12M18 9a3 3 0 1 0-3-3M6 21a3 3 0 1 1 3-3M18 21V9" },
+                  { id: "az", label: "A→Z", icon: "M3 7h10M3 12h7M3 17h4M14 17l3-3 3 3M17 4v10" },
                 ] as const).map(s => (
                   <button
                     key={s.id}
-                    className={`ds-sort-btn ${sort === s.id ? "active" : ""}`}
+                    className={`alextrix-sort-btn ${sort === s.id ? "active" : ""}`}
                     onClick={() => setSort(s.id)}
                   >
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <path d={s.icon}/>
                     </svg>
                     {s.label}
                   </button>
                 ))}
               </div>
-              <div className="ds-filter-pills">
+              <div className="alextrix-filters">
                 <button
-                  className={`ds-pill-btn ${featured ? "active-featured" : ""}`}
+                  className={`alextrix-pill ${featured ? "active-featured" : ""}`}
                   onClick={() => setFeatured(!featured)}
                 >
                   ★ Featured
                 </button>
                 <button
-                  className={`ds-pill-btn ${premium ? "active-premium" : ""}`}
+                  className={`alextrix-pill ${premium ? "active-premium" : ""}`}
                   onClick={() => setPremium(!premium)}
                 >
                   PRO
@@ -330,36 +317,36 @@ function HomeInner() {
               </div>
             </div>
 
-            {/* Tier 3: Tags (always visible, horizontal scroll) */}
+            {/* Tier 3: Tags */}
             {tags.length > 0 && (
-              <div className="ds-tags-scroll">
+              <div className="alextrix-tags">
                 {tags.slice(0, 30).map(t => (
                   <button
                     key={t.tag}
-                    className={`ds-tag-pill ${tag === t.tag ? "active" : ""}`}
+                    className={`alextrix-tag ${tag === t.tag ? "active" : ""}`}
                     onClick={() => setTag(tag === t.tag ? null : t.tag)}
                   >
                     {t.tag}
-                    <span className="ds-tag-count">{t.count}</span>
+                    <span className="alextrix-tag-count">{t.count}</span>
                   </button>
                 ))}
               </div>
             )}
 
             {/* Result count + active filter chips */}
-            <div className="ds-result-bar">
-              <span className="ds-result-text">
+            <div className="alextrix-result">
+              <span className="alextrix-result-text">
                 {loading ? "Loading..." : (
-                  <>Showing <strong>{Math.min(page * 24, total).toLocaleString()}</strong> of <strong>{total.toLocaleString()}</strong> {tab}{page > 1 && <span className="ds-page-info"> · Page {page} of {totalPages}</span>}</>
+                  <>Showing <strong>{Math.min(page * 24, total).toLocaleString()}</strong> of <strong>{total.toLocaleString()}</strong> {tab}{page > 1 && <span style={{ marginLeft: 8, fontSize: 11, color: "#9CA3AF" }}>· Page {page} of {totalPages}</span>}</>
                 )}
               </span>
               {(tag || featured || premium || q) && (
-                <div className="ds-active-chips">
-                  {q && <span className="ds-chip" onClick={() => setQ("")}>"{q}" ✕</span>}
-                  {tag && <span className="ds-chip" onClick={() => setTag(null)}>#{tag} ✕</span>}
-                  {featured && <span className="ds-chip" onClick={() => setFeatured(false)}>★ Featured ✕</span>}
-                  {premium && <span className="ds-chip" onClick={() => setPremium(false)}>PRO ✕</span>}
-                  <button className="ds-clear-all" onClick={resetFilters}>Clear all</button>
+                <div className="alextrix-chips">
+                  {q && <span className="alextrix-chip" onClick={() => setQ("")}>"{q}" ✕</span>}
+                  {tag && <span className="alextrix-chip" onClick={() => setTag(null)}>#{tag} ✕</span>}
+                  {featured && <span className="alextrix-chip" onClick={() => setFeatured(false)}>★ Featured ✕</span>}
+                  {premium && <span className="alextrix-chip" onClick={() => setPremium(false)}>PRO ✕</span>}
+                  <button className="alextrix-clear" onClick={resetFilters}>Clear all</button>
                 </div>
               )}
             </div>
