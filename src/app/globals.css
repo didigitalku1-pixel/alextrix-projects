@@ -60,7 +60,11 @@
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
 html, body {
-  background: hsl(var(--background));
+  background-color: #FDFBF7 !important;
+  background-image: radial-gradient(circle, rgba(230, 92, 0, 0.05) 1px, transparent 1px) !important;
+  background-size: 40px 40px !important;
+  background-position: 0 0 !important;
+  background-attachment: fixed !important;
   color: hsl(var(--foreground));
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
   font-size: 16px; /* was 14px — match aura.build root so rem-based utilities render at intended sizes */
@@ -68,6 +72,11 @@ html, body {
   -webkit-font-smoothing: antialiased;
   min-height: 100vh;
   transition: background-color 0.3s, color 0.3s;
+}
+
+.dark, .dark body {
+  background-color: #0A0A0A !important;
+  background-image: radial-gradient(circle, rgba(255, 179, 128, 0.04) 1px, transparent 1px) !important;
 }
 
 html {
@@ -254,9 +263,9 @@ img { display: block; max-width: 100%; }
 .main {
   flex: 1;
   padding-top: 0;
-  background: hsl(var(--muted));
+  background: transparent; /* let body dot-grid show through */
 }
-.dark .main { background: hsl(var(--background)); }
+.dark .main { background: transparent; }
 
 .main-content {
   max-width: 1600px;
@@ -5017,12 +5026,8 @@ img { display: block; max-width: 100%; }
    ============================================================ */
 
 .alextrix-app {
-  background: #FDFBF7;
-  background-image: 
-    linear-gradient(rgba(230, 92, 0, 0.04) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(230, 92, 0, 0.04) 1px, transparent 1px);
-  background-size: 48px 48px;
-  background-position: -1px -1px;
+  /* Background dot-grid now handled at body level for consistency across all pages */
+  background: transparent;
   min-height: 100vh;
 }
 
@@ -5485,14 +5490,8 @@ img { display: block; max-width: 100%; }
   z-index: 1;
 }
 
-/* === Global dot-grid background for ALL pages === */
-.app.alextrix-app,
-.alextrix-app {
-  background-color: #FDFBF7 !important;
-  background-image: radial-gradient(circle, rgba(230, 92, 0, 0.05) 1px, transparent 1px) !important;
-  background-size: 40px 40px !important;
-  background-position: 0 0 !important;
-}
+/* === Global dot-grid background moved to body level (applies to ALL pages) === */
+/* Removed duplicate rule from .alextrix-app — body now handles it globally */
 
 /* Remove old grid pattern from browse-specific */
 .alextrix-app .main {
