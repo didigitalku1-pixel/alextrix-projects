@@ -18,13 +18,7 @@ interface DSItem {
   tags?: string[];
 }
 
-// Pulse stats are fetched from API to avoid stale hardcoded numbers
-const DEFAULT_PULSE_STATS = [
-  { label: "Systems", value: 0, color: "#3b82f6" },
-  { label: "Colors", value: 0, color: "#ef4444" },
-  { label: "Type", value: 0, color: "#f59e0b" },
-  { label: "Spacing", value: 0, color: "#10b981" },
-];
+// Pulse stats removed - using clean layout
 
 export default function DesignSystemsPage() {
   const [items, setItems] = useState<DSItem[]>([]);
@@ -33,26 +27,10 @@ export default function DesignSystemsPage() {
   const [page, setPage] = useState(1);
   const [sort, setSort] = useState("popular");
   const [loading, setLoading] = useState(true);
-  const [pulseStats, setPulseStats] = useState(DEFAULT_PULSE_STATS);
+  
   const { isDark, toggle: toggleTheme } = useTheme();
 
-  // Fetch pulse stats from /api/stats once
-  useEffect(() => {
-    fetch("/api/stats")
-      .then((r) => r.json())
-      .then((d) => {
-        if (d.design_systems) {
-          setPulseStats((prev) =>
-            prev.map((p) =>
-              p.label === "Systems" ? { ...p, value: d.design_systems } : p,
-            ),
-          );
-        }
-      })
-      .catch(() => {
-        // Silent fail — stats are non-critical
-      });
-  }, []);
+
 
   const loadItems = useCallback(async () => {
     setLoading(true);
@@ -106,7 +84,7 @@ export default function DesignSystemsPage() {
         </div>
       </header>
 
-      <main className="main">
+      <main className="main alextrix-app">
         <div className="main-content">
           {/* === Hero section === */}
           <div className="ds-hero">
@@ -126,24 +104,7 @@ export default function DesignSystemsPage() {
             </div>
           </div>
 
-          {/* === Library Pulse === */}
-          <div className="ds-pulse-box">
-            <div className="ds-pulse-header">
-              <span className="ds-pulse-dot"></span>
-              <span className="ds-pulse-title">LIBRARY PULSE</span>
-            </div>
-            <div className="ds-pulse-stats">
-              {pulseStats.map(stat => (
-                <div key={stat.label} className="ds-pulse-stat">
-                  <span className="ds-pulse-label">
-                    <span className="ds-pulse-dot-sm" style={{ background: stat.color }}></span>
-                    {stat.label}
-                  </span>
-                  <span className="ds-pulse-value">{stat.value.toLocaleString()}</span>
-                </div>
-              ))}
-            </div>
-          </div>
+
 
           {/* === Sort tabs === */}
           <div className="ds-sort-row">
@@ -212,10 +173,7 @@ export default function DesignSystemsPage() {
                   </div>
                   <div className="card-footer">
                     <h3 className="card-title" title={item.title}>{item.title}</h3>
-                    <div className="card-stats">
-                      <span className="card-stat">👁 {item.views.toLocaleString()}</span>
-                      {item.forks > 0 && <span className="card-stat">⑂ {item.forks}</span>}
-                    </div>
+                    {item.featured && <span className="card-pro-badge">FEATURED</span>}
                   </div>
                 </a>
               ))}

@@ -412,11 +412,7 @@ function HomeInner() {
                     </div>
                     <div className="card-footer">
                       <h3 className="card-title" title={item.title}>{item.title}</h3>
-                      <div className="card-stats alextrix-card-stats">
-                        <span className="card-stat alextrix-stat">{formatCount(item.views)} views</span>
-                        {item.forks > 0 && <span className="card-stat alextrix-stat">↻ {formatCount(item.forks)}</span>}
-                        <span className="card-stat alextrix-stat alextrix-stat-code">{formatCount(item.code_chars)} chars</span>
-                      </div>
+                      {item.premium && <span className="card-pro-badge">PRO</span>}
                     </div>
                   </a>
                 ))}
@@ -520,12 +516,12 @@ function DesignSystemsView() {
   }, []);
 
   return (
-    <main className="main">
+    <main className="main alextrix-app">
       <div className="main-content">
-        <div style={{ marginBottom: 32 }}>
-          <p className="hero-eyebrow">Design Systems</p>
-          <h1 className="hero-title">Design system specifications and documentation</h1>
-          <p className="hero-desc">Browse design systems with complete DESIGN.md specifications, color tokens, typography, and component documentation.</p>
+        <div className="alextrix-hero" style={{ marginBottom: 32 }}>
+          <p className="alextrix-hero-eyebrow">DESIGN SYSTEMS</p>
+          <h1 className="alextrix-hero-title">Design system specifications</h1>
+          <p className="alextrix-hero-desc">Browse design systems with complete DESIGN.md specifications, color tokens, typography, and component documentation.</p>
         </div>
         {loading ? (
           <div className="grid">
@@ -534,7 +530,7 @@ function DesignSystemsView() {
         ) : (
           <div style={{ display: "flex", flexDirection: "column", gap: 32 }}>
             {items.map(item => (
-              <a key={item.id} className="card" href={`/detail/template/${item.id}`} style={{ maxWidth: "none" }}>
+              <a key={item.id} className="card" href={`/design-systems/${item.slug || item.id}`} style={{ maxWidth: "none" }}>
                 <div className="card-image-wrap" style={{ aspectRatio: "21 / 9" }}>
                   {item.image ? <img src={`/api/image?url=${encodeURIComponent(item.image)}`} alt={item.title} className="card-image" loading="lazy" onError={(e) => { const t = e.target as HTMLImageElement; t.style.display = "none"; const p = t.parentElement; if (p && !p.querySelector(".card-image-placeholder")) { const d = document.createElement("div"); d.className = "card-image-placeholder"; d.textContent = item.title.substring(0, 20); p.appendChild(d); } }} /> : <div className="card-image-placeholder">{item.title.substring(0, 20)}</div>}
                   {item.featured && <span className="card-badge badge-featured">★</span>}
@@ -542,10 +538,8 @@ function DesignSystemsView() {
                 <div className="card-footer" style={{ padding: 20 }}>
                   <h2 style={{ fontSize: 20, fontWeight: 600, marginBottom: 8 }}>{item.title}</h2>
                   {item.desc && <p style={{ color: "hsl(var(--muted-foreground))", fontSize: 14, marginBottom: 12 }}>{item.desc}</p>}
-                  <div style={{ display: "flex", alignItems: "center", gap: 16, fontSize: 13, color: "hsl(var(--muted-foreground))" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 12, fontSize: 13, color: "hsl(var(--muted-foreground))" }}>
                     {item.username && <span className="alextrix-author">{item.username.slice(0, 16)}</span>}
-                    <span>{item.views.toLocaleString()} views</span>
-                    {item.forks > 0 && <span>⑂ {item.forks.toLocaleString()}</span>}
                     {item.created_at && <span>{new Date(item.created_at).toLocaleDateString()}</span>}
                   </div>
                   {item.tags && item.tags.length > 0 && (
@@ -676,7 +670,7 @@ function SkillsView() {
   };
 
   return (
-    <main className="main" style={{ background: "hsl(var(--background))" }}>
+    <main className="main alextrix-app">
       <div className="skills-doc-layout">
         {/* === Sidebar — list only, no search/tags === */}
         <aside className="skills-doc-sidebar">
@@ -706,10 +700,7 @@ function SkillsView() {
                       ))}
                     </div>
                   )}
-                  <div className="skills-doc-item-stats">
-                    <span>{formatCount(skill.views)} views</span>
-                    {skill.forks > 0 && <span>⑂ {formatCount(skill.forks)}</span>}
-                  </div>
+
                 </button>
               ))
             )}
@@ -762,19 +753,14 @@ function SkillsView() {
                 <p className="skills-doc-desc">{selectedSkill.desc}</p>
               )}
               {/* Meta */}
-              <div className="skills-doc-meta">
-                <span>{formatCount(selectedSkill.views)} views</span>
-                {selectedSkill.forks > 0 && <span>⑂ {formatCount(selectedSkill.forks)} remixes</span>}
-              </div>
-              {/* Tags */}
               {selectedSkill.tags && selectedSkill.tags.length > 0 && (
                 <div className="skills-doc-content-tags">
-                  {(selectedSkill.tags as string[]).map(t => (
+                  {(selectedSkill.tags as string[]).slice(0, 6).map(t => (
                     <span key={t} className="about-tag">{t}</span>
                   ))}
                 </div>
               )}
-              <div style={{ width: 48, height: 3, background: "hsl(var(--foreground))", marginBottom: 32, borderRadius: 2 }} />
+              <div style={{ width: 48, height: 3, background: "#E65C00", marginBottom: 32, borderRadius: 2 }} />
               {/* Markdown content */}
               <div
                 className="markdown skills-doc-markdown"

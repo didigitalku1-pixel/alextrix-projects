@@ -231,7 +231,7 @@ export default function DesignSystemDetailPage({
   const rounded = frontmatter.rounded || {};
 
   return (
-    <div className="app ds-app">
+    <div className="app alextrix-app">
       {/* Header */}
       <header className="header">
         <div className="header-inner">

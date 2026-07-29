@@ -5457,3 +5457,77 @@ img { display: block; max-width: 100%; }
 .dark .alextrix-stat { color: #71717A !important; }
 .dark .alextrix-stat-code { color: #FFB380 !important; }
 .dark .alextrix-author { color: #71717A; }
+
+/* === Card PRO badge === */
+.card-pro-badge {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: #111827;
+  color: #FDFBF7;
+  font-family: 'Inter', system-ui, sans-serif;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 999px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  z-index: 1;
+}
+
+/* === Global dot-grid background for ALL pages === */
+.app.alextrix-app,
+.alextrix-app {
+  background-color: #FDFBF7 !important;
+  background-image: radial-gradient(circle, rgba(230, 92, 0, 0.05) 1px, transparent 1px) !important;
+  background-size: 40px 40px !important;
+  background-position: 0 0 !important;
+}
+
+/* Remove old grid pattern from browse-specific */
+.alextrix-app .main {
+  background: transparent !important;
+}
+
+/* Design systems page - use same Alextrix styling */
+.alextrix-app .ds-hero,
+.alextrix-app .ds-pulse-box,
+.alextrix-app .ds-sort-row {
+  display: none !important;
+}
+
+/* Skills page - use Alextrix theme */
+.skills-doc-sidebar {
+  background: #F7F4EB !important;
+  border-color: #E8E2D5 !important;
+}
+.skills-doc-item.active {
+  background: #E65C00 !important;
+  color: #FDFBF7 !important;
+}
+.skills-doc-search-input {
+  background: #F7F4EB !important;
+  border-color: #E8E2D5 !important;
+}
+.skills-doc-tag.active {
+  background: #E65C00 !important;
+  color: #FDFBF7 !important;
+}
+
+/* Dark theme for PRO badge */
+.dark .card-pro-badge {
+  background: #FAFAFA;
+  color: #0A0A0A;
+}
+.dark .skills-doc-sidebar {
+  background: #18181B !important;
+  border-color: #27272A !important;
+}
+.dark .skills-doc-search-input {
+  background: #18181B !important;
+  border-color: #27272A !important;
+}
+.dark .skills-doc-item.active {
+  background: #FAFAFA !important;
+  color: #0A0A0A !important;
+}

@@ -209,7 +209,7 @@ export default function SlugDetail({
 
   if (loading) {
     return (
-      <div className="app">
+      <div className="app alextrix-app">
         <header className="header">
           <div className="header-inner">
             <a href="/" className="header-logo">
@@ -228,7 +228,7 @@ export default function SlugDetail({
 
   if (!item) {
     return (
-      <div className="app">
+      <div className="app alextrix-app">
         <header className="header">
           <div className="header-inner">
             <a href="/" className="header-logo">
@@ -290,7 +290,7 @@ export default function SlugDetail({
   );
 
   return (
-    <div className="app">
+    <div className="app alextrix-app">
       <header className="header">
         <div className="header-inner">
           <a href="/" className="header-logo">
@@ -796,10 +796,7 @@ const RelatedCard = memo(function RelatedCard({ item }: { item: any }) {
       </div>
       <div className="related-card-footer">
         <h3 className="related-card-title" title={item.title}>{item.title}</h3>
-        <div className="related-card-stats">
-          <span>{formatCount(item.views)} views</span>
-          {item.forks > 0 && <span>↻ {formatCount(item.forks)}</span>}
-        </div>
+        
       </div>
     </Link>
   );
