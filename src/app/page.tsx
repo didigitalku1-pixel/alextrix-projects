@@ -65,9 +65,169 @@ const PAGE_INFO: Record<string, { eyebrow: string; title: string; desc: string }
 
 export default function Home() {
   return (
-    <Suspense fallback={<div className="app"><main className="main"><div className="loading-spinner"><div className="spinner" /></div></main></div>}>
-      <HomeInner />
+    <Suspense fallback={<div className="app alextrix-app"><main className="main"><div className="loading-spinner"><div className="spinner" /></div></main></div>}>
+      <HomeRouter />
     </Suspense>
+  );
+}
+
+function HomeRouter() {
+  const pathname = usePathname();
+  if (pathname === "/") {
+    return <AlextrixHomepage />;
+  }
+  return <HomeInner />;
+}
+
+// === Homepage Landing Page ===
+function AlextrixHomepage() {
+  const [featuredTemplates, setFeaturedTemplates] = useState<Item[]>([]);
+  const [featuredComponents, setFeaturedComponents] = useState<Item[]>([]);
+  const [loading, setLoading] = useState(true);
+  const { isDark, toggle: toggleTheme } = useTheme();
+
+  useEffect(() => {
+    Promise.all([
+      fetch("/api/items?type=template&sort=views&limit=5").then(r => r.json()),
+      fetch("/api/items?type=component&sort=views&limit=5").then(r => r.json()),
+    ]).then(([t, c]) => {
+      setFeaturedTemplates(t.items || []);
+      setFeaturedComponents(c.items || []);
+      setLoading(false);
+    }).catch(() => setLoading(false));
+  }, []);
+
+  const navTabs = [
+    { id: "templates", label: "Templates", href: "/templates" },
+    { id: "components", label: "Components", href: "/components" },
+    { id: "assets", label: "Assets", href: "/assets" },
+    { id: "skills", label: "Skills", href: "/skills" },
+    { id: "design-md", label: "DESIGN.MD", href: "/design-systems" },
+    { id: "learn", label: "Learn", href: "/learn/introduction" },
+  ];
+
+  return (
+    <div className="app alextrix-app">
+      <header className="header">
+        <div className="header-inner">
+          <div className="header-left">
+            <a href="/" className="header-logo alextrix-logo">
+              <div className="header-logo-icon">A</div>
+              <span className="alextrix-name">Alextrix</span>
+            </a>
+          </div>
+          <nav className="header-nav">
+            {navTabs.map(t => (
+              <a key={t.id} href={t.href} className="header-tab">{t.label}</a>
+            ))}
+          </nav>
+          <div className="header-right">
+            <button className="header-icon-btn" onClick={toggleTheme} aria-label="Toggle theme">
+              {isDark ? "☀️" : "🌙"}
+            </button>
+          </div>
+        </div>
+      </header>
+
+      <main className="main alextrix-homepage">
+        <section className="alextrix-hero-section">
+          <div className="alextrix-hero-content">
+            <p className="alextrix-hero-eyebrow">ALEXTRIX LIBRARY</p>
+            <h1 className="alextrix-hero-headline">Build Stunning Websites<br />in Seconds</h1>
+            <p className="alextrix-hero-subheadline">Curated HTML, CSS, React templates, UI components, and design systems. Export production-ready code instantly.</p>
+            <div className="alextrix-hero-cta">
+              <a href="/templates" className="alextrix-cta-primary">Browse Templates →</a>
+              <a href="/design-systems" className="alextrix-cta-secondary">Explore Design.md</a>
+            </div>
+          </div>
+        </section>
+
+        <section className="alextrix-featured-section">
+          <div className="alextrix-section-header">
+            <h2 className="alextrix-section-title">Trending Templates</h2>
+            <a href="/templates" className="alextrix-section-link">Browse all →</a>
+          </div>
+          <div className="alextrix-featured-grid">
+            {loading ? (
+              Array.from({ length: 5 }).map((_, i) => <div key={i} className="skeleton" />)
+            ) : (
+              featuredTemplates.map(item => (
+                <a key={item.id} className="card alextrix-card" href={`/templates/${item.slug || item.id}`}>
+                  <div className="card-image-wrap">
+                    {item.image ? (
+                      <img src={`/api/image?url=${encodeURIComponent(item.image)}`} alt={item.title} className="card-image" loading="lazy" />
+                    ) : (
+                      <img src={`/api/skill-thumb?title=${encodeURIComponent(item.title)}`} alt={item.title} className="card-image" loading="lazy" />
+                    )}
+                    {item.premium && <span className="card-pro-badge">PRO</span>}
+                  </div>
+                  <div className="card-footer">
+                    <h3 className="card-title" title={item.title}>{item.title}</h3>
+                    {item.username && <span className="alextrix-author">{item.username.slice(0, 16)}</span>}
+                  </div>
+                </a>
+              ))
+            )}
+          </div>
+        </section>
+
+        <section className="alextrix-featured-section">
+          <div className="alextrix-section-header">
+            <h2 className="alextrix-section-title">Featured Components</h2>
+            <a href="/components" className="alextrix-section-link">Browse all →</a>
+          </div>
+          <div className="alextrix-featured-grid">
+            {loading ? (
+              Array.from({ length: 5 }).map((_, i) => <div key={i} className="skeleton" />)
+            ) : (
+              featuredComponents.map(item => (
+                <a key={item.id} className="card alextrix-card" href={`/components/${item.slug || item.id}`}>
+                  <div className="card-image-wrap">
+                    {item.image ? (
+                      <img src={`/api/image?url=${encodeURIComponent(item.image)}`} alt={item.title} className="card-image" loading="lazy" />
+                    ) : (
+                      <img src={`/api/skill-thumb?title=${encodeURIComponent(item.title)}`} alt={item.title} className="card-image" loading="lazy" />
+                    )}
+                    {item.premium && <span className="card-pro-badge">PRO</span>}
+                  </div>
+                  <div className="card-footer">
+                    <h3 className="card-title" title={item.title}>{item.title}</h3>
+                    {item.username && <span className="alextrix-author">{item.username.slice(0, 16)}</span>}
+                  </div>
+                </a>
+              ))
+            )}
+          </div>
+        </section>
+
+        <footer className="alextrix-footer">
+          <div className="alextrix-footer-container">
+            <div className="alextrix-footer-brand">
+              <div className="alextrix-footer-logo">A</div>
+              <p className="alextrix-footer-tagline">Premium templates, components, and design systems. Export production-ready code instantly.</p>
+            </div>
+            <div className="alextrix-footer-cols">
+              <div className="alextrix-footer-col">
+                <h4 className="alextrix-footer-col-title">PRODUCT</h4>
+                <a href="/templates" className="alextrix-footer-link">Templates</a>
+                <a href="/components" className="alextrix-footer-link">Components</a>
+                <a href="/assets" className="alextrix-footer-link">Assets</a>
+                <a href="/skills" className="alextrix-footer-link">Skills</a>
+                <a href="/design-systems" className="alextrix-footer-link">Design.md</a>
+              </div>
+              <div className="alextrix-footer-col">
+                <h4 className="alextrix-footer-col-title">RESOURCES</h4>
+                <a href="/learn/introduction" className="alextrix-footer-link">Learn</a>
+                <a href="/learn/faq" className="alextrix-footer-link">FAQ</a>
+              </div>
+            </div>
+          </div>
+          <div className="alextrix-footer-bottom">
+            <p>© {new Date().getFullYear()} Alextrix. All rights reserved.</p>
+          </div>
+        </footer>
+      </main>
+    </div>
   );
 }
 
