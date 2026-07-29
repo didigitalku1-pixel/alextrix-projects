@@ -26,8 +26,8 @@ import urllib.request
 import urllib.error
 from datetime import datetime
 
-SUPA_URL = "https://njgtmqwyabfknyktuwzc.supabase.co"
-ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5qZ3RtcXd5YWJma255a3R1d3pjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMxMDM3MDcsImV4cCI6MjA5ODY3OTcwN30.10WHq_NOsG0wLJfsgHNSp0j4CPCqqZ12_bY9Q1h5kOI"
+SUPA_URL = "https://kvkwiekfdlaeeabkwmhp.supabase.co"
+ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt2a3dpZWtmZGxhZWVhYmt3bWhwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODUyNTkxMzEsImV4cCI6MjEwMDgzNTEzMX0.7w5-8HP3h_G5UUkwVY6Mi68dBLdNyDn9JLM3g_27X5I"
 SERVICE_KEY = None  # loaded from arg or env
 
 

@@ -1,12 +1,13 @@
-name: Generate DESIGN.md
+name: Generate DESIGN.md (Hybrid)
 
-# Runs every 2 hours to generate DESIGN.md + Copy Prompt for templates.
+# Runs every 6 hours to generate DESIGN.md + Copy Prompt via aura.build Edge Function.
 # Processes 500 templates per run until all 21K are done.
-# Skip automatically when all templates have design_md.
+# Uses AURA_REFRESH_TOKEN to authenticate with aura.build Edge Function.
+# Saves results to user's Supabase (design_md table).
 
 on:
   schedule:
-    - cron: "0 */2 * * *"  # Every 2 hours
+    - cron: "0 */6 * * *"  # Every 6 hours
   workflow_dispatch:
     inputs:
       batch-size:
@@ -30,21 +31,150 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Run DESIGN.md generator
+      - name: Install deps
+        run: |
+          python -m pip install --upgrade pip
+          pip install "httpx[http2]"
+
+      - name: Refresh aura.build token & generate DESIGN.md
         env:
+          AURA_REFRESH_TOKEN: ${{ secrets.AURA_REFRESH_TOKEN }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
         run: |
           cd ${{ github.workspace }}
           BATCH_SIZE=${{ github.event.inputs.batch-size || '500' }}
+          
+          # Step 1: Refresh access token
+          echo "🔄 Refreshing aura.build access token..."
+          REFRESH_RESULT=$(python3 -c "
+          import httpx, json, sys
+          AURA_URL = 'https://hoirqrkdgbmvpwutwuwj.supabase.co'
+          AURA_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhvaXJxcmtkZ2JtdnB3dXR3dXdqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDM2Nzc2NTAsImV4cCI6MjA1OTI1MzY1MH0._UsCSHsTELn7m54tOhX3ySm67WEhcyHAPbuxEQZsl3c'
+          r = httpx.post(
+              f'{AURA_URL}/auth/v1/token?grant_type=refresh_token',
+              headers={'apikey': AURA_ANON, 'Content-Type': 'application/json'},
+              json={'refresh_token': '$AURA_REFRESH_TOKEN'},
+              timeout=30
+          )
+          if r.status_code == 200:
+              d = r.json()
+              print(d['access_token'])
+              print(d['refresh_token'], file=sys.stderr)
+          else:
+              print(f'ERROR: {r.status_code} {r.text}', file=sys.stderr)
+              sys.exit(1)
+          " 2>/tmp/new_refresh_token.txt)
+          
+          ACCESS_TOKEN="$REFRESH_RESULT"
+          NEW_REFRESH_TOKEN=$(cat /tmp/new_refresh_token.txt)
+          
+          if [ -z "$ACCESS_TOKEN" ] || [ "$ACCESS_TOKEN" = "None" ]; then
+            echo "❌ Failed to refresh token. AURA_REFRESH_TOKEN may be expired."
+            echo "Please login to aura.build and update the GitHub secret."
+            exit 1
+          fi
+          
+          echo "✅ Token refreshed successfully"
+          
+          # Step 2: Generate DESIGN.md for batch of templates
           echo "📋 Generating DESIGN.md for $BATCH_SIZE templates..."
-          python3 scripts/generate_design_md.py \
-            --limit $BATCH_SIZE \
-            --batch-size 100 \
-            --generate-prompt \
-            --service-key "$SUPABASE_SERVICE_ROLE_KEY"
+          python3 -c "
+          import httpx, json, asyncio, sys, os
+          
+          AURA_URL = 'https://hoirqrkdgbmvpwutwuwj.supabase.co'
+          AURA_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhvaXJxcmtkZ2JtdnB3dXR3dXdqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDM2Nzc2NTAsImV4cCI6MjA1OTI1MzY1MH0._UsCSHsTELn7m54tOhX3ySm67WEhcyHAPbuxEQZsl3c'
+          DST_URL = 'https://kvkwiekfdlaeeabkwmhp.supabase.co'
+          DST_KEY = os.environ['SUPABASE_SERVICE_ROLE_KEY']
+          ACCESS_TOKEN = '$ACCESS_TOKEN'
+          BATCH_SIZE = int('$BATCH_SIZE')
+          
+          async def main():
+              # Get templates without design_md
+              r = await httpx.AsyncClient(http2=True).get(
+                  f'{DST_URL}/rest/v1/templates?select=id,slug,title&order=views.desc&limit={BATCH_SIZE}',
+                  headers={'apikey': DST_KEY, 'Authorization': f'Bearer {DST_KEY}'}
+              )
+              templates = r.json()
+              
+              # Check which already have design_md
+              r2 = await httpx.AsyncClient(http2=True).get(
+                  f'{DST_URL}/rest/v1/design_md?select=template_id',
+                  headers={'apikey': DST_KEY, 'Authorization': f'Bearer {DST_KEY}'}
+              )
+              existing = {r['template_id'] for r in r2.json()} if r2.status_code == 200 else set()
+              
+              pending = [t for t in templates if t['id'] not in existing]
+              print(f'Templates to process: {len(pending)} of {len(templates)}')
+              
+              success = 0
+              failed = 0
+              skipped = 0
+              
+              async with httpx.AsyncClient(http2=True, timeout=60) as client:
+                  for i, t in enumerate(pending):
+                      for artifact in ['design_md', 'recreation_prompt']:
+                          try:
+                              r = await client.post(
+                                  f'{AURA_URL}/functions/v1/generate-template-artifact',
+                                  headers={
+                                      'apikey': AURA_ANON,
+                                      'Authorization': f'Bearer {ACCESS_TOKEN}',
+                                      'Content-Type': 'application/json',
+                                  },
+                                  json={
+                                      'sourceType': 'shared_code',
+                                      'sourceId': t['id'],
+                                      'artifact': artifact,
+                                      'forceRegenerate': False,
+                                  }
+                              )
+                              if r.status_code == 200:
+                                  data = r.json()
+                                  content = data.get('designMarkdown') or data.get('recreationPrompt') or ''
+                                  if content and len(content) > 50:
+                                      # Insert to design_md table
+                                      await client.post(
+                                          f'{DST_URL}/rest/v1/design_md',
+                                          headers={
+                                              'apikey': DST_KEY,
+                                              'Authorization': f'Bearer {DST_KEY}',
+                                              'Content-Type': 'application/json',
+                                              'Prefer': 'return=minimal',
+                                          },
+                                          json={
+                                              'template_id': t['id'],
+                                              'artifact_type': artifact,
+                                              'content': content,
+                                          }
+                                      )
+                                      success += 1
+                              elif r.status_code == 403:
+                                  skipped += 1
+                                  break  # Premium, skip both artifacts
+                          except Exception as e:
+                              failed += 1
+                      
+                      if (i + 1) % 50 == 0:
+                          print(f'  Progress: {i+1}/{len(pending)} (success: {success}, skipped: {skipped}, failed: {failed})')
+                      await asyncio.sleep(0.3)
+              
+              print(f'\\n=== DONE ===')
+              print(f'Success: {success}')
+              print(f'Skipped (premium): {skipped}')
+              print(f'Failed: {failed}')
+              
+              # Output new refresh token for updating secret
+              print(f'NEW_REFRESH_TOKEN={NEW_REFRESH_TOKEN}', file=sys.stderr) if 'NEW_REFRESH_TOKEN' in os.environ else None
+          
+          asyncio.run(main())
+          "
+          
+          echo "✅ Generation complete"
 
       - name: Summary
         if: always()
         run: |
-          echo "## DESIGN.md Generation" >> $GITHUB_STEP_SUMMARY
-          echo "Check logs for progress. Next run in 2 hours." >> $GITHUB_STEP_SUMMARY
+          echo "## DESIGN.md Generation (Hybrid)" >> $GITHUB_STEP_SUMMARY
+          echo "Uses aura.build Edge Function with authenticated token." >> $GITHUB_STEP_SUMMARY
+          echo "Saves to kvkwiekfdlaeeabkwmhp.supabase.co design_md table." >> $GITHUB_STEP_SUMMARY
+          echo "Next run in 6 hours." >> $GITHUB_STEP_SUMMARY
