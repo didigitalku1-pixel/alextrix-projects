@@ -61,10 +61,9 @@
 
 html, body {
   background-color: #FDFBF7 !important;
-  background-image: radial-gradient(circle, rgba(230, 92, 0, 0.18) 1.5px, transparent 1.5px) !important;
-  background-size: 32px 32px !important;
+  background-image: radial-gradient(circle, rgba(230, 92, 0, 0.32) 2px, transparent 2px) !important;
+  background-size: 28px 28px !important;
   background-position: 0 0 !important;
-  background-attachment: fixed !important;
   color: hsl(var(--foreground));
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
   font-size: 16px; /* was 14px — match aura.build root so rem-based utilities render at intended sizes */
@@ -76,7 +75,7 @@ html, body {
 
 .dark, .dark body {
   background-color: #0A0A0A !important;
-  background-image: radial-gradient(circle, rgba(255, 179, 128, 0.12) 1.5px, transparent 1.5px) !important;
+  background-image: radial-gradient(circle, rgba(255, 179, 128, 0.22) 2px, transparent 2px) !important;
 }
 
 html {
