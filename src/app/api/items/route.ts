@@ -122,7 +122,10 @@ function buildSearchOr(q: string, textCols: string[]): string | null {
   // URL-encode the value (but keep * as wildcard marker for PostgREST)
   const encoded = encodeURIComponent(limitedQ);
   const parts = textCols.map((c) => `${c}.ilike.*${encoded}*`);
-  parts.push(`tags.cs.{${encoded}}`);
+  // tags.cs requires valid JSON array format: tags.cs.["value"]
+  // URL-encode the JSON to avoid comma conflicts in or= filter
+  const tagsJson = encodeURIComponent(JSON.stringify([limitedQ]));
+  parts.push(`tags.cs.${tagsJson}`);
   return `or=(${parts.join(",")})`;
 }
 
