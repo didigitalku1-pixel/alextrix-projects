@@ -343,9 +343,8 @@ export default function SlugDetail({
                     <span className="detail-author-name">Alextrix Community</span>
                   </span>
                 )}
-                <span className="detail-stat">{formatCount(item.views)} views</span>
-                {item.forks > 0 && (
-                  <span className="detail-stat">⑂ {formatCount(item.forks)} remixes</span>
+                {item.featured && (
+                  <span className="detail-stat">★ Featured</span>
                 )}
               </div>
             </div>
@@ -615,35 +614,27 @@ export default function SlugDetail({
                 </h3>
                 <div className="about-stats">
                   <div className="about-stat-row">
-                    <span>Views</span>
-                    <span>{formatCount(item.views)}</span>
+                    <span>Type</span>
+                    <span style={{ textTransform: "capitalize" }}>{item.type}</span>
                   </div>
-                  {item.forks > 0 && (
-                    <div className="about-stat-row">
-                      <span>Remixes</span>
-                      <span>{formatCount(item.forks)}</span>
-                    </div>
-                  )}
-                  <div className="about-stat-row">
-                    <span>Code size</span>
-                    <span>{formatCount(item.code_chars)} chars</span>
-                  </div>
-                  {item.created_at && (
-                    <div className="about-stat-row">
-                      <span>Created</span>
-                      <span>{formatDate(item.created_at)}</span>
-                    </div>
-                  )}
                   {item.featured && (
                     <div className="about-stat-row">
                       <span>Featured</span>
                       <span>★ Yes</span>
                     </div>
                   )}
-                  <div className="about-stat-row">
-                    <span>Type</span>
-                    <span style={{ textTransform: "capitalize" }}>{item.type}</span>
-                  </div>
+                  {item.premium && (
+                    <div className="about-stat-row">
+                      <span>Premium</span>
+                      <span>PRO</span>
+                    </div>
+                  )}
+                  {item.created_at && (
+                    <div className="about-stat-row">
+                      <span>Created</span>
+                      <span>{formatDate(item.created_at)}</span>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
