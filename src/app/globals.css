@@ -61,8 +61,8 @@
 
 html, body {
   background-color: #FDFBF7 !important;
-  background-image: radial-gradient(circle, rgba(230, 92, 0, 0.05) 1px, transparent 1px) !important;
-  background-size: 40px 40px !important;
+  background-image: radial-gradient(circle, rgba(230, 92, 0, 0.18) 1.5px, transparent 1.5px) !important;
+  background-size: 32px 32px !important;
   background-position: 0 0 !important;
   background-attachment: fixed !important;
   color: hsl(var(--foreground));
@@ -76,7 +76,7 @@ html, body {
 
 .dark, .dark body {
   background-color: #0A0A0A !important;
-  background-image: radial-gradient(circle, rgba(255, 179, 128, 0.04) 1px, transparent 1px) !important;
+  background-image: radial-gradient(circle, rgba(255, 179, 128, 0.12) 1.5px, transparent 1.5px) !important;
 }
 
 html {
