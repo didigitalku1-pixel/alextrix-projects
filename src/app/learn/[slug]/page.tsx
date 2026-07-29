@@ -69,7 +69,7 @@ export default function LearnPage({
   const Body = page.body;
 
   return (
-    <div className="app" style={{ minHeight: "100vh" }}>
+    <div className="app alextrix-app" style={{ minHeight: "100vh" }}>
       {/* Header */}
       <header className="header">
         <div className="header-inner">

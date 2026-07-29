@@ -540,17 +540,17 @@ export default function SlugDetail({
 
               {contentStatus === "notfound" && (
                 <div className="artifact-empty">
-                  <div style={{ fontSize: 40 }}>⚠️</div>
+                  <div style={{ fontSize: 40 }}>📄</div>
                   <h3>
                     {tab === "design"
-                      ? "DESIGN.md not generated yet"
+                      ? "DESIGN.md Coming Soon"
                       : tab === "prompt"
-                        ? "Copy Prompt not generated yet"
-                        : "Content not available"}
+                        ? "Copy Prompt Coming Soon"
+                        : "Content Coming Soon"}
                   </h3>
                   <p>
                     {tab === "design" || tab === "prompt"
-                      ? "This artifact is being generated in the background."
+                      ? "This artifact is being generated automatically. Check back soon."
                       : ""}
                   </p>
                 </div>
