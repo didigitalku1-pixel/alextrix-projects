@@ -262,7 +262,7 @@ function AlextrixHomepage() {
   const formatViews = (n: number) => {
     if (n >= 1000000) return `${(n / 1000000).toFixed(1)}M`;
     if (n >= 1000) return `${(n / 1000).toFixed(1)}k`;
-    return String(n || Math.floor(Math.random() * 900 + 100));
+    return String(n || 0);
   };
 
   const navTabs = [
@@ -788,11 +788,12 @@ function HomeInner() {
     if (tag) params.set("tag", tag);
     if (debouncedQ) params.set("q", debouncedQ);
     if (featured) params.set("featured", "true");
+    if (premium) params.set("premium", "true");
     if (page > 1) params.set("page", String(page));
     const qs = params.toString();
     const newUrl = qs ? `${basePath}?${qs}` : basePath;
     router.replace(newUrl, { scroll: false });
-  }, [tab, sort, tag, debouncedQ, featured, page, router]);
+  }, [tab, sort, tag, debouncedQ, featured, premium, page, router]);
 
   // Theme handled by useTheme hook
 
@@ -821,6 +822,7 @@ function HomeInner() {
     if (debouncedQ) params.set("q", debouncedQ);
 
     if (featured) params.set("featured", "true");
+    if (premium) params.set("premium", "true");
     try {
       const r = await fetch(`/api/items?${params}`);
       if (!r.ok) throw new Error("Failed");
@@ -833,7 +835,7 @@ function HomeInner() {
       setItems([]);
     }
     setLoading(false);
-  }, [tab, sort, tag, debouncedQ, featured, page]);
+  }, [tab, sort, tag, debouncedQ, featured, premium, page]);
 
   useEffect(() => { loadItems(); }, [loadItems]);
 
@@ -1228,34 +1230,77 @@ function DesignSystemsView() {
   );
 }
 
-// === Markdown renderer ===
+// === Markdown renderer — XSS-safe via URL sanitization ===
+// SECURITY: All link URLs are sanitized to block javascript:, data:, and other dangerous schemes.
+function sanitizeUrl(url: string): string {
+  const trimmed = url.trim().toLowerCase();
+  // Only allow http(s), mailto:, ftp:, and relative URLs (start with / or #)
+  if (
+    trimmed.startsWith("http://") ||
+    trimmed.startsWith("https://") ||
+    trimmed.startsWith("mailto:") ||
+    trimmed.startsWith("ftp://") ||
+    trimmed.startsWith("/") ||
+    trimmed.startsWith("#") ||
+    !trimmed.includes(":") // relative URL without scheme
+  ) {
+    return url;
+  }
+  // Block javascript:, data:, vbscript:, file:, etc.
+  return "#blocked";
+}
+
 function renderMarkdown(content: string): string {
   const lines = content.split("\n");
   const out: string[] = [];
   let inCode = false;
   let codeLines: string[] = [];
-  const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  // SECURITY: Escape HTML entities including quotes to prevent attribute injection
+  const esc = (s: string) =>
+    s
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
   const renderInline = (text: string) => {
     let r = esc(text);
     r = r.replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>");
     r = r.replace(/`([^`]+)`/g, "<code>$1</code>");
-    r = r.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
+    // SECURITY: Sanitize URL before placing in href attribute
+    r = r.replace(
+      /\[([^\]]+)\]\(([^)]+)\)/g,
+      (_match, label: string, url: string) => {
+        const safeUrl = sanitizeUrl(url.trim());
+        return `<a href="${safeUrl}" target="_blank" rel="noopener noreferrer">${label}</a>`;
+      },
+    );
     r = r.replace(/\*([^*]+)\*/g, "<em>$1</em>");
     return r;
   };
   lines.forEach(line => {
     if (line.startsWith("```")) {
-      if (inCode) { out.push(`<pre><code>${esc(codeLines.join("\n"))}</code></pre>`); codeLines = []; inCode = false; }
-      else { inCode = true; }
+      if (inCode) {
+        out.push(`<pre><code>${esc(codeLines.join("\n"))}</code></pre>`);
+        codeLines = [];
+        inCode = false;
+      } else {
+        inCode = true;
+      }
       return;
     }
-    if (inCode) { codeLines.push(line); return; }
+    if (inCode) {
+      codeLines.push(line);
+      return;
+    }
     if (line.startsWith("# ")) out.push(`<h1>${esc(line.slice(2))}</h1>`);
     else if (line.startsWith("## ")) out.push(`<h2>${esc(line.slice(3))}</h2>`);
     else if (line.startsWith("### ")) out.push(`<h3>${esc(line.slice(4))}</h3>`);
     else if (line.startsWith("#### ")) out.push(`<h4>${esc(line.slice(5))}</h4>`);
-    else if (line.startsWith("- ") || line.startsWith("* ")) out.push(`<li>${renderInline(line.slice(2))}</li>`);
-    else if (/^\d+\.\s/.test(line)) out.push(`<li>${renderInline(line.replace(/^\d+\.\s/, ""))}</li>`);
+    else if (line.startsWith("- ") || line.startsWith("* "))
+      out.push(`<li>${renderInline(line.slice(2))}</li>`);
+    else if (/^\d+\.\s/.test(line))
+      out.push(`<li>${renderInline(line.replace(/^\d+\.\s/, ""))}</li>`);
     else if (line.startsWith("> ")) out.push(`<blockquote>${renderInline(line.slice(2))}</blockquote>`);
     else if (line.trim() === "") out.push(`<div style="height:12px"></div>`);
     else out.push(`<p>${renderInline(line)}</p>`);

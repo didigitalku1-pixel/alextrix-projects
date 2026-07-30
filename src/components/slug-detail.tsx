@@ -399,12 +399,17 @@ export default function SlugDetail({
                     <button
                       className="preview-copy-btn"
                       onClick={() => {
-                        // SECURITY: Use blob URL with origin null
-                        // so iframe can't access parent window
+                        // SECURITY: Use blob URL with noopener,noreferrer to prevent
+                        // opener-based attacks (phishing redirect via window.opener).
                         const html = withAutoResize(content);
                         const blob = new Blob([html], { type: "text/html" });
                         const url = URL.createObjectURL(blob);
-                        window.open(url, "_blank");
+                        // Open with noopener to break opener reference
+                        const win = window.open(url, "_blank", "noopener,noreferrer");
+                        if (!win) {
+                          // Popup blocked — fallback: navigate same tab
+                          window.location.href = url;
+                        }
                         setTimeout(() => URL.revokeObjectURL(url), 60_000);
                       }}
                       title="Open in New Tab"

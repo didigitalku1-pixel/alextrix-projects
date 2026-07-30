@@ -75,17 +75,18 @@ export async function GET(req: NextRequest) {
       return placeholder();
     }
 
-    // Limit response size to 10MB to prevent memory exhaustion
+    // Limit response size to 10MB to prevent memory exhaustion.
+    // If too large, return SVG placeholder (NOT JSON) so <img> can render fallback.
     const contentLength = parseInt(r.headers.get("content-length") || "0", 10);
     if (contentLength > 10 * 1024 * 1024) {
-      return NextResponse.json({ error: "Image too large" }, { status: 413 });
+      return placeholder("Too large");
     }
 
     const buffer = await r.arrayBuffer();
 
     // Double-check buffer size after fetch
     if (buffer.byteLength > 10 * 1024 * 1024) {
-      return NextResponse.json({ error: "Image too large" }, { status: 413 });
+      return placeholder("Too large");
     }
 
     return new NextResponse(buffer, {
@@ -100,8 +101,8 @@ export async function GET(req: NextRequest) {
   }
 }
 
-function placeholder(): NextResponse {
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="400" height="300"><rect width="400" height="300" fill="#f5f5f5"/><text x="200" y="150" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#999">No preview</text></svg>`;
+function placeholder(label = "No preview"): NextResponse {
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="400" height="300"><rect width="400" height="300" fill="#f5f5f5"/><text x="200" y="150" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#999">${label}</text></svg>`;
   return new NextResponse(svg, {
     headers: {
       "Content-Type": "image/svg+xml",

@@ -14,6 +14,7 @@ export const maxDuration = 60;
 /**
  * Read item code/content from local manifest files as fallback.
  * Manifest contains skill content but NOT template/component code.
+ * SECURITY: All file paths are validated to prevent path traversal.
  */
 async function getContentFromManifest(
   type: string,
@@ -21,6 +22,11 @@ async function getContentFromManifest(
   artifact: string,
 ): Promise<string | null> {
   try {
+    // SECURITY: Re-validate file name (defense in depth)
+    if (!/^[\w.-]+$/.test(file) || file.includes("..")) {
+      return null;
+    }
+
     // Skills have content in skills-manifest.json
     if (type === "skill" && artifact === "content") {
       const skillsPath = path.join(
@@ -44,36 +50,26 @@ async function getContentFromManifest(
       (artifact === "code" || artifact === "design_md" || artifact === "recreation_prompt")
     ) {
       const subdir = type === "component" ? "components" : "templates";
+      // SECURITY: Compute base dir + verify resolved path stays inside
+      const baseDir = path.resolve(process.cwd(), "download", "aura_library", subdir);
 
       if (artifact === "code") {
-        const fullPath = path.join(
-          process.cwd(),
-          "download",
-          "aura_library",
-          subdir,
-          `${file}.json`,
-        );
-        const raw = await fs.readFile(fullPath, "utf-8");
+        const fullPath = path.join(baseDir, `${file}.json`);
+        const resolved = path.resolve(fullPath);
+        if (!resolved.startsWith(baseDir + path.sep)) return null;
+        const raw = await fs.readFile(resolved, "utf-8");
         const data = JSON.parse(raw);
         return data.code || null;
       } else if (artifact === "design_md") {
-        const fullPath = path.join(
-          process.cwd(),
-          "download",
-          "aura_library",
-          subdir,
-          `${file}.design.md`,
-        );
-        return await fs.readFile(fullPath, "utf-8");
+        const fullPath = path.join(baseDir, `${file}.design.md`);
+        const resolved = path.resolve(fullPath);
+        if (!resolved.startsWith(baseDir + path.sep)) return null;
+        return await fs.readFile(resolved, "utf-8");
       } else if (artifact === "recreation_prompt") {
-        const fullPath = path.join(
-          process.cwd(),
-          "download",
-          "aura_library",
-          subdir,
-          `${file}.prompt.md`,
-        );
-        return await fs.readFile(fullPath, "utf-8");
+        const fullPath = path.join(baseDir, `${file}.prompt.md`);
+        const resolved = path.resolve(fullPath);
+        if (!resolved.startsWith(baseDir + path.sep)) return null;
+        return await fs.readFile(resolved, "utf-8");
       }
     }
     return null;
@@ -100,6 +96,16 @@ export async function GET(req: NextRequest) {
   // Validate artifact
   if (!["code", "design_md", "recreation_prompt", "content"].includes(artifact)) {
     return NextResponse.json({ error: "Invalid artifact" }, { status: 400 });
+  }
+
+  // SECURITY: Validate file name — prevent path traversal attacks.
+  // Whitelist safe characters: word chars, dashes, underscores, dots.
+  // Reject path separators, null bytes, and other dangerous chars.
+  if (!/^[\w.-]+$/.test(file) || file.includes("..")) {
+    return NextResponse.json(
+      { error: "Invalid file name — only alphanumeric, dash, underscore, dot allowed" },
+      { status: 400 },
+    );
   }
 
   // Extract numeric ID from file (for templates/components/assets with format "000123_slug")
