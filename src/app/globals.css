@@ -5503,8 +5503,7 @@ img { display: block; max-width: 100%; }
   background: transparent !important;
 }
 
-/* Design systems page - use same Alextrix styling */
-.alextrix-app .ds-hero,
+/* Design systems page - ds-hero is now used for the detail page hero (with Add to Prompt buttons) */
 .alextrix-app .ds-pulse-box,
 .alextrix-app .ds-sort-row {
   display: none !important;
