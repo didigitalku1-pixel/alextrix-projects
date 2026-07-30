@@ -4516,9 +4516,11 @@ img { display: block; max-width: 100%; }
   top: 80px;
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  max-height: calc(100vh - 80px);
-  overflow-y: auto;
+  gap: 12px;
+  /* NO scroll — all cards must fit in viewport */
+  max-height: calc(100vh - 100px);
+  overflow-y: visible;
+  padding-right: 4px;
 }
 
 @media (max-width: 1024px) {
@@ -5779,3 +5781,388 @@ img { display: block; max-width: 100%; }
 .alextrix-toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(80px); background: #111827; color: #FFFFFF; padding: 12px 20px; border-radius: 12px; font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 500; z-index: 200; opacity: 0; transition: transform 0.3s ease, opacity 0.3s ease; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2); display: inline-flex; align-items: center; gap: 8px; }
 .alextrix-toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
 .alextrix-toast::before { content: '✓'; color: #16A34A; font-weight: 700; }
+
+/* === Design System Detail — New Copy Interactions === */
+
+/* Hero actions — disabled state */
+.ds-hero-actions .ds-btn-primary:disabled,
+.ds-hero-actions .ds-btn-ghost:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* DESIGN.md card header — Copy All button */
+.ds-designmd-header {
+  display: flex !important;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+.ds-copy-all-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  background: #FFFFFF;
+  border: 1px solid #E8E2D5;
+  border-radius: 8px;
+  font-family: 'Inter', sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  color: #111827;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.ds-copy-all-btn:hover {
+  background: #E65C00;
+  color: #FFFFFF;
+  border-color: #E65C00;
+}
+.dark .ds-copy-all-btn {
+  background: #18181B;
+  border-color: #27272A;
+  color: #FAFAFA;
+}
+.dark .ds-copy-all-btn:hover {
+  background: #E65C00;
+  color: #FFFFFF;
+  border-color: #E65C00;
+}
+
+/* Frontmatter row — hover copy */
+.ds-fm-row-copyable {
+  cursor: pointer;
+  transition: background 0.15s;
+  border-radius: 6px;
+  padding: 4px 8px;
+  margin: 0 -8px;
+}
+.ds-fm-row-copyable:hover {
+  background: #FFF8F3;
+}
+.dark .ds-fm-row-copyable:hover {
+  background: #27272A;
+}
+.ds-fm-row-copy-icon {
+  opacity: 0;
+  margin-left: 8px;
+  font-size: 12px;
+  color: #9CA3AF;
+  transition: opacity 0.15s;
+}
+.ds-fm-row-copyable:hover .ds-fm-row-copy-icon {
+  opacity: 1;
+}
+
+/* Frontmatter group — copy button next to label */
+.ds-fm-group-label {
+  display: flex !important;
+  align-items: center;
+  justify-content: space-between;
+}
+.ds-fm-group-copy {
+  background: transparent;
+  border: 1px solid #E8E2D5;
+  border-radius: 6px;
+  width: 24px;
+  height: 24px;
+  cursor: pointer;
+  font-size: 12px;
+  color: #6B7280;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s;
+  padding: 0;
+}
+.ds-fm-group-copy:hover {
+  background: #E65C00;
+  color: #FFFFFF;
+  border-color: #E65C00;
+}
+.dark .ds-fm-group-copy {
+  border-color: #27272A;
+  color: #A1A1AA;
+}
+.dark .ds-fm-group-copy:hover {
+  background: #E65C00;
+  color: #FFFFFF;
+  border-color: #E65C00;
+}
+
+/* Sidebar — Copy All Sections button */
+.ds-copy-all-sections-btn {
+  width: 100%;
+  padding: 12px 16px;
+  background: #111827;
+  color: #FFFFFF;
+  border: none;
+  border-radius: 10px;
+  font-family: 'Inter', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+.ds-copy-all-sections-btn:hover {
+  background: #E65C00;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(230, 92, 0, 0.2);
+}
+.dark .ds-copy-all-sections-btn {
+  background: #FAFAFA;
+  color: #0A0A0A;
+}
+.dark .ds-copy-all-sections-btn:hover {
+  background: #E65C00;
+  color: #FFFFFF;
+}
+
+/* Sidebar card — copyable (click whole card to copy section) */
+.ds-sb-card-copyable {
+  cursor: pointer;
+  transition: all 0.2s;
+  position: relative;
+  border: 1px solid #E8E2D5;
+  border-radius: 12px;
+  padding: 14px;
+  background: #FFFFFF;
+}
+.ds-sb-card-copyable:hover {
+  border-color: #E65C00;
+  box-shadow: 0 4px 12px rgba(230, 92, 0, 0.08);
+  transform: translateY(-1px);
+}
+.dark .ds-sb-card-copyable {
+  background: #18181B;
+  border-color: #27272A;
+}
+.dark .ds-sb-card-copyable:hover {
+  border-color: #E65C00;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.ds-sb-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+.ds-sb-copy-icon {
+  font-size: 14px;
+  color: #9CA3AF;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+.ds-sb-card-copyable:hover .ds-sb-copy-icon {
+  opacity: 1;
+}
+
+/* Compact color swatches */
+.ds-color-swatches-compact {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+.ds-swatch-mini {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+.ds-swatch-mini .ds-swatch {
+  width: 100%;
+  height: 28px;
+  border-radius: 6px;
+  border: 1px solid rgba(0, 0, 0, 0.05);
+}
+.ds-swatch-mini .ds-swatch-hex {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  color: #6B7280;
+  text-align: center;
+}
+.dark .ds-swatch-mini .ds-swatch-hex {
+  color: #A1A1AA;
+}
+
+/* Compact typography list */
+.ds-typo-list-compact {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.ds-typo-card-compact {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 0;
+  border-bottom: 1px solid #F3F0EA;
+}
+.ds-typo-card-compact:last-child {
+  border-bottom: none;
+}
+.ds-typo-sample-sm {
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #F3F0EA;
+  border-radius: 6px;
+  color: #111827;
+}
+.dark .ds-typo-card-compact {
+  border-color: #27272A;
+}
+.dark .ds-typo-sample-sm {
+  background: #27272A;
+  color: #FAFAFA;
+}
+.ds-typo-card-compact .ds-typo-meta {
+  flex: 1;
+  min-width: 0;
+}
+.ds-typo-card-compact .ds-typo-name {
+  font-size: 11px;
+  font-weight: 600;
+  color: #111827;
+}
+.dark .ds-typo-card-compact .ds-typo-name {
+  color: #FAFAFA;
+}
+.ds-typo-card-compact .ds-typo-font {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  color: #9CA3AF;
+}
+
+/* Compact spacing list with visual bars */
+.ds-spacing-list-compact {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.ds-spacing-row-compact {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 3px 0;
+  font-size: 11px;
+}
+.ds-spacing-bar {
+  height: 4px;
+  background: #E65C00;
+  border-radius: 2px;
+  flex-shrink: 0;
+  min-width: 4px;
+}
+.ds-spacing-row-compact .ds-spacing-label {
+  flex: 1;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  color: #6B7280;
+}
+.ds-spacing-row-compact .ds-spacing-val {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  color: #111827;
+  font-weight: 600;
+}
+.dark .ds-spacing-row-compact .ds-spacing-label {
+  color: #A1A1AA;
+}
+.dark .ds-spacing-row-compact .ds-spacing-val {
+  color: #FAFAFA;
+}
+
+/* Compact radius list */
+.ds-radius-list-compact {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+}
+.ds-radius-row-compact {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 10px;
+}
+.ds-radius-row-compact .ds-radius-preview {
+  width: 20px;
+  height: 20px;
+  background: #E65C00;
+  border: 1px solid rgba(0,0,0,0.05);
+  flex-shrink: 0;
+}
+.ds-radius-row-compact .ds-radius-label {
+  flex: 1;
+  font-family: 'JetBrains Mono', monospace;
+  color: #6B7280;
+  font-size: 10px;
+}
+.ds-radius-row-compact .ds-radius-val {
+  font-family: 'JetBrains Mono', monospace;
+  color: #111827;
+  font-weight: 600;
+  font-size: 10px;
+}
+.dark .ds-radius-row-compact .ds-radius-label {
+  color: #A1A1AA;
+}
+.dark .ds-radius-row-compact .ds-radius-val {
+  color: #FAFAFA;
+}
+
+/* Toast notification for design-systems page */
+.ds-toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #111827;
+  color: #FFFFFF;
+  padding: 12px 20px;
+  border-radius: 12px;
+  font-family: 'Inter', sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  z-index: 200;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  animation: ds-toast-in 0.3s ease;
+}
+.ds-toast::before {
+  content: '✓';
+  color: #16A34A;
+  font-weight: 700;
+}
+@keyframes ds-toast-in {
+  from { opacity: 0; transform: translateX(-50%) translateY(20px); }
+  to { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+.dark .ds-toast {
+  background: #FAFAFA;
+  color: #0A0A0A;
+}
+.dark .ds-toast::before {
+  color: #16A34A;
+}
+
+/* About section — make left full-width since right (Creator/Details) is removed */
+.about-grid {
+  grid-template-columns: 1fr !important;
+}
+.about-left {
+  max-width: none !important;
+}

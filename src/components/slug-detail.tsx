@@ -598,45 +598,6 @@ export default function SlugDetail({
                   </div>
                 )}
               </div>
-              <div className="about-right">
-                <h3 className="about-h3">Creator</h3>
-                <div className="about-author-card">
-                  <div className="about-author-avatar">
-                    {(item.username || "?").slice(0, 2).toUpperCase()}
-                  </div>
-                  <div>
-                    <div className="about-author-name">Creator</div>
-                    <div className="about-author-sub">Member</div>
-                  </div>
-                </div>
-                <h3 className="about-h3" style={{ marginTop: 24 }}>
-                  Details
-                </h3>
-                <div className="about-stats">
-                  <div className="about-stat-row">
-                    <span>Type</span>
-                    <span style={{ textTransform: "capitalize" }}>{item.type}</span>
-                  </div>
-                  {item.featured && (
-                    <div className="about-stat-row">
-                      <span>Featured</span>
-                      <span>★ Yes</span>
-                    </div>
-                  )}
-                  {item.premium && (
-                    <div className="about-stat-row">
-                      <span>Premium</span>
-                      <span>PRO</span>
-                    </div>
-                  )}
-                  {item.created_at && (
-                    <div className="about-stat-row">
-                      <span>Created</span>
-                      <span>{formatDate(item.created_at)}</span>
-                    </div>
-                  )}
-                </div>
-              </div>
             </div>
           </section>
 

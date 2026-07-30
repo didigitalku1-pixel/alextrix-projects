@@ -131,6 +131,7 @@ export default function DesignSystemDetailPage({
   const [loading, setLoading] = useState(true);
   const { isDark, toggle: toggleTheme } = useTheme();
   const [copied, setCopied] = useState<string | null>(null);
+  const [toast, setToast] = useState<string | null>(null);
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
   useEffect(() => {
@@ -159,14 +160,103 @@ export default function DesignSystemDetailPage({
     [item?.content],
   );
 
-  const copyToClipboard = async (text: string, label: string) => {
+  // Extract markdown sections by ## Heading
+  const sections = useMemo(() => {
+    const result: Record<string, string> = {};
+    if (!body) return result;
+    // Split by ## headings
+    const parts = body.split(/^## (.+)$/gm);
+    // parts[0] = pre-content; parts[1] = first heading; parts[2] = first content; parts[3] = second heading; ...
+    for (let i = 1; i < parts.length; i += 2) {
+      const heading = parts[i].trim();
+      const content = (parts[i + 1] || "").trim();
+      result[heading.toLowerCase()] = `## ${heading}\n\n${content}`;
+    }
+    return result;
+  }, [body]);
+
+  // Auto-generate section from frontmatter (Option A)
+  const generateSection = (key: string, label: string, data: Record<string, any>): string => {
+    if (!data || Object.keys(data).length === 0) return "";
+    const lines = [`## ${label}`, ""];
+    // Build human-readable description
+    const entries = Object.entries(data);
+    if (key === "colors") {
+      const colorList = entries.map(([k, v]) => `\`${String(v)}\` (${k})`).join(", ");
+      lines.push(`The color system uses ${colorList.includes("#FFFFFF") ? "light mode" : "a custom palette"} with ${entries[0][1]} as the main accent and ${entries[1] ? entries[1][1] : "#FFFFFF"} as the neutral foundation.`);
+      lines.push("");
+      lines.push("| Role | Value |");
+      lines.push("| --- | --- |");
+      entries.forEach(([k, v]) => lines.push(`| ${k} | ${String(v)} |`));
+    } else if (key === "typography") {
+      const fam = entries[0] ? (entries[0][1] as any)?.fontFamily || entries[0][1] : "Inter";
+      lines.push(`Typography uses ${fam} as the primary font family with ${entries.length} defined styles.`);
+      lines.push("");
+      lines.push("| Style | Family | Size | Weight |");
+      lines.push("| --- | --- | --- | --- |");
+      entries.forEach(([k, v]: [string, any]) => {
+        const fam = (v?.fontFamily) || "—";
+        const size = (v?.fontSize) || "—";
+        const weight = (v?.fontWeight) || "—";
+        lines.push(`| ${k} | ${fam} | ${size} | ${weight} |`);
+      });
+    } else if (key === "spacing") {
+      lines.push(`Spacing scale defines ${entries.length} steps from ${entries[0][1]} to ${entries[entries.length - 1][1]}.`);
+      lines.push("");
+      lines.push("| Step | Value |");
+      lines.push("| --- | --- |");
+      entries.forEach(([k, v]) => lines.push(`| ${k} | ${String(v)} |`));
+    } else if (key === "rounded") {
+      lines.push(`Border radius scale defines ${entries.length} levels for various UI elements.`);
+      lines.push("");
+      lines.push("| Name | Radius |");
+      lines.push("| --- | --- |");
+      entries.forEach(([k, v]) => lines.push(`| ${k} | ${String(v)} |`));
+    } else {
+      lines.push(`Configuration for ${label}:`);
+      lines.push("");
+      entries.forEach(([k, v]) => lines.push(`- **${k}**: ${String(v)}`));
+    }
+    return lines.join("\n");
+  };
+
+  // Get section content by key (from body, fallback to generated from frontmatter)
+  const getSection = (key: string, label: string, data: Record<string, any>): string => {
+    const bodySection = sections[key.toLowerCase()];
+    if (bodySection) return bodySection;
+    return generateSection(key, label, data);
+  };
+
+  const showToast = (msg: string) => {
+    setToast(msg);
+    setTimeout(() => setToast(null), 2000);
+  };
+
+  const copyToClipboard = async (text: string, label: string, toastMsg?: string) => {
     try {
       await navigator.clipboard.writeText(text);
       setCopied(label);
+      showToast(toastMsg || `Copied ${label} to clipboard`);
       setTimeout(() => setCopied(null), 2000);
     } catch (e) {
       console.error("Clipboard error:", e);
-      alert("Copy failed. Please select and copy manually.");
+      showToast("Copy failed — please try again");
+    }
+  };
+
+  const downloadFile = (content: string, filename: string, type: string, toastMsg?: string) => {
+    try {
+      const blob = new Blob([content], { type });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(url), 5000);
+      showToast(toastMsg || `Downloaded ${filename}`);
+    } catch (e) {
+      console.error("Download error:", e);
+      showToast("Download failed");
     }
   };
 
@@ -290,41 +380,27 @@ export default function DesignSystemDetailPage({
                   )}
                 </div>
                 <div className="ds-hero-actions">
-                  {item.content && (
-                    <button
-                      className="ds-btn-primary"
-                      onClick={() => copyToClipboard(item.content, "prompt")}
-                    >
-                      {copied === "prompt" ? "✓ Copied!" : "⚡ Add to Prompt"}
-                    </button>
-                  )}
-                  {item.content && (
-                    <button
-                      className="ds-btn-ghost"
-                      onClick={() => copyToClipboard(item.content, "design-md")}
-                    >
-                      {copied === "design-md" ? "✓ Copied!" : "⬇ DESIGN.md"}
-                    </button>
-                  )}
-                  {item.preview_html && (
-                    <button
-                      className="ds-btn-ghost"
-                      onClick={() => {
-                        const blob = new Blob(
-                          [withTailwindAndAutoResize(item.preview_html)],
-                          { type: "text/html" },
-                        );
-                        const url = URL.createObjectURL(blob);
-                        const a = document.createElement("a");
-                        a.href = url;
-                        a.download = `${item.slug || "design-system"}.html`;
-                        a.click();
-                        setTimeout(() => URL.revokeObjectURL(url), 5000);
-                      }}
-                    >
-                      ⬇ HTML
-                    </button>
-                  )}
+                  <button
+                    className="ds-btn-primary"
+                    onClick={() => copyToClipboard(item.content || "", "prompt", "Added to prompt")}
+                    disabled={!item.content}
+                  >
+                    {copied === "prompt" ? "✓ Added!" : "⚡ Add to Prompt"}
+                  </button>
+                  <button
+                    className="ds-btn-ghost"
+                    onClick={() => downloadFile(item.content || "", `${item.slug || "design-system"}-design.md`, "text/markdown", `Downloaded ${item.slug || "design-system"}-design.md`)}
+                    disabled={!item.content}
+                  >
+                    ⬇ DESIGN.md
+                  </button>
+                  <button
+                    className="ds-btn-ghost"
+                    onClick={() => downloadFile(withTailwindAndAutoResize(item.preview_html || ""), `${item.slug || "design-system"}.html`, "text/html", `Downloaded ${item.slug || "design-system"}.html`)}
+                    disabled={!item.preview_html}
+                  >
+                    ⬇ HTML
+                  </button>
                 </div>
               </div>
             </div>
@@ -360,35 +436,46 @@ export default function DesignSystemDetailPage({
             {item.content && (
               <div className="ds-designmd-card">
                 <div className="ds-designmd-header">
-                  <span className="ds-section-label">DESIGN . MD</span>
-                  <h2 className="ds-designmd-title">Prompt context source</h2>
+                  <div>
+                    <span className="ds-section-label">DESIGN . MD</span>
+                    <h2 className="ds-designmd-title">Prompt context source</h2>
+                  </div>
+                  <button
+                    className="ds-copy-all-btn"
+                    onClick={() => copyToClipboard(item.content, "all", "Copied entire DESIGN.md")}
+                    title="Copy entire DESIGN.md"
+                  >
+                    {copied === "all" ? "✓ Copied!" : "⎘ Copy All"}
+                  </button>
                 </div>
 
                 {/* Frontmatter table */}
                 {Object.keys(frontmatter).length > 0 && (
                   <div className="ds-fm-table">
                     {frontmatter.version && (
-                      <FmRow label="version" value={frontmatter.version} />
+                      <FmRow label="version" value={frontmatter.version} onCopy={() => copyToClipboard(`version: ${frontmatter.version}`, "version", "Copied version")} />
                     )}
                     {frontmatter.name && (
-                      <FmRow label="name" value={frontmatter.name} />
+                      <FmRow label="name" value={frontmatter.name} onCopy={() => copyToClipboard(`name: ${frontmatter.name}`, "name", "Copied name")} />
                     )}
                     {frontmatter.description && (
                       <FmRow
                         label="description"
                         value={frontmatter.description}
+                        onCopy={() => copyToClipboard(`description: ${frontmatter.description}`, "description", "Copied description")}
                       />
                     )}
 
                     {/* Colors */}
                     {Object.keys(colors).length > 0 && (
-                      <FmGroup label="colors">
+                      <FmGroup label="colors" onCopy={() => copyToClipboard(generateSection("colors", "Colors", colors), "colors", "Copied Colors section")}>
                         {Object.entries(colors).map(([k, v]) => (
                           <FmRow
                             key={k}
                             label={k}
                             value={String(v)}
                             swatch={String(v).startsWith("#") ? String(v) : undefined}
+                            onCopy={() => copyToClipboard(String(v), `color-${k}`, `Copied ${k}: ${String(v)}`)}
                           />
                         ))}
                       </FmGroup>
@@ -396,12 +483,13 @@ export default function DesignSystemDetailPage({
 
                     {/* Typography */}
                     {Object.keys(typography).length > 0 && (
-                      <FmGroup label="typography">
+                      <FmGroup label="typography" onCopy={() => copyToClipboard(generateSection("typography", "Typography", typography), "typography", "Copied Typography section")}>
                         {Object.entries(typography).map(([k, v]) => (
                           <FmRow
                             key={k}
                             label={k}
                             value={typeof v === "object" ? JSON.stringify(v) : String(v)}
+                            onCopy={() => copyToClipboard(typeof v === "object" ? JSON.stringify(v) : String(v), `typo-${k}`, `Copied ${k}`)}
                           />
                         ))}
                       </FmGroup>
@@ -409,18 +497,18 @@ export default function DesignSystemDetailPage({
 
                     {/* Spacing */}
                     {Object.keys(spacing).length > 0 && (
-                      <FmGroup label="spacing">
+                      <FmGroup label="spacing" onCopy={() => copyToClipboard(generateSection("spacing", "Spacing", spacing), "spacing", "Copied Spacing section")}>
                         {Object.entries(spacing).map(([k, v]) => (
-                          <FmRow key={k} label={k} value={String(v)} />
+                          <FmRow key={k} label={k} value={String(v)} onCopy={() => copyToClipboard(String(v), `spacing-${k}`, `Copied ${k}: ${String(v)}`)} />
                         ))}
                       </FmGroup>
                     )}
 
                     {/* Rounded */}
                     {Object.keys(rounded).length > 0 && (
-                      <FmGroup label="rounded">
+                      <FmGroup label="rounded" onCopy={() => copyToClipboard(generateSection("rounded", "Rounded", rounded), "rounded", "Copied Radius section")}>
                         {Object.entries(rounded).map(([k, v]) => (
-                          <FmRow key={k} label={k} value={String(v)} />
+                          <FmRow key={k} label={k} value={String(v)} onCopy={() => copyToClipboard(String(v), `radius-${k}`, `Copied ${k}: ${String(v)}`)} />
                         ))}
                       </FmGroup>
                     )}
@@ -437,76 +525,39 @@ export default function DesignSystemDetailPage({
             )}
           </div>
 
-          {/* RIGHT: Sticky Sidebar */}
+          {/* RIGHT: Sticky Sidebar — No scroll, condensed cards */}
           <aside className="ds-sidebar">
-            {/* Author */}
-            <div className="ds-sb-card">
-              <div className="ds-sb-label">AUTHOR</div>
-              <div className="ds-author">
-                <div className="ds-author-avatar">
-                  {(item.username || item.created_by || "A")
-                    .slice(0, 1)
-                    .toUpperCase()}
-                </div>
-                <div>
-                  <div className="ds-author-name">
-                    {item.username || item.created_by || "Aura"}
-                  </div>
-                  <div className="ds-author-sub">Design system creator</div>
-                </div>
-              </div>
-            </div>
-
-            {/* Stats */}
-            <div className="ds-sb-card">
-              <div className="ds-stats-grid">
-                <div className="ds-stat-item">
-                  <div className="ds-stat-num">
-                    {(item.views || 0).toLocaleString()}
-                  </div>
-                  <div className="ds-sb-label">VIEWS</div>
-                </div>
-                <div className="ds-stat-item">
-                  <div className="ds-stat-num">{item.forks || 0}</div>
-                  <div className="ds-sb-label">USES</div>
-                </div>
-                <div className="ds-stat-item">
-                  <div className="ds-stat-num">●</div>
-                  <div className="ds-sb-label">LIGHT</div>
-                </div>
-              </div>
-            </div>
-
-            {/* Dates */}
-            {item.created_at && (
-              <div className="ds-sb-card">
-                <div className="ds-sb-label">PUBLISHED</div>
-                <div className="ds-date-primary">
-                  {formatDate(item.created_at)}
-                </div>
-                {item.updated_at && (
-                  <div className="ds-date-secondary">
-                    Updated {formatDate(item.updated_at)}
-                  </div>
-                )}
-              </div>
+            {/* Copy All Sections button (top of sidebar) */}
+            {item.content && (
+              <button
+                className="ds-copy-all-sections-btn"
+                onClick={() => copyToClipboard(item.content, "all-sections", "Copied all sections to clipboard")}
+              >
+                {copied === "all-sections" ? "✓ Copied All Sections!" : "⎘ Copy All Sections"}
+              </button>
             )}
 
-            {/* Visual Cards - Colors */}
+            {/* Visual Cards - Colors (with copy on hover) */}
             {Object.keys(colors).length > 0 && (
-              <div className="ds-sb-card">
-                <div className="ds-sb-label">VISUAL CARDS</div>
-                <div className="ds-color-swatches">
+              <div
+                className="ds-sb-card ds-sb-card-copyable"
+                onClick={() => copyToClipboard(getSection("colors", "Colors", colors), "sb-colors", "Copied Colors section")}
+                title="Click to copy Colors section"
+              >
+                <div className="ds-sb-card-header">
+                  <div className="ds-sb-label">COLORS</div>
+                  <span className="ds-sb-copy-icon">{copied === "sb-colors" ? "✓" : "⎘"}</span>
+                </div>
+                <div className="ds-color-swatches ds-color-swatches-compact">
                   {Object.entries(colors)
                     .filter(([, v]) => String(v).startsWith("#"))
                     .slice(0, 6)
                     .map(([k, v]) => (
-                      <div key={k} className="ds-swatch-row">
+                      <div key={k} className="ds-swatch-mini">
                         <span
                           className="ds-swatch"
                           style={{ background: String(v) }}
                         />
-                        <span className="ds-swatch-label">{k}</span>
                         <span className="ds-swatch-hex">{String(v)}</span>
                       </div>
                     ))}
@@ -514,18 +565,25 @@ export default function DesignSystemDetailPage({
               </div>
             )}
 
-            {/* Typography */}
+            {/* Typography (with copy on hover) */}
             {Object.keys(typography).length > 0 && (
-              <div className="ds-sb-card">
-                <div className="ds-sb-label">TYPOGRAPHY</div>
-                <div className="ds-typo-list">
-                  {Object.entries(typography).map(([k, v]: [string, any]) => (
-                    <div key={k} className="ds-typo-card">
+              <div
+                className="ds-sb-card ds-sb-card-copyable"
+                onClick={() => copyToClipboard(getSection("typography", "Typography", typography), "sb-typography", "Copied Typography section")}
+                title="Click to copy Typography section"
+              >
+                <div className="ds-sb-card-header">
+                  <div className="ds-sb-label">TYPOGRAPHY</div>
+                  <span className="ds-sb-copy-icon">{copied === "sb-typography" ? "✓" : "⎘"}</span>
+                </div>
+                <div className="ds-typo-list ds-typo-list-compact">
+                  {Object.entries(typography).slice(0, 3).map(([k, v]: [string, any]) => (
+                    <div key={k} className="ds-typo-card ds-typo-card-compact">
                       <div
-                        className="ds-typo-sample"
+                        className="ds-typo-sample ds-typo-sample-sm"
                         style={{
                           fontFamily: v.fontFamily || "inherit",
-                          fontSize: v.fontSize || "16px",
+                          fontSize: "20px",
                           fontWeight: v.fontWeight || 400,
                         }}
                       >
@@ -533,9 +591,7 @@ export default function DesignSystemDetailPage({
                       </div>
                       <div className="ds-typo-meta">
                         <div className="ds-typo-name">{k}</div>
-                        <div className="ds-typo-font">
-                          {v.fontFamily} · {v.fontSize}
-                        </div>
+                        <div className="ds-typo-font">{v.fontFamily} · {v.fontSize}</div>
                       </div>
                     </div>
                   ))}
@@ -543,28 +599,50 @@ export default function DesignSystemDetailPage({
               </div>
             )}
 
-            {/* Spacing */}
+            {/* Spacing (with copy on hover) */}
             {Object.keys(spacing).length > 0 && (
-              <div className="ds-sb-card">
-                <div className="ds-sb-label">SPACING</div>
-                <div className="ds-spacing-list">
-                  {Object.entries(spacing).map(([k, v]) => (
-                    <div key={k} className="ds-spacing-row">
-                      <span className="ds-spacing-label">{k}</span>
-                      <span className="ds-spacing-val">{String(v)}</span>
-                    </div>
-                  ))}
+              <div
+                className="ds-sb-card ds-sb-card-copyable"
+                onClick={() => copyToClipboard(getSection("spacing", "Spacing", spacing), "sb-spacing", "Copied Spacing section")}
+                title="Click to copy Spacing section"
+              >
+                <div className="ds-sb-card-header">
+                  <div className="ds-sb-label">SPACING</div>
+                  <span className="ds-sb-copy-icon">{copied === "sb-spacing" ? "✓" : "⎘"}</span>
+                </div>
+                <div className="ds-spacing-list ds-spacing-list-compact">
+                  {Object.entries(spacing).slice(0, 6).map(([k, v]) => {
+                    const numMatch = String(v).match(/(\d+)/);
+                    const num = numMatch ? parseInt(numMatch[1]) : 8;
+                    return (
+                      <div key={k} className="ds-spacing-row ds-spacing-row-compact">
+                        <span
+                          className="ds-spacing-bar"
+                          style={{ width: `${Math.min(num * 2, 48)}px` }}
+                        />
+                        <span className="ds-spacing-label">{k}</span>
+                        <span className="ds-spacing-val">{String(v)}</span>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             )}
 
-            {/* Radius */}
+            {/* Radius (with copy on hover) */}
             {Object.keys(rounded).length > 0 && (
-              <div className="ds-sb-card">
-                <div className="ds-sb-label">RADIUS</div>
-                <div className="ds-radius-list">
-                  {Object.entries(rounded).map(([k, v]) => (
-                    <div key={k} className="ds-radius-row">
+              <div
+                className="ds-sb-card ds-sb-card-copyable"
+                onClick={() => copyToClipboard(getSection("rounded", "Rounded", rounded), "sb-radius", "Copied Radius section")}
+                title="Click to copy Radius section"
+              >
+                <div className="ds-sb-card-header">
+                  <div className="ds-sb-label">RADIUS</div>
+                  <span className="ds-sb-copy-icon">{copied === "sb-radius" ? "✓" : "⎘"}</span>
+                </div>
+                <div className="ds-radius-list ds-radius-list-compact">
+                  {Object.entries(rounded).slice(0, 4).map(([k, v]) => (
+                    <div key={k} className="ds-radius-row ds-radius-row-compact">
                       <span
                         className="ds-radius-preview"
                         style={{ borderRadius: String(v) }}
@@ -580,24 +658,35 @@ export default function DesignSystemDetailPage({
         </div>
       </main>
 
+      {/* Toast notification */}
+      {toast && (
+        <div className="ds-toast">{toast}</div>
+      )}
+
       {/* Footer */}
       <DsFooter />
     </div>
   );
 }
 
-/** Frontmatter row (key/value) */
+/** Frontmatter row (key/value) — with hover copy */
 function FmRow({
   label,
   value,
   swatch,
+  onCopy,
 }: {
   label: string;
   value: string;
   swatch?: string;
+  onCopy?: () => void;
 }) {
   return (
-    <div className="ds-fm-row">
+    <div
+      className={`ds-fm-row${onCopy ? " ds-fm-row-copyable" : ""}`}
+      onClick={onCopy}
+      title={onCopy ? "Click to copy" : undefined}
+    >
       <span className="ds-fm-key">{label}</span>
       <span className="ds-fm-val">
         {swatch && (
@@ -607,22 +696,32 @@ function FmRow({
           />
         )}
         <code>{value}</code>
+        {onCopy && <span className="ds-fm-row-copy-icon">⎘</span>}
       </span>
     </div>
   );
 }
 
-/** Frontmatter group (e.g. colors, typography) */
+/** Frontmatter group (e.g. colors, typography) — with hover copy */
 function FmGroup({
   label,
   children,
+  onCopy,
 }: {
   label: string;
   children: React.ReactNode;
+  onCopy?: () => void;
 }) {
   return (
     <div className="ds-fm-group">
-      <div className="ds-fm-group-label">{label}</div>
+      <div className="ds-fm-group-label">
+        {label}
+        {onCopy && (
+          <button className="ds-fm-group-copy" onClick={(e) => { e.stopPropagation(); onCopy(); }} title={`Copy ${label} section`}>
+            ⎘
+          </button>
+        )}
+      </div>
       {children}
     </div>
   );
