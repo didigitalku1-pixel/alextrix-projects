@@ -57,7 +57,10 @@ def refresh_aura_token(refresh_token):
 
 def get_service_role_key():
     """Get service role key from Supabase Management API."""
-    pat = "REDACTED_PAT"
+    # SECURITY: PAT must come from environment variable, never hardcode!
+    pat = os.environ.get("SUPABASE_PAT") or open("/tmp/supa_pat.txt").read().strip() if os.path.exists("/tmp/supa_pat.txt") else os.environ.get("SUPABASE_PAT")
+    if not pat:
+        raise RuntimeError("SUPABASE_PAT env var or /tmp/supa_pat.txt required")
     project_ref = "kvkwiekfdlaeeabkwmhp"
     r = httpx.get(
         f"https://api.supabase.com/v1/projects/{project_ref}/api-keys",

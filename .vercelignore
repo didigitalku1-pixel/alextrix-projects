@@ -22,3 +22,11 @@ scripts/keep-dev-alive.sh
 scripts/run_generator.sh
 download/*.zip
 download/full-source.zip
+
+# Security: Never deploy scraper scripts with potential secrets
+scripts/aura_edge_*.py
+scripts/generate_artifacts.py
+scripts/migrate_*.py
+scripts/scrape_*.py
+scripts/set-github-secrets.py
+scripts/legacy/
