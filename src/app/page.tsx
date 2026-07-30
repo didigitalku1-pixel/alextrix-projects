@@ -256,11 +256,8 @@ function AlextrixHomepage() {
     }
   };
 
-  const tierBadge = (item: Item) => {
-    if (item.premium) return <span className="card-tier-badge card-tier-pro">PRO</span>;
-    if (item.forks > 0 && item.views > 1000) return <span className="card-tier-badge card-tier-paid">PAID</span>;
-    return <span className="card-tier-badge card-tier-free">FREE</span>;
-  };
+  // Tier badges removed — all items show as clean cards (no FREE/PRO/PAID labels)
+  // Per user request: "pada hakikatnya semuanya itu free (namun jangan di tulis free)"
 
   const formatViews = (n: number) => {
     if (n >= 1000000) return `${(n / 1000000).toFixed(1)}M`;
@@ -430,7 +427,6 @@ function AlextrixHomepage() {
               featuredTemplates.map(item => (
                 <a key={item.id} className="card alextrix-card" href={`/templates/${item.slug || item.id}`}>
                   <div className="card-image-wrap">
-                    {tierBadge(item)}
                     <div className="card-actions">
                       <button
                         type="button"
@@ -488,7 +484,6 @@ function AlextrixHomepage() {
               featuredComponents.map(item => (
                 <a key={item.id} className="card alextrix-card" href={`/components/${item.slug || item.id}`}>
                   <div className="card-image-wrap">
-                    {tierBadge(item)}
                     <div className="card-actions">
                       <button
                         type="button"
@@ -973,12 +968,6 @@ function HomeInner() {
                 >
                   ★ Featured
                 </button>
-                <button
-                  className={`alextrix-pill ${premium ? "active-premium" : ""}`}
-                  onClick={() => setPremium(!premium)}
-                >
-                  PRO
-                </button>
               </div>
             </div>
 
@@ -1005,12 +994,11 @@ function HomeInner() {
                   <>Showing <strong>{Math.min(page * 24, total).toLocaleString()}</strong> of <strong>{total.toLocaleString()}</strong> {tab}{page > 1 && <span style={{ marginLeft: 8, fontSize: 11, color: "#9CA3AF" }}>· Page {page} of {totalPages}</span>}</>
                 )}
               </span>
-              {(tag || featured || premium || q) && (
+              {(tag || featured || q) && (
                 <div className="alextrix-chips">
                   {q && <span className="alextrix-chip" onClick={() => setQ("")}>"{q}" ✕</span>}
                   {tag && <span className="alextrix-chip" onClick={() => setTag(null)}>#{tag} ✕</span>}
                   {featured && <span className="alextrix-chip" onClick={() => setFeatured(false)}>★ Featured ✕</span>}
-                  {premium && <span className="alextrix-chip" onClick={() => setPremium(false)}>PRO ✕</span>}
                   <button className="alextrix-clear" onClick={resetFilters}>Clear all</button>
                 </div>
               )}
@@ -1091,7 +1079,6 @@ function HomeInner() {
                     </div>
                     <div className="card-footer">
                       <h3 className="card-title" title={item.title}>{item.title}</h3>
-                      {item.premium && <span className="card-pro-badge">PRO</span>}
                     </div>
                   </a>
                 ))}

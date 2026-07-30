@@ -620,17 +620,36 @@ img { display: block; max-width: 100%; }
 .detail-tab {
   padding: 12px 16px;
   font-size: 13px;
-  font-weight: 500;
-  color: hsl(var(--muted-foreground));
+  font-weight: 600;
+  color: #374151; /* gray-700 — darker than muted-foreground for readability */
   border-bottom: 2px solid transparent;
   display: inline-flex;
   align-items: center;
   gap: 6px;
   transition: all 0.2s;
   white-space: nowrap;
+  cursor: pointer;
+  background: transparent;
+  border-top: none;
+  border-left: none;
+  border-right: none;
 }
-.detail-tab:hover { color: hsl(var(--foreground)); }
-.detail-tab.active { color: hsl(var(--foreground)); border-bottom-color: hsl(var(--foreground)); }
+.detail-tab:hover { 
+  color: #111827; /* full black on hover */
+}
+.detail-tab.active { 
+  color: #111827; /* full black when active */
+  font-weight: 700;
+  border-bottom-color: #E65C00; /* orange accent — Alextrix brand */
+}
+.dark .detail-tab {
+  color: #D4D4D8; /* gray-300 for dark mode */
+}
+.dark .detail-tab:hover { color: #FAFAFA; }
+.dark .detail-tab.active { 
+  color: #FAFAFA;
+  border-bottom-color: #E65C00;
+}
 
 .detail-tab-panel { min-height: 500px; position: relative; }
 
@@ -1186,6 +1205,53 @@ img { display: block; max-width: 100%; }
 /* === About section === */
 .detail-section {
   margin-bottom: 64px;
+}
+
+/* === Artifact empty state — high contrast === */
+.artifact-empty {
+  text-align: center;
+  padding: 80px 32px;
+  color: #374151; /* gray-700 — high contrast on light bg */
+}
+.artifact-empty h3 { 
+  font-size: 18px; 
+  font-weight: 700; 
+  margin: 16px 0 8px; 
+  color: #111827; /* full black heading */
+}
+.artifact-empty p { 
+  font-size: 14px; 
+  max-width: 480px; 
+  margin: 0 auto;
+  color: #4B5563; /* gray-600 — readable description */
+  line-height: 1.6;
+}
+.dark .artifact-empty { color: #D4D4D8; }
+.dark .artifact-empty h3 { color: #FAFAFA; }
+.dark .artifact-empty p { color: #A1A1AA; }
+
+/* === Prompt/Code preview — Light theme (Alextrix design) === */
+.prompt-preview {
+  background: #FFFFFF;
+  color: #111827; /* full black text — high contrast */
+  font-family: 'JetBrains Mono', ui-monospace, Monaco, Consolas, monospace;
+  font-size: 13px;
+  line-height: 1.7;
+  padding: 20px 24px;
+  border-radius: 10px;
+  border: 1px solid #E8E2D5;
+  text-align: left;
+  white-space: pre-wrap;
+  word-break: break-word;
+  margin: 20px 0;
+  overflow-x: auto;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+.dark .prompt-preview {
+  background: #18181B;
+  color: #FAFAFA;
+  border-color: #27272A;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 }
 
 .about-grid {
@@ -6211,4 +6277,40 @@ img { display: block; max-width: 100%; }
     font-size: 9px;
     padding: 0 6px;
   }
+}
+
+/* === Tab Action Button — Orange prominent CTA === */
+.btn-tab-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: #E65C00; /* Alextrix orange */
+  color: #FFFFFF;
+  border: none;
+  border-radius: 10px;
+  padding: 12px 24px;
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 12px rgba(230, 92, 0, 0.2);
+  margin-top: 8px;
+}
+.btn-tab-action:hover {
+  background: #C44D00; /* darker orange on hover */
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(230, 92, 0, 0.3);
+}
+.btn-tab-action:active {
+  transform: translateY(0);
+}
+.dark .btn-tab-action {
+  background: #E65C00;
+  color: #FFFFFF;
+  box-shadow: 0 4px 12px rgba(230, 92, 0, 0.4);
+}
+.dark .btn-tab-action:hover {
+  background: #FF8533; /* lighter orange for dark mode hover */
+  box-shadow: 0 6px 16px rgba(230, 92, 0, 0.5);
 }

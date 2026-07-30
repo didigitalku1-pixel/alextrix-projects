@@ -542,10 +542,10 @@ export default function SlugDetail({
                 <div className="artifact-empty">
                   <div style={{ fontSize: 40 }}>✨</div>
                   <h3>Auto-generated Prompt</h3>
-                  <p style={{ marginBottom: 16, color: "#6B7280" }}>
-                    Generated from this {item.type}'s metadata. Click copy to use it.
+                  <p>
+                    Generated from this {item.type}&apos;s metadata. Click copy to use it.
                   </p>
-                  <pre className="code-viewer" style={{ textAlign: "left", whiteSpace: "pre-wrap", background: "#F9FAFB", padding: 16, borderRadius: 8, margin: "16px 0", fontSize: 13 }}>
+                  <pre className="prompt-preview">
 {`Recreate this ${item.type === "template" ? "landing page template" : "UI component"}: ${item.title}
 
 Description: ${item.desc || "No description available."}
@@ -559,11 +559,10 @@ Source: Alextrix Library — ${item.slug || item.id}
 Author: ${item.username || "unknown"}`}
                   </pre>
                   <button
-                    className="btn btn-primary btn-sm"
+                    className="btn-tab-action"
                     onClick={() => {
                       const prompt = `Recreate this ${item.type === "template" ? "landing page template" : "UI component"}: ${item.title}\n\nDescription: ${item.desc || "No description available."}\n\nStyle: ${(item.tags || []).slice(0, 5).join(", ") || "modern, clean, minimal"}\n\nTech stack: HTML, CSS, Tailwind\nType: ${item.type}\n\nSource: Alextrix Library — ${item.slug || item.id}\nAuthor: ${item.username || "unknown"}`;
                       navigator.clipboard?.writeText(prompt).then(() => {
-                        // Show inline confirmation
                         const btn = document.activeElement as HTMLButtonElement;
                         if (btn) {
                           const original = btn.textContent;
@@ -582,10 +581,10 @@ Author: ${item.username || "unknown"}`}
                 <div className="artifact-empty">
                   <div style={{ fontSize: 40 }}>📄</div>
                   <h3>DESIGN.md</h3>
-                  <p style={{ marginBottom: 16, color: "#6B7280" }}>
+                  <p>
                     Auto-generated minimal spec. Full version coming soon via cron.
                   </p>
-                  <pre className="code-viewer" style={{ textAlign: "left", whiteSpace: "pre-wrap", background: "#F9FAFB", padding: 16, borderRadius: 8, margin: "16px 0", fontSize: 12 }}>{`---
+                  <pre className="prompt-preview">{`---
 name: ${item.title}
 description: ${item.desc || ""}
 type: ${item.type}
@@ -611,7 +610,7 @@ ${item.desc || "Design system specification for " + item.title + "."}
 | Body | Inter | 16px | 400 |
 | Label | JetBrains Mono | 11px | 600 |`}</pre>
                   <button
-                    className="btn btn-primary btn-sm"
+                    className="btn-tab-action"
                     onClick={() => {
                       const md = `---\nname: ${item.title}\ndescription: ${item.desc || ""}\ntype: ${item.type}\ntags: ${(item.tags || []).join(", ")}\nauthor: ${item.username || "unknown"}\n---\n\n## Overview\n${item.desc || "Design system specification for " + item.title + "."}\n\n## Colors\n| Role | Value |\n| --- | --- |\n| Primary | #111827 |\n| Background | #FFFFFF |\n| Surface | #F9FAFB |\n| Text | #111827 |\n\n## Typography\n| Style | Family | Size | Weight |\n| --- | --- | --- | --- |\n| Display | Inter | 48px | 700 |\n| Body | Inter | 16px | 400 |\n| Label | JetBrains Mono | 11px | 600 |\n`;
                       const blob = new Blob([md], { type: "text/markdown" });
