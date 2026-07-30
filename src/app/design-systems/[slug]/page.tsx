@@ -339,10 +339,10 @@ export default function DesignSystemDetailPage({
                 <div className="ds-hero-actions">
                   <button
                     className="ds-btn-primary"
-                    onClick={() => copyToClipboard(item.content || "", "prompt", "Added to prompt")}
+                    onClick={() => copyToClipboard(item.content || "", "prompt", "Ditambahkan ke prompt")}
                     disabled={!item.content}
                   >
-                    {copied === "prompt" ? "✓ Added!" : "⚡ Add to Prompt"}
+                    {copied === "prompt" ? "✓ Ditambahkan!" : "⚡ Add to Prompt"}
                   </button>
                   <button
                     className="ds-btn-ghost"
@@ -399,7 +399,7 @@ export default function DesignSystemDetailPage({
                   </div>
                   <button
                     className="ds-copy-all-btn"
-                    onClick={() => copyToClipboard(item.content, "all", "Copied entire DESIGN.md")}
+                    onClick={() => copyToClipboard(item.content, "all", "DESIGN.md disalin")}
                     title="Copy entire DESIGN.md"
                   >
                     {copied === "all" ? "✓ Copied!" : "⎘ Copy All"}
@@ -425,7 +425,7 @@ export default function DesignSystemDetailPage({
 
                     {/* Colors */}
                     {Object.keys(colors).length > 0 && (
-                      <FmGroup label="colors" onCopy={() => copyToClipboard(generateSection("colors", "Colors", colors), "colors", "Copied Colors section")}>
+                      <FmGroup label="colors" onCopy={() => copyToClipboard(generateSection("colors", "Colors", colors), "colors", "Bagian Colors disalin")}>
                         {Object.entries(colors).map(([k, v]) => (
                           <FmRow
                             key={k}
@@ -440,7 +440,7 @@ export default function DesignSystemDetailPage({
 
                     {/* Typography */}
                     {Object.keys(typography).length > 0 && (
-                      <FmGroup label="typography" onCopy={() => copyToClipboard(generateSection("typography", "Typography", typography), "typography", "Copied Typography section")}>
+                      <FmGroup label="typography" onCopy={() => copyToClipboard(generateSection("typography", "Typography", typography), "typography", "Bagian Typography disalin")}>
                         {Object.entries(typography).map(([k, v]) => (
                           <FmRow
                             key={k}
@@ -454,7 +454,7 @@ export default function DesignSystemDetailPage({
 
                     {/* Spacing */}
                     {Object.keys(spacing).length > 0 && (
-                      <FmGroup label="spacing" onCopy={() => copyToClipboard(generateSection("spacing", "Spacing", spacing), "spacing", "Copied Spacing section")}>
+                      <FmGroup label="spacing" onCopy={() => copyToClipboard(generateSection("spacing", "Spacing", spacing), "spacing", "Bagian Spacing disalin")}>
                         {Object.entries(spacing).map(([k, v]) => (
                           <FmRow key={k} label={k} value={String(v)} onCopy={() => copyToClipboard(String(v), `spacing-${k}`, `Copied ${k}: ${String(v)}`)} />
                         ))}
@@ -463,7 +463,7 @@ export default function DesignSystemDetailPage({
 
                     {/* Rounded */}
                     {Object.keys(rounded).length > 0 && (
-                      <FmGroup label="rounded" onCopy={() => copyToClipboard(generateSection("rounded", "Rounded", rounded), "rounded", "Copied Radius section")}>
+                      <FmGroup label="rounded" onCopy={() => copyToClipboard(generateSection("rounded", "Rounded", rounded), "rounded", "Bagian Radius disalin")}>
                         {Object.entries(rounded).map(([k, v]) => (
                           <FmRow key={k} label={k} value={String(v)} onCopy={() => copyToClipboard(String(v), `radius-${k}`, `Copied ${k}: ${String(v)}`)} />
                         ))}
@@ -488,7 +488,7 @@ export default function DesignSystemDetailPage({
             {item.content && (
               <button
                 className="ds-copy-all-sections-btn"
-                onClick={() => copyToClipboard(item.content, "all-sections", "Copied all sections to clipboard")}
+                onClick={() => copyToClipboard(item.content, "all-sections", "Semua bagian disalin")}
               >
                 {copied === "all-sections" ? "✓ Copied All Sections!" : "⎘ Copy All Sections"}
               </button>
@@ -498,7 +498,7 @@ export default function DesignSystemDetailPage({
             {Object.keys(colors).length > 0 && (
               <div
                 className="ds-sb-card ds-sb-card-copyable"
-                onClick={() => copyToClipboard(getSection("colors", "Colors", colors), "sb-colors", "Copied Colors section")}
+                onClick={() => copyToClipboard(getSection("colors", "Colors", colors), "sb-colors", "Bagian Colors disalin")}
                 title="Click to copy Colors section"
               >
                 <div className="ds-sb-card-header">
@@ -526,7 +526,7 @@ export default function DesignSystemDetailPage({
             {Object.keys(typography).length > 0 && (
               <div
                 className="ds-sb-card ds-sb-card-copyable"
-                onClick={() => copyToClipboard(getSection("typography", "Typography", typography), "sb-typography", "Copied Typography section")}
+                onClick={() => copyToClipboard(getSection("typography", "Typography", typography), "sb-typography", "Bagian Typography disalin")}
                 title="Click to copy Typography section"
               >
                 <div className="ds-sb-card-header">
@@ -560,7 +560,7 @@ export default function DesignSystemDetailPage({
             {Object.keys(spacing).length > 0 && (
               <div
                 className="ds-sb-card ds-sb-card-copyable"
-                onClick={() => copyToClipboard(getSection("spacing", "Spacing", spacing), "sb-spacing", "Copied Spacing section")}
+                onClick={() => copyToClipboard(getSection("spacing", "Spacing", spacing), "sb-spacing", "Bagian Spacing disalin")}
                 title="Click to copy Spacing section"
               >
                 <div className="ds-sb-card-header">
@@ -590,7 +590,7 @@ export default function DesignSystemDetailPage({
             {Object.keys(rounded).length > 0 && (
               <div
                 className="ds-sb-card ds-sb-card-copyable"
-                onClick={() => copyToClipboard(getSection("rounded", "Rounded", rounded), "sb-radius", "Copied Radius section")}
+                onClick={() => copyToClipboard(getSection("rounded", "Rounded", rounded), "sb-radius", "Bagian Radius disalin")}
                 title="Click to copy Radius section"
               >
                 <div className="ds-sb-card-header">

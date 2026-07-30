@@ -78,11 +78,11 @@ export default function DesignSystemsPage() {
             <p className="hero-desc">Browse, upload, or generate DESIGN.md systems for typography, colors, spacing, components, motion, and style rules. Aura turns websites and templates into reusable prompt context for stronger generated UIs.</p>
           {/* CTA buttons - disabled until upload feature is implemented */}
             <div className="ds-cta-row">
-              <button className="ds-cta-primary" disabled title="Coming soon">
+              <button className="ds-cta-primary" disabled title="Segera hadir">
                 <span className="ds-cta-icon">+</span>
                 Add DESIGN.md
               </button>
-              <button className="ds-cta-secondary" disabled title="Coming soon">
+              <button className="ds-cta-secondary" disabled title="Segera hadir">
                 <span className="ds-cta-icon">⬆</span>
                 Import from Templates
               </button>

@@ -37,29 +37,29 @@ interface Stats {
 
 const PAGE_INFO: Record<string, { eyebrow: string; title: string; desc: string }> = {
   templates: {
-    eyebrow: "All Templates",
-    title: "Explore Premium Landing Page Templates",
-    desc: "Discover curated HTML, CSS, and React templates. Filter by category, sort by popularity, and export production-ready code.",
+    eyebrow: "Semua Template",
+    title: "Jelajahi Template Landing Page Premium",
+    desc: "Temukan template HTML, CSS, dan React yang dikurasi. Filter berdasarkan kategori, urutkan berdasarkan popularitas, dan ekspor kode siap produksi.",
   },
   components: {
-    eyebrow: "UI Components",
-    title: "Reusable HTML, CSS, and React components",
-    desc: "Browse reusable UI components — hero sections, navigation, cards, forms, and more. Copy HTML or React code directly.",
+    eyebrow: "Komponen UI",
+    title: "Komponen HTML, CSS, dan React yang dapat digunakan ulang",
+    desc: "Jelajahi komponen UI yang dapat digunakan ulang — hero section, navigasi, kartu, form, dan lainnya. Salin kode HTML atau React langsung.",
   },
   assets: {
-    eyebrow: "Stock Assets",
-    title: "High-quality stock images and visual assets",
-    desc: "Browse thousands of curated stock photos, illustrations, and visual assets for your designs.",
+    eyebrow: "Stok Aset",
+    title: "Gambar stok berkualitas tinggi dan aset visual",
+    desc: "Jelajahi ribuan foto stok, ilustrasi, dan aset visual yang dikurasi untuk desain Anda.",
   },
   skills: {
-    eyebrow: "AI Skills",
-    title: "AI agent skills and prompt templates",
-    desc: "Browse AI agent skills — pre-configured prompt templates for design, coding, content creation, and more.",
+    eyebrow: "Skill AI",
+    title: "Skill agen AI dan template prompt",
+    desc: "Jelajahi skill agen AI — template prompt pre-konfigurasi untuk desain, coding, pembuatan konten, dan lainnya.",
   },
   "design-md": {
     eyebrow: "Design Systems",
-    title: "Design system specifications and documentation",
-    desc: "Browse design systems with complete DESIGN.md specifications, color tokens, typography, and component documentation.",
+    title: "Spesifikasi dan dokumentasi design system",
+    desc: "Jelajahi design system dengan spesifikasi DESIGN.md lengkap, token warna, tipografi, dan dokumentasi komponen.",
   },
 };
 
@@ -125,10 +125,10 @@ function AlextrixHomepage() {
       const next = new Set(prev);
       if (next.has(id)) {
         next.delete(id);
-        setToast("Removed from saved");
+        setToast("Dihapus dari simpanan");
       } else {
         next.add(id);
-        setToast("Saved to your library");
+        setToast("Disimpan ke pustaka Anda");
       }
       return next;
     });
@@ -140,7 +140,7 @@ function AlextrixHomepage() {
     const code = `<!-- ${item.title} -->\n<!-- Source: Alextrix Library — ${item.slug || item.id} -->\n<!-- Get full code at /components/${item.slug || item.id} -->`;
     navigator.clipboard?.writeText(code).then(() => {
       setToast(`Copied ${item.title} reference`);
-    }).catch(() => setToast("Copy failed — open detail page"));
+    }).catch(() => setToast("Salin gagal — buka halaman detail"));
   };
 
   // Auto-generate prompt fallback from item metadata
@@ -222,7 +222,7 @@ function AlextrixHomepage() {
       setTimeout(() => URL.revokeObjectURL(url), 5000);
       setToast(`Downloaded ${(item.slug || "design").slice(0, 30)}-design.md`);
     } catch (err) {
-      setToast("Download failed — try detail page");
+      setToast("Download gagal — coba halaman detail");
     }
   };
 
@@ -251,7 +251,7 @@ function AlextrixHomepage() {
         await navigator.clipboard.writeText(prompt);
         setToast(`Prompt copied (auto-generated)`);
       } catch {
-        setToast("Copy failed — open detail page");
+        setToast("Salin gagal — buka halaman detail");
       }
     }
   };
@@ -299,17 +299,46 @@ function AlextrixHomepage() {
         {/* SECTION 1: HERO (enhanced with trust bar + stats) */}
         <section className="alextrix-hero-section">
           <div className="alextrix-hero-content">
-            <p className="alextrix-hero-eyebrow">ALEXTRIX LIBRARY</p>
-            <h1 className="alextrix-hero-headline">Build Stunning Websites<br />in Seconds</h1>
-            <p className="alextrix-hero-subheadline">Curated HTML, CSS, React templates, UI components, and design systems. Export production-ready code instantly.</p>
+            <p className="alextrix-hero-eyebrow">PUSTAKA ALEXTRIX</p>
+            <h1 className="alextrix-hero-headline">Bangun Website Menakjubkan<br />dalam Hitungan Detik</h1>
+            <p className="alextrix-hero-subheadline">Kurasi template HTML, CSS, React, komponen UI, dan design system. Ekspor kode siap produksi secara instan.</p>
             <div className="alextrix-hero-cta">
-              <a href="/templates" className="alextrix-cta-primary">Browse Templates →</a>
-              <a href="/design-systems" className="alextrix-cta-secondary">Explore Design.md</a>
+              <a href="/templates" className="alextrix-cta-primary">Jelajahi Template →</a>
+              <a href="/design-systems" className="alextrix-cta-secondary">Lihat Design.md</a>
+            </div>
+
+            {/* Pricing CTA — Buy Lifetime Access */}
+            <div className="alextrix-pricing-cta">
+              <div className="alextrix-pricing-card">
+                <div className="alextrix-pricing-header">
+                  <span className="alextrix-pricing-badge">🔥 Akses Seumur Hidup</span>
+                  <h3 className="alextrix-pricing-title">Bayar Sekali, Pakai Selamanya</h3>
+                </div>
+                <div className="alextrix-pricing-price">
+                  <span className="alextrix-pricing-currency">Rp</span>
+                  <span className="alextrix-pricing-amount">99.000</span>
+                </div>
+                <ul className="alextrix-pricing-features">
+                  <li>✓ Akses 21.563+ template</li>
+                  <li>✓ Download DESIGN.md + Copy Prompt</li>
+                  <li>✓ Aktif di 3 perangkat</li>
+                  <li>✓ Update selamanya</li>
+                  <li>✓ Bayar 1x, tanpa langganan</li>
+                </ul>
+                <a href="/activate" className="alextrix-pricing-btn">Beli Sekarang Rp 99.000 →</a>
+                <p className="alextrix-pricing-note">QRIS · GoPay · OVO · DANA · Kartu Kredit</p>
+              </div>
+              <div className="alextrix-pricing-demo">
+                <p className="alextrix-pricing-demo-text">Belum yakin?</p>
+                <a href="/templates/interactive-globe-hero-section" className="alextrix-pricing-demo-btn">
+                  Coba 3 Template Gratis →
+                </a>
+              </div>
             </div>
 
             {/* Trust bar — tech stack */}
             <div className="alextrix-trust-bar">
-              <span className="alextrix-trust-label">Compatible with</span>
+              <span className="alextrix-trust-label">Kompatibel dengan</span>
               <div className="alextrix-trust-items">
                 <span className="alextrix-trust-item">HTML</span>
                 <span className="alextrix-trust-item">CSS</span>
@@ -344,9 +373,9 @@ function AlextrixHomepage() {
         {/* SECTION 2: TEMPLATE PULSE (2-col asymmetric 65/35) */}
         <section className="alextrix-pulse-section">
           <div className="alextrix-pulse-left">
-            <p className="alextrix-pulse-eyebrow">WHAT&apos;S INSIDE</p>
-            <h2 className="alextrix-pulse-title">Curated Library for Modern Builders</h2>
-            <p className="alextrix-pulse-desc">Browse thousands of production-ready templates and components. Export clean HTML, CSS, or React when your page is ready. Free, Pro, and Paid tiers — pick what fits your project.</p>
+            <p className="alextrix-pulse-eyebrow">APA YANG ADA DI DALAMNYA</p>
+            <h2 className="alextrix-pulse-title">Pustaka Kurasi untuk Pembuat Modern</h2>
+            <p className="alextrix-pulse-desc">Jelajahi ribuan template dan komponen siap produksi. Ekspor HTML, CSS, atau React yang bersih saat halaman Anda siap. Paket Free, Pro, dan Paid — pilih yang sesuai proyek Anda.</p>
           </div>
           <div className="alextrix-pulse-card">
             <div className="alextrix-pulse-card-header">
@@ -427,7 +456,7 @@ function AlextrixHomepage() {
                     <button
                       className={`card-bookmark${bookmarks.has(item.id) ? " saved" : ""}`}
                       onClick={(e) => toggleBookmark(item.id, e)}
-                      aria-label="Save template"
+                      aria-label="Simpan template"
                     >
                       {bookmarks.has(item.id) ? "★" : "☆"}
                     </button>
@@ -484,7 +513,7 @@ function AlextrixHomepage() {
                     <button
                       className="card-copy-btn"
                       onClick={(e) => copyComponentCode(item, e)}
-                      aria-label="Copy code"
+                      aria-label="Salin kode"
                     >
                       ⧉ Copy
                     </button>
@@ -673,7 +702,7 @@ function HomeInner() {
       setTimeout(() => URL.revokeObjectURL(url), 5000);
       setToast(`Downloaded ${(item.slug || "design").slice(0, 30)}-design.md`);
     } catch {
-      setToast("Download failed");
+      setToast("Download gagal");
     }
   };
 
@@ -698,7 +727,7 @@ function HomeInner() {
         await navigator.clipboard.writeText(prompt);
         setToast(`Prompt copied (auto-generated)`);
       } catch {
-        setToast("Copy failed");
+        setToast("Salin gagal");
       }
     }
   };
@@ -769,7 +798,7 @@ function HomeInner() {
       setTotal(d.total || 0);
       setTotalPages(d.totalPages || 0);
     } catch (e) {
-      console.error("Items fetch error:", e);
+      console.error("Error fetch item:", e);
       setItems([]);
     }
     setLoading(false);
@@ -839,8 +868,8 @@ function HomeInner() {
             <div className="alextrix-filter-row">
               <div className="alextrix-sort">
                 {([
-                  { id: "recent", label: "Recent", icon: "M12 8v4l3 3M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" },
-                  { id: "views", label: "Popular", icon: "M3 3v18h18M7 12l4-4 4 4 6-6" },
+                  { id: "recent", label: "Terbaru", icon: "M12 8v4l3 3M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" },
+                  { id: "views", label: "Populer", icon: "M3 3v18h18M7 12l4-4 4 4 6-6" },
                   { id: "forks", label: "Forked", icon: "M6 3v12M18 9a3 3 0 1 0-3-3M6 21a3 3 0 1 1 3-3M18 21V9" },
                   { id: "az", label: "A→Z", icon: "M3 7h10M3 12h7M3 17h4M14 17l3-3 3 3M17 4v10" },
                 ] as const).map(s => (
@@ -886,7 +915,7 @@ function HomeInner() {
             <div className="alextrix-result">
               <span className="alextrix-result-text">
                 {loading ? "Loading..." : (
-                  <>Showing <strong>{Math.min(page * 24, total).toLocaleString()}</strong> of <strong>{total.toLocaleString()}</strong> {tab}{page > 1 && <span style={{ marginLeft: 8, fontSize: 11, color: "#9CA3AF" }}>· Page {page} of {totalPages}</span>}</>
+                  <>Menampilkan <strong>{Math.min(page * 24, total).toLocaleString()}</strong> dari <strong>{total.toLocaleString()}</strong> {tab}{page > 1 && <span style={{ marginLeft: 8, fontSize: 11, color: "#9CA3AF" }}>· Page {page} dari {totalPages}</span>}</>
                 )}
               </span>
               {(tag || featured || q) && (
@@ -928,7 +957,7 @@ function HomeInner() {
                           className="card-image"
                           onError={(e) => {
                             const t = e.target as HTMLImageElement;
-                            // Swap to branded placeholder instead of plain "No preview"
+                            // Swap to branded placeholder instead dari plain "No preview"
                             const p = t.parentElement;
                             if (p && !p.querySelector(".card-image-fallback")) {
                               t.style.display = "none";
@@ -983,9 +1012,9 @@ function HomeInner() {
             {/* Pagination */}
             {totalPages > 1 && (
               <div className="pagination">
-                <button className="btn btn-outline btn-sm" disabled={page <= 1} onClick={() => setPage(p => Math.max(1, p - 1))}>Previous</button>
+                <button className="btn btn-outline btn-sm" disabled={page <= 1} onClick={() => setPage(p => Math.max(1, p - 1))}>Sebelumnya</button>
                 <span style={{ fontSize: 13, color: "hsl(var(--muted-foreground))" }}>{page} / {totalPages}</span>
-                <button className="btn btn-outline btn-sm" disabled={page >= totalPages} onClick={() => setPage(p => Math.min(totalPages, p + 1))}>Next</button>
+                <button className="btn btn-outline btn-sm" disabled={page >= totalPages} onClick={() => setPage(p => Math.min(totalPages, p + 1))}>Berikutnya</button>
               </div>
             )}
           </div>
@@ -1025,7 +1054,7 @@ function ProgressView() {
       <div className="progress-page">
         <div className="progress-hero">
           <h1>Generation Progress</h1>
-          <p>Real-time tracking of DESIGN.md and Copy Prompt generation for {totalTemplates.toLocaleString()} templates via Aura's Edge Function.</p>
+          <p>Real-time tracking dari DESIGN.md and Copy Prompt generation for {totalTemplates.toLocaleString()} templates via Aura's Edge Function.</p>
         </div>
         <div className="progress-stats">
           <div className="progress-stat-card">
@@ -1285,7 +1314,7 @@ function SkillsView() {
         <aside className="skills-doc-sidebar">
           <div className="skills-doc-header">
             <h2 className="skills-doc-title">AI Skills</h2>
-            <p className="skills-doc-subtitle">{filteredSkills.length} of {skills.length} skills</p>
+            <p className="skills-doc-subtitle">{filteredSkills.length} dari {skills.length} skills</p>
           </div>
 
           {/* Skills list — full height */}

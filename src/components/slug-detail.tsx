@@ -257,7 +257,7 @@ export default function SlugDetail({
   const tabs: { id: typeof tab; label: string; icon: string; show: boolean }[] = [
     {
       id: "preview",
-      label: "Preview",
+      label: "Pratinjau",
       icon: "eye",
       show: item.type !== "skill" && item.type !== "asset",
     },
@@ -269,7 +269,7 @@ export default function SlugDetail({
     },
     {
       id: "code",
-      label: "Code",
+      label: "Kode",
       icon: "</>",
       show:
         (item.type === "template" || item.type === "component") &&
@@ -282,7 +282,7 @@ export default function SlugDetail({
       icon: "✨",
       show: item.type === "template",
     },
-    { id: "content", label: "Content", icon: "📄", show: item.type === "skill" },
+    { id: "content", label: "Konten", icon: "📄", show: item.type === "skill" },
   ];
 
   const visibleTabs = tabs.filter(
@@ -387,7 +387,7 @@ export default function SlugDetail({
                         }
                         setTimeout(() => URL.revokeObjectURL(url), 60_000);
                       }}
-                      title="Open in New Tab"
+                      title="Buka di Tab Baru"
                     >
                       ↗ Open
                     </button>
@@ -528,7 +528,7 @@ export default function SlugDetail({
                   <pre className="prompt-preview">
 {`Recreate this ${item.type === "template" ? "landing page template" : "UI component"}: ${item.title}
 
-Description: ${item.desc || "No description available."}
+Description: ${item.desc || "Tidak ada deskripsi."}
 
 Style: ${(item.tags || []).slice(0, 5).join(", ") || "modern, clean, minimal"}
 
@@ -541,7 +541,7 @@ Author: ${item.username || "unknown"}`}
                   <button
                     className="btn-tab-action"
                     onClick={() => {
-                      const prompt = `Recreate this ${item.type === "template" ? "landing page template" : "UI component"}: ${item.title}\n\nDescription: ${item.desc || "No description available."}\n\nStyle: ${(item.tags || []).slice(0, 5).join(", ") || "modern, clean, minimal"}\n\nTech stack: HTML, CSS, Tailwind\nType: ${item.type}\n\nSource: Alextrix Library — ${item.slug || item.id}\nAuthor: ${item.username || "unknown"}`;
+                      const prompt = `Recreate this ${item.type === "template" ? "landing page template" : "UI component"}: ${item.title}\n\nDescription: ${item.desc || "Tidak ada deskripsi."}\n\nStyle: ${(item.tags || []).slice(0, 5).join(", ") || "modern, clean, minimal"}\n\nTech stack: HTML, CSS, Tailwind\nType: ${item.type}\n\nSource: Alextrix Library — ${item.slug || item.id}\nAuthor: ${item.username || "unknown"}`;
                       navigator.clipboard?.writeText(prompt).then(() => {
                         const btn = document.activeElement as HTMLButtonElement;
                         if (btn) {
@@ -634,7 +634,7 @@ ${item.desc || "Design system specification for " + item.title + "."}
           <section className="detail-section">
             <div className="about-grid">
               <div className="about-left">
-                <h2 className="about-h2">About</h2>
+                <h2 className="about-h2">Tentang</h2>
                 {item.featured && (
                   <div className="about-pro-badge">★ Featured {item.type}</div>
                 )}
@@ -663,7 +663,7 @@ ${item.desc || "Design system specification for " + item.title + "."}
           {related.moreFromAuthor.length > 0 && (
             <section className="detail-section">
               <div className="related-header">
-                <h2 className="related-h2">More from this Creator</h2>
+                <h2 className="related-h2">Lainnya dari Kreator ini</h2>
                 <Link href={`/${pluralRoute}`} className="related-view-all">
                   View all →
                 </Link>

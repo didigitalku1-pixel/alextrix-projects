@@ -21,7 +21,7 @@ export function SiteFooter() {
         <div className="alextrix-footer-brand">
           <div className="alextrix-footer-logo">A</div>
           <p className="alextrix-footer-tagline">
-            Premium templates, components, and design systems. Export production-ready code instantly.
+            Template, komponen, dan design system premium. Ekspor kode siap produksi secara instan.
           </p>
           <div className="alextrix-footer-social">
             {SOCIAL_LINKS.map((link) => (
@@ -53,12 +53,12 @@ export function SiteFooter() {
       </div>
 
       <div className="alextrix-footer-bottom">
-        <p>© {year} Alextrix. Built with care for developers.</p>
+        <p>© {year} Alextrix. Dibuat dengan dedikasi untuk developer.</p>
         <div className="alextrix-footer-lang">
           <span aria-hidden="true">🌐</span>
-          <select className="alextrix-footer-lang-select" defaultValue="en" aria-label="Select language">
-            <option value="en">English</option>
+          <select className="alextrix-footer-lang-select" defaultValue="id" aria-label="Pilih bahasa">
             <option value="id">Bahasa Indonesia</option>
+            <option value="en">English</option>
           </select>
         </div>
       </div>

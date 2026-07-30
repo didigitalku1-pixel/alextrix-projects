@@ -14,25 +14,25 @@ export interface NavTab {
 export const NAV_TABS: NavTab[] = [
   {
     id: "templates",
-    label: "Templates",
+    label: "Template",
     href: "/templates",
     activePaths: ["/templates"],
   },
   {
     id: "components",
-    label: "Components",
+    label: "Komponen",
     href: "/components",
     activePaths: ["/components"],
   },
   {
     id: "assets",
-    label: "Assets",
+    label: "Aset",
     href: "/assets",
     activePaths: ["/assets"],
   },
   {
     id: "skills",
-    label: "Skills",
+    label: "Skill",
     href: "/skills",
     activePaths: ["/skills"],
   },
@@ -44,7 +44,7 @@ export const NAV_TABS: NavTab[] = [
   },
   {
     id: "learn",
-    label: "Learn",
+    label: "Pelajari",
     href: "/learn/introduction",
     activePaths: ["/learn"],
   },
@@ -55,31 +55,31 @@ export const NAV_TABS: NavTab[] = [
  */
 export const FOOTER_COLUMNS = [
   {
-    title: "PRODUCT",
+    title: "PRODUK",
     links: [
-      { text: "Templates", href: "/templates" },
-      { text: "Components", href: "/components" },
-      { text: "Assets", href: "/assets" },
-      { text: "Skills", href: "/skills" },
+      { text: "Template", href: "/templates" },
+      { text: "Komponen", href: "/components" },
+      { text: "Aset", href: "/assets" },
+      { text: "Skill", href: "/skills" },
       { text: "Design.md", href: "/design-systems" },
     ],
   },
   {
-    title: "RESOURCES",
+    title: "SUMBER DAYA",
     links: [
-      { text: "Learn", href: "/learn/introduction" },
-      { text: "Docs", href: "/learn/documentation" },
+      { text: "Pelajari", href: "/learn/introduction" },
+      { text: "Dokumentasi", href: "/learn/documentation" },
       { text: "FAQ", href: "/learn/faq" },
-      { text: "Tutorials", href: "/learn/video-tutorials" },
+      { text: "Tutorial", href: "/learn/video-tutorials" },
     ],
   },
   {
-    title: "COMPANY",
+    title: "PERUSAHAAN",
     links: [
-      { text: "About", href: "/learn/introduction" },
-      { text: "Contact", href: "mailto:hello@alextrix.dev" },
-      { text: "Privacy", href: "/learn/custom-domain" },
-      { text: "Terms", href: "/learn/seo-settings" },
+      { text: "Tentang", href: "/learn/introduction" },
+      { text: "Kontak", href: "mailto:hello@alextrix.dev" },
+      { text: "Privasi", href: "/learn/custom-domain" },
+      { text: "Syarat", href: "/learn/seo-settings" },
     ],
   },
 ] as const;

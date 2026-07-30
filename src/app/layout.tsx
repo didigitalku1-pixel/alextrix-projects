@@ -5,8 +5,8 @@ import { SiteHeader } from "@/components/layout/SiteHeader";
 import { SiteFooter } from "@/components/layout/SiteFooter";
 
 export const metadata: Metadata = {
-  title: "Alextrix — Premium Templates, Components & Design Systems",
-  description: "Browse premium HTML, CSS, React templates, UI components, and design systems. Export production-ready code instantly.",
+  title: "Alextrix — Template, Komponen, & Design System Premium",
+  description: "Jelajahi template HTML, CSS, React, komponen UI, dan design system premium. Ekspor kode siap produksi secara instan.",
 };
 
 export default function RootLayout({
