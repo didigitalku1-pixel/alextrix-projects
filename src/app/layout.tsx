@@ -1,5 +1,8 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import "./globals.css";
+import { SiteHeader } from "@/components/layout/SiteHeader";
+import { SiteFooter } from "@/components/layout/SiteFooter";
 
 export const metadata: Metadata = {
   title: "Alextrix — Premium Templates, Components & Design Systems",
@@ -25,7 +28,18 @@ export default function RootLayout({
           rel="stylesheet"
         />
       </head>
-      <body>{children}</body>
+      <body>
+        {/* Global header — rendered on ALL pages via layout */}
+        <Suspense fallback={<header className="header"><div className="header-inner"><div className="header-left"><a href="/" className="header-logo alextrix-logo"><div className="header-logo-icon">A</div><span className="alextrix-name">Alextrix</span></a></div></div></header>}>
+          <SiteHeader />
+        </Suspense>
+
+        {/* Page content */}
+        {children}
+
+        {/* Global footer — rendered on ALL pages via layout */}
+        <SiteFooter />
+      </body>
     </html>
   );
 }

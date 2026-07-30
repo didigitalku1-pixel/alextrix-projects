@@ -69,21 +69,6 @@ export default function DesignSystemsPage() {
 
   return (
     <div className="app">
-      <header className="header">
-        <div className="header-inner">
-          <a href="/" className="header-logo"><div className="header-logo-icon">A</div></a>
-          <nav className="header-nav">
-            {tabs.map(t => (
-              <a key={t.id} href={t.id === "design-md" ? "/design-systems" : t.id === "learn" ? "/learn/introduction" : t.id === "design-md" ? "/design-systems" : `/${t.id}`}
-                 className={`header-tab ${t.active ? "active" : ""}`}>{t.label}</a>
-            ))}
-          </nav>
-          <div className="header-right">
-            <button className="header-icon-btn" onClick={toggleTheme} aria-label="Toggle theme">{isDark ? "☀️" : "🌙"}</button>
-          </div>
-        </div>
-      </header>
-
       <main className="main alextrix-app">
         <div className="main-content">
           {/* === Hero section === */}

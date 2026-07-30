@@ -263,13 +263,6 @@ export default function DesignSystemDetailPage({
   if (loading) {
     return (
       <div className="app">
-        <header className="header">
-          <div className="header-inner">
-            <a href="/" className="header-logo">
-              <div className="header-logo-icon">A</div>
-            </a>
-          </div>
-        </header>
         <main className="main">
           <div className="loading-spinner">
             <div className="spinner" />
@@ -282,13 +275,6 @@ export default function DesignSystemDetailPage({
   if (!item) {
     return (
       <div className="app">
-        <header className="header">
-          <div className="header-inner">
-            <a href="/" className="header-logo">
-              <div className="header-logo-icon">A</div>
-            </a>
-          </div>
-        </header>
         <main className="main">
           <div className="empty">
             <div className="empty-icon">🔍</div>
@@ -322,36 +308,7 @@ export default function DesignSystemDetailPage({
 
   return (
     <div className="app alextrix-app">
-      {/* Header */}
-      <header className="header">
-        <div className="header-inner">
-          <a href="/" className="header-logo">
-            <div className="header-logo-icon">A</div>
-          </a>
-          <nav className="header-nav">
-            {navTabs.map((t) => (
-              <a
-                key={t.id}
-                href={t.href || "/design-systems"}
-                className={`header-tab ${t.active ? "active" : ""}`}
-              >
-                {t.label}
-              </a>
-            ))}
-          </nav>
-          <div className="header-right">
-            <button
-              className="header-icon-btn"
-              onClick={toggleTheme}
-              aria-label="Toggle theme"
-            >
-              {isDark ? "☀️" : "🌙"}
-            </button>
-          </div>
-        </div>
-      </header>
-
-      {/* Main content - 2 column layout */}
+      {/* Main content — header is now global via layout.tsx */}
       <main className="main ds-main">
         <div className="ds-grid">
           {/* LEFT: Main column */}
@@ -662,9 +619,6 @@ export default function DesignSystemDetailPage({
       {toast && (
         <div className="ds-toast">{toast}</div>
       )}
-
-      {/* Footer */}
-      <DsFooter />
     </div>
   );
 }
@@ -726,71 +680,4 @@ function FmGroup({
     </div>
   );
 }
-
-/** 5-column footer */
-function DsFooter() {
-  const cols = [
-    {
-      title: "PRODUCT",
-      links: [
-        { text: "Create", href: "/" },
-        { text: "Templates", href: "/templates" },
-        { text: "Components", href: "/components" },
-        { text: "Assets", href: "/assets" },
-        { text: "Skills", href: "/skills" },
-        { text: "DESIGN.MD", href: "/design-systems" },
-      ],
-    },
-    {
-      title: "RESOURCES",
-      links: [
-        { text: "Learn", href: "/learn/introduction" },
-        { text: "Introduction", href: "/learn/introduction" },
-        { text: "How to Prompt", href: "/learn/tips-for-prompting" },
-        { text: "How to Edit", href: "/learn/how-to-design" },
-        { text: "FAQ", href: "/learn/faq" },
-      ],
-    },
-    {
-      title: "CONNECT",
-      links: [
-        { text: "Privacy", href: "/" },
-        { text: "Terms", href: "/" },
-        { text: "Support", href: "/" },
-      ],
-    },
-  ];
-
-  return (
-    <footer className="ds-footer">
-      <div className="ds-footer-container">
-        <div className="ds-footer-top">
-          <div className="ds-footer-brand">
-            <div className="ds-footer-logo">A</div>
-            <p className="ds-footer-tagline">
-              AI landing page builder that creates stunning designs in seconds.
-              No design skills needed. Export to HTML & Figma.
-            </p>
-          </div>
-          <div className="ds-footer-cols">
-            {cols.map((col) => (
-              <div key={col.title} className="ds-footer-col">
-                <h4 className="ds-footer-col-title">{col.title}</h4>
-                {col.links.map((link) => (
-                  <a key={link.text} href={link.href} className="ds-footer-link">
-                    {link.text}
-                  </a>
-                ))}
-              </div>
-            ))}
-          </div>
-        </div>
-        <div className="ds-footer-bottom">
-          <p>
-            © {new Date().getFullYear()} Aura Library. All rights reserved.
-          </p>
-        </div>
-      </div>
-    </footer>
-  );
-}
+// DsFooter function removed — now using global SiteFooter from layout.tsx

@@ -291,31 +291,6 @@ export default function SlugDetail({
 
   return (
     <div className="app alextrix-app">
-      <header className="header">
-        <div className="header-inner">
-          <a href="/" className="header-logo">
-            <div className="header-logo-icon">A</div>
-          </a>
-          <nav className="header-nav">
-            <a href="/templates" className="header-tab">TEMPLATES</a>
-            <a href="/components" className="header-tab">COMPONENTS</a>
-            <a href="/assets" className="header-tab">ASSETS</a>
-            <a href="/skills" className="header-tab">SKILLS</a>
-            <a href="/design-systems" className="header-tab">DESIGN.MD</a>
-            <a href="/learn/introduction" className="header-tab">LEARN</a>
-          </nav>
-          <div className="header-right">
-            <button
-              className="header-icon-btn"
-              onClick={toggleTheme}
-              aria-label="Toggle theme"
-            >
-              {isDark ? "☀️" : "🌙"}
-            </button>
-          </div>
-        </div>
-      </header>
-
       <main className="main detail-main">
         <div className="detail-container">
           <div className="detail-hero">
@@ -728,71 +703,7 @@ ${item.desc || "Design system specification for " + item.title + "."}
           )}
         </div>
       </main>
-
-      <SiteFooter />
     </div>
-  );
-}
-
-/** Site-wide footer — mirrors aura.build footer structure */
-function SiteFooter() {
-  const footerColumns = [
-    {
-      title: "PRODUCT",
-      links: [
-        { text: "Create", href: "/" },
-        { text: "Templates", href: "/templates" },
-        { text: "Components", href: "/components" },
-        { text: "Assets", href: "/assets" },
-        { text: "Skills", href: "/skills" },
-        { text: "DESIGN.MD", href: "/design-systems" },
-      ],
-    },
-    {
-      title: "RESOURCES",
-      links: [
-        { text: "Learn", href: "/learn/introduction" },
-        { text: "FAQ", href: "/learn/faq" },
-      ],
-    },
-    {
-      title: "CONNECT",
-      links: [
-        { text: "Privacy", href: "/" },
-        { text: "Terms", href: "/" },
-      ],
-    },
-  ];
-
-  return (
-    <footer className="site-footer">
-      <div className="footer-container">
-        <div className="footer-top">
-          <div className="footer-brand">
-            <div className="footer-brand-icon">A</div>
-            <p className="footer-brand-text">
-              AI landing page builder that creates stunning designs in seconds.
-              No design skills needed. Export to HTML & Figma.
-            </p>
-          </div>
-          <div className="footer-columns">
-            {footerColumns.map((col) => (
-              <div key={col.title} className="footer-column">
-                <h4 className="footer-col-title">{col.title}</h4>
-                {col.links.map((link) => (
-                  <a key={link.text} href={link.href} className="footer-link">
-                    {link.text}
-                  </a>
-                ))}
-              </div>
-            ))}
-          </div>
-        </div>
-        <div className="footer-bottom">
-          <p>© {new Date().getFullYear()} Aura Library. All rights reserved.</p>
-        </div>
-      </div>
-    </footer>
   );
 }
 

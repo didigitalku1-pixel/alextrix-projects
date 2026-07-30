@@ -295,27 +295,6 @@ function AlextrixHomepage() {
 
   return (
     <div className="app alextrix-app">
-      <header className={`header${headerScrolled ? " header-scrolled" : ""}`}>
-        <div className="header-inner">
-          <div className="header-left">
-            <a href="/" className="header-logo alextrix-logo">
-              <div className="header-logo-icon">A</div>
-              <span className="alextrix-name">Alextrix</span>
-            </a>
-          </div>
-          <nav className="header-nav">
-            {navTabs.map(t => (
-              <a key={t.id} href={t.href} className="header-tab">{t.label}</a>
-            ))}
-          </nav>
-          <div className="header-right">
-            <button className="header-icon-btn" onClick={toggleTheme} aria-label="Toggle theme">
-              {isDark ? "☀️" : "🌙"}
-            </button>
-          </div>
-        </div>
-      </header>
-
       <main className="main alextrix-homepage">
         {/* SECTION 1: HERO (enhanced with trust bar + stats) */}
         <section className="alextrix-hero-section">
@@ -564,53 +543,6 @@ function AlextrixHomepage() {
             </div>
           </div>
         </section>
-
-        {/* SECTION 8: FOOTER (enhanced 4-column) */}
-        <footer className="alextrix-footer">
-          <div className="alextrix-footer-container">
-            <div className="alextrix-footer-brand">
-              <div className="alextrix-footer-logo">A</div>
-              <p className="alextrix-footer-tagline">Premium templates, components, and design systems. Export production-ready code instantly.</p>
-              <div className="alextrix-footer-social">
-                <a href="https://twitter.com" className="alextrix-footer-social-link" aria-label="Twitter">𝕏</a>
-                <a href="https://github.com/didigitalku1-pixel/web-library" className="alextrix-footer-social-link" aria-label="GitHub">⌥</a>
-                <a href="https://discord.com" className="alextrix-footer-social-link" aria-label="Discord">◈</a>
-              </div>
-            </div>
-            <div className="alextrix-footer-col">
-              <h4 className="alextrix-footer-col-title">PRODUCT</h4>
-              <a href="/templates" className="alextrix-footer-link">Templates</a>
-              <a href="/components" className="alextrix-footer-link">Components</a>
-              <a href="/assets" className="alextrix-footer-link">Assets</a>
-              <a href="/skills" className="alextrix-footer-link">Skills</a>
-              <a href="/design-systems" className="alextrix-footer-link">Design.md</a>
-            </div>
-            <div className="alextrix-footer-col">
-              <h4 className="alextrix-footer-col-title">RESOURCES</h4>
-              <a href="/learn/introduction" className="alextrix-footer-link">Learn</a>
-              <a href="/learn/documentation" className="alextrix-footer-link">Docs</a>
-              <a href="/learn/faq" className="alextrix-footer-link">FAQ</a>
-              <a href="/learn/video-tutorials" className="alextrix-footer-link">Tutorials</a>
-            </div>
-            <div className="alextrix-footer-col">
-              <h4 className="alextrix-footer-col-title">COMPANY</h4>
-              <a href="/learn/introduction" className="alextrix-footer-link">About</a>
-              <a href="mailto:hello@alextrix.dev" className="alextrix-footer-link">Contact</a>
-              <a href="/learn/custom-domain" className="alextrix-footer-link">Privacy</a>
-              <a href="/learn/seo-settings" className="alextrix-footer-link">Terms</a>
-            </div>
-          </div>
-          <div className="alextrix-footer-bottom">
-            <p>© {new Date().getFullYear()} Alextrix. Built with care for developers.</p>
-            <div className="alextrix-footer-lang">
-              <span>🌐</span>
-              <select className="alextrix-footer-lang-select" defaultValue="en">
-                <option value="en">English</option>
-                <option value="id">Bahasa Indonesia</option>
-              </select>
-            </div>
-          </div>
-        </footer>
       </main>
 
       {/* Toast for copy/bookmark feedback */}
@@ -653,6 +585,12 @@ function HomeInner() {
   const [tags, setTags] = useState<{ tag: string; count: number }[]>([]);
   const [debouncedQ, setDebouncedQ] = useState("");
   const [showFilters, setShowFilters] = useState(false);
+
+  // Sync search query from URL when global SiteHeader updates it
+  useEffect(() => {
+    const urlQ = searchParams.get("q") || "";
+    if (urlQ !== q) setQ(urlQ);
+  }, [searchParams]);
   const { isDark, toggle: toggleTheme } = useTheme();
   const [toast, setToast] = useState<string | null>(null);
 
@@ -862,52 +800,7 @@ function HomeInner() {
 
   return (
     <div className="app alextrix-app">
-      {/* Header */}
-      <header className="header">
-        <div className="header-inner">
-          <div className="header-left">
-            <a href="/" className="header-logo alextrix-logo">
-              <div className="header-logo-icon">A</div>
-              <span className="alextrix-name">Alextrix</span>
-            </a>
-          </div>
-          <nav className="header-nav">
-            {tabs.map(t => (
-              t.href ? (
-                <a key={t.id} href={t.href} className="header-tab">
-                  {t.label}
-                </a>
-              ) : (
-                <button
-                  key={t.id}
-                  className={`header-tab ${t.id === tab ? "active" : ""}`}
-                  onClick={() => setTab(t.id)}
-                >
-                  {t.label}
-                </button>
-              )
-            ))}
-          </nav>
-          <div className="header-right">
-            <div className="header-search">
-              <span className="header-search-icon">🔍</span>
-              <input
-                type="text"
-                className="header-search-input"
-                placeholder="Search..."
-                value={q}
-                onChange={e => setQ(e.target.value)}
-              />
-              {q && <button className="header-search-clear" onClick={() => setQ("")}>✕</button>}
-            </div>
-            <button className="header-icon-btn" onClick={toggleTheme} aria-label="Toggle theme">
-              {isDark ? "☀️" : "🌙"}
-            </button>
-          </div>
-        </div>
-      </header>
-
-      {/* Content */}
+      {/* Content — header is now global via layout.tsx SiteHeader */}
       {tab === "skills" ? (
         <SkillsView />
       ) : tab === "design-md" ? (
