@@ -11,7 +11,7 @@ export async function GET(req: NextRequest) {
   const q = searchParams.get("q");
   const limit = parseInt(searchParams.get("limit") || "200", 10);
   
-  let url = `${supaUrl}/rest/v1/prompt_ai?select=id,title,type,category,prompt_text,is_free,sort_order&is_free=eq.true&order=title.asc&limit=${limit}`;
+  let url = `${supaUrl}/rest/v1/prompt_ai?select=id,title,type,category,prompt_text,is_free,sort_order,preview_url,preview_type&is_free=eq.true&order=title.asc&limit=${limit}`;
   if (type && type !== "all") {
     url += `&type=eq.${type}`;
   }
