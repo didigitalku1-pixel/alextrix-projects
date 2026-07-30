@@ -265,14 +265,7 @@ function AlextrixHomepage() {
     return String(n || 0);
   };
 
-  const navTabs = [
-    { id: "templates", label: "Templates", href: "/templates" },
-    { id: "components", label: "Components", href: "/components" },
-    { id: "assets", label: "Assets", href: "/assets" },
-    { id: "skills", label: "Skills", href: "/skills" },
-    { id: "design-md", label: "DESIGN.MD", href: "/design-systems" },
-    { id: "learn", label: "Learn", href: "/learn/introduction" },
-  ];
+  // navTabs removed — using global SiteHeader from layout.tsx
 
   const categoryPills = [
     { emoji: "🔥", label: "Trending", href: "/templates?sort=views" },
@@ -816,14 +809,7 @@ function HomeInner() {
     return String(n || 0);
   };
 
-  const tabs: { id: TabType; label: string; href?: string }[] = [
-    { id: "templates", label: "Templates", href: "/templates" },
-    { id: "components", label: "Components", href: "/components" },
-    { id: "assets", label: "Assets", href: "/assets" },
-    { id: "skills", label: "Skills", href: "/skills" },
-    { id: "design-md", label: "DESIGN.MD", href: "/design-systems" },
-    { id: "learn", label: "Learn", href: "/learn/introduction" },
-  ];
+  // tabs removed — using global SiteHeader from layout.tsx
 
   const info = PAGE_INFO[tab] || PAGE_INFO.templates;
 

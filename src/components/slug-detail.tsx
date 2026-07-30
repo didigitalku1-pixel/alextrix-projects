@@ -210,13 +210,6 @@ export default function SlugDetail({
   if (loading) {
     return (
       <div className="app alextrix-app">
-        <header className="header">
-          <div className="header-inner">
-            <a href="/" className="header-logo">
-              <div className="header-logo-icon">A</div>
-            </a>
-          </div>
-        </header>
         <main className="main">
           <div className="loading-spinner">
             <div className="spinner" />
@@ -229,13 +222,6 @@ export default function SlugDetail({
   if (!item) {
     return (
       <div className="app alextrix-app">
-        <header className="header">
-          <div className="header-inner">
-            <a href="/" className="header-logo">
-              <div className="header-logo-icon">A</div>
-            </a>
-          </div>
-        </header>
         <main className="main">
           <div className="empty">
             <div className="empty-icon">🔍</div>
