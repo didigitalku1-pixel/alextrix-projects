@@ -143,6 +143,119 @@ function AlextrixHomepage() {
     }).catch(() => setToast("Copy failed — open detail page"));
   };
 
+  // Auto-generate prompt fallback from item metadata
+  const generateFallbackPrompt = (item: Item): string => {
+    const tags = (item.tags || []).slice(0, 5).join(", ");
+    const itemType = item.type === "template" ? "landing page template" : item.type === "component" ? "UI component" : `${item.type} template`;
+    const lines = [
+      `Recreate this ${itemType}: ${item.title}`,
+      ``,
+      `Description: ${item.desc || "No description available."}`,
+      ``,
+      `Style: ${tags || "modern, clean, minimal"}`,
+      ``,
+      `Tech stack: HTML, CSS, Tailwind`,
+      `Type: ${item.type}`,
+      ``,
+      `Source: Alextrix Library — ${item.slug || item.id}`,
+      `Author: ${item.username || "unknown"}`,
+    ];
+    return lines.join("\n");
+  };
+
+  // Download DESIGN.md file from card hover
+  const downloadDesignMd = async (item: Item, e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    try {
+      // Try fetch from API first
+      const res = await fetch(`/api/item/${item.type}/${item.id}?artifact=design`);
+      let content: string;
+      if (res.ok) {
+        const data = await res.json();
+        content = data.content || data.design_md || "";
+      } else {
+        content = "";
+      }
+      // Fallback if no DESIGN.md yet — auto-generate minimal spec
+      if (!content) {
+        content = [
+          `---`,
+          `name: ${item.title}`,
+          `description: ${item.desc || ""}`,
+          `type: ${item.type}`,
+          `tags: ${(item.tags || []).join(", ")}`,
+          `author: ${item.username || "unknown"}`,
+          `---`,
+          ``,
+          `## Overview`,
+          ``,
+          `${item.desc || "Design system specification for " + item.title + "."}`,
+          ``,
+          `## Colors`,
+          ``,
+          `| Role | Value |`,
+          `| --- | --- |`,
+          `| Primary | #111827 |`,
+          `| Background | #FFFFFF |`,
+          `| Surface | #F9FAFB |`,
+          `| Text | #111827 |`,
+          ``,
+          `## Typography`,
+          ``,
+          `| Style | Family | Size | Weight |`,
+          `| --- | --- | --- | --- |`,
+          `| Display | Inter | 48px | 700 |`,
+          `| Body | Inter | 16px | 400 |`,
+          `| Label | JetBrains Mono | 11px | 600 |`,
+          ``,
+          `> Note: Auto-generated. For full DESIGN.md, check back soon or visit /${item.type === "template" ? "templates" : "components"}/${item.slug || item.id}`,
+        ].join("\n");
+      }
+      // Trigger download
+      const blob = new Blob([content], { type: "text/markdown" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${item.slug || "design-system"}-design.md`;
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(url), 5000);
+      setToast(`Downloaded ${(item.slug || "design").slice(0, 30)}-design.md`);
+    } catch (err) {
+      setToast("Download failed — try detail page");
+    }
+  };
+
+  // Copy prompt to clipboard — 3 tier fallback
+  const copyPromptToClipboard = async (item: Item, e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    try {
+      // Tier 1: Try existing prompt in database via API
+      const res = await fetch(`/api/item/${item.type}/${item.id}?artifact=prompt`);
+      let prompt = "";
+      if (res.ok) {
+        const data = await res.json();
+        prompt = data.content || data.prompt || "";
+      }
+      // Tier 2: Auto-generate from metadata (immediate, no API needed)
+      if (!prompt) {
+        prompt = generateFallbackPrompt(item);
+      }
+      await navigator.clipboard.writeText(prompt);
+      setToast(`Prompt copied for ${item.title.slice(0, 30)}`);
+    } catch (err) {
+      // Tier 3: Even simpler fallback
+      const prompt = generateFallbackPrompt(item);
+      try {
+        await navigator.clipboard.writeText(prompt);
+        setToast(`Prompt copied (auto-generated)`);
+      } catch {
+        setToast("Copy failed — open detail page");
+      }
+    }
+  };
+
   const tierBadge = (item: Item) => {
     if (item.premium) return <span className="card-tier-badge card-tier-pro">PRO</span>;
     if (item.forks > 0 && item.views > 1000) return <span className="card-tier-badge card-tier-paid">PAID</span>;
@@ -318,6 +431,24 @@ function AlextrixHomepage() {
                 <a key={item.id} className="card alextrix-card" href={`/templates/${item.slug || item.id}`}>
                   <div className="card-image-wrap">
                     {tierBadge(item)}
+                    <div className="card-actions">
+                      <button
+                        type="button"
+                        className="card-action-btn"
+                        aria-label={`Download DESIGN.md for ${item.title}`}
+                        onClick={(e) => downloadDesignMd(item, e)}
+                      >
+                        📄 DESIGN.md
+                      </button>
+                      <button
+                        type="button"
+                        className="card-action-btn"
+                        aria-label={`Copy prompt for ${item.title}`}
+                        onClick={(e) => copyPromptToClipboard(item, e)}
+                      >
+                        ✨ Copy Prompt
+                      </button>
+                    </div>
                     <button
                       className={`card-bookmark${bookmarks.has(item.id) ? " saved" : ""}`}
                       onClick={(e) => toggleBookmark(item.id, e)}
@@ -358,6 +489,24 @@ function AlextrixHomepage() {
                 <a key={item.id} className="card alextrix-card" href={`/components/${item.slug || item.id}`}>
                   <div className="card-image-wrap">
                     {tierBadge(item)}
+                    <div className="card-actions">
+                      <button
+                        type="button"
+                        className="card-action-btn"
+                        aria-label={`Download DESIGN.md for ${item.title}`}
+                        onClick={(e) => downloadDesignMd(item, e)}
+                      >
+                        📄 DESIGN.md
+                      </button>
+                      <button
+                        type="button"
+                        className="card-action-btn"
+                        aria-label={`Copy prompt for ${item.title}`}
+                        onClick={(e) => copyPromptToClipboard(item, e)}
+                      >
+                        ✨ Copy Prompt
+                      </button>
+                    </div>
                     <button
                       className="card-copy-btn"
                       onClick={(e) => copyComponentCode(item, e)}
@@ -510,6 +659,116 @@ function HomeInner() {
   const [debouncedQ, setDebouncedQ] = useState("");
   const [showFilters, setShowFilters] = useState(false);
   const { isDark, toggle: toggleTheme } = useTheme();
+  const [toast, setToast] = useState<string | null>(null);
+
+  // Auto-dismiss toast
+  useEffect(() => {
+    if (!toast) return;
+    const id = setTimeout(() => setToast(null), 2000);
+    return () => clearTimeout(id);
+  }, [toast]);
+
+  // Auto-generate prompt fallback from item metadata (shared with homepage)
+  const generateFallbackPrompt = (item: Item): string => {
+    const tags = (item.tags || []).slice(0, 5).join(", ");
+    const itemType = item.type === "template" ? "landing page template" : item.type === "component" ? "UI component" : `${item.type} template`;
+    return [
+      `Recreate this ${itemType}: ${item.title}`,
+      ``,
+      `Description: ${item.desc || "No description available."}`,
+      ``,
+      `Style: ${tags || "modern, clean, minimal"}`,
+      ``,
+      `Tech stack: HTML, CSS, Tailwind`,
+      `Type: ${item.type}`,
+      ``,
+      `Source: Alextrix Library — ${item.slug || item.id}`,
+      `Author: ${item.username || "unknown"}`,
+    ].join("\n");
+  };
+
+  const downloadDesignMd = async (item: Item, e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    try {
+      const res = await fetch(`/api/item/${item.type}/${item.id}?artifact=design`);
+      let content: string = "";
+      if (res.ok) {
+        const data = await res.json();
+        content = data.content || data.design_md || "";
+      }
+      if (!content) {
+        content = [
+          `---`,
+          `name: ${item.title}`,
+          `description: ${item.desc || ""}`,
+          `type: ${item.type}`,
+          `tags: ${(item.tags || []).join(", ")}`,
+          `author: ${item.username || "unknown"}`,
+          `---`,
+          ``,
+          `## Overview`,
+          ``,
+          `${item.desc || "Design system specification for " + item.title + "."}`,
+          ``,
+          `## Colors`,
+          ``,
+          `| Role | Value |`,
+          `| --- | --- |`,
+          `| Primary | #111827 |`,
+          `| Background | #FFFFFF |`,
+          `| Surface | #F9FAFB |`,
+          `| Text | #111827 |`,
+          ``,
+          `## Typography`,
+          ``,
+          `| Style | Family | Size | Weight |`,
+          `| --- | --- | --- | --- |`,
+          `| Display | Inter | 48px | 700 |`,
+          `| Body | Inter | 16px | 400 |`,
+          `| Label | JetBrains Mono | 11px | 600 |`,
+          ``,
+          `> Auto-generated. Full DESIGN.md coming soon.`,
+        ].join("\n");
+      }
+      const blob = new Blob([content], { type: "text/markdown" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${item.slug || "design-system"}-design.md`;
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(url), 5000);
+      setToast(`Downloaded ${(item.slug || "design").slice(0, 30)}-design.md`);
+    } catch {
+      setToast("Download failed");
+    }
+  };
+
+  const copyPromptToClipboard = async (item: Item, e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    try {
+      const res = await fetch(`/api/item/${item.type}/${item.id}?artifact=prompt`);
+      let prompt = "";
+      if (res.ok) {
+        const data = await res.json();
+        prompt = data.content || data.prompt || "";
+      }
+      if (!prompt) {
+        prompt = generateFallbackPrompt(item);
+      }
+      await navigator.clipboard.writeText(prompt);
+      setToast(`Prompt copied for ${item.title.slice(0, 30)}`);
+    } catch {
+      const prompt = generateFallbackPrompt(item);
+      try {
+        await navigator.clipboard.writeText(prompt);
+        setToast(`Prompt copied (auto-generated)`);
+      } catch {
+        setToast("Copy failed");
+      }
+    }
+  };
 
   // Wrapper setters that also sync to URL
   const setTab = useCallback((t: TabType) => { setTabState(t); setPageState(1); }, []);
@@ -811,8 +1070,22 @@ function HomeInner() {
                       {item.featured && <span className="card-badge badge-featured">★</span>}
                       {(item.type === "template" || item.type === "component") && (
                         <div className="card-actions">
-                          <span className="card-action-btn">📄 DESIGN.md</span>
-                          <span className="card-action-btn">✨ Copy</span>
+                          <button
+                            type="button"
+                            className="card-action-btn"
+                            aria-label={`Download DESIGN.md for ${item.title}`}
+                            onClick={(e) => downloadDesignMd(item, e)}
+                          >
+                            📄 DESIGN.md
+                          </button>
+                          <button
+                            type="button"
+                            className="card-action-btn"
+                            aria-label={`Copy prompt for ${item.title}`}
+                            onClick={(e) => copyPromptToClipboard(item, e)}
+                          >
+                            ✨ Copy Prompt
+                          </button>
                         </div>
                       )}
                     </div>
@@ -835,6 +1108,11 @@ function HomeInner() {
             )}
           </div>
         </main>
+      )}
+
+      {/* Toast for copy/download feedback */}
+      {toast && (
+        <div className="alextrix-toast show">{toast}</div>
       )}
     </div>
   );

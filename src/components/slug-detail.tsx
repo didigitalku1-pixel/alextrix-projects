@@ -538,21 +538,101 @@ export default function SlugDetail({
                 </div>
               )}
 
-              {contentStatus === "notfound" && (
+              {contentStatus === "notfound" && tab === "prompt" && (
+                <div className="artifact-empty">
+                  <div style={{ fontSize: 40 }}>✨</div>
+                  <h3>Auto-generated Prompt</h3>
+                  <p style={{ marginBottom: 16, color: "#6B7280" }}>
+                    Generated from this {item.type}'s metadata. Click copy to use it.
+                  </p>
+                  <pre className="code-viewer" style={{ textAlign: "left", whiteSpace: "pre-wrap", background: "#F9FAFB", padding: 16, borderRadius: 8, margin: "16px 0", fontSize: 13 }}>
+{`Recreate this ${item.type === "template" ? "landing page template" : "UI component"}: ${item.title}
+
+Description: ${item.desc || "No description available."}
+
+Style: ${(item.tags || []).slice(0, 5).join(", ") || "modern, clean, minimal"}
+
+Tech stack: HTML, CSS, Tailwind
+Type: ${item.type}
+
+Source: Alextrix Library — ${item.slug || item.id}
+Author: ${item.username || "unknown"}`}
+                  </pre>
+                  <button
+                    className="btn btn-primary btn-sm"
+                    onClick={() => {
+                      const prompt = `Recreate this ${item.type === "template" ? "landing page template" : "UI component"}: ${item.title}\n\nDescription: ${item.desc || "No description available."}\n\nStyle: ${(item.tags || []).slice(0, 5).join(", ") || "modern, clean, minimal"}\n\nTech stack: HTML, CSS, Tailwind\nType: ${item.type}\n\nSource: Alextrix Library — ${item.slug || item.id}\nAuthor: ${item.username || "unknown"}`;
+                      navigator.clipboard?.writeText(prompt).then(() => {
+                        // Show inline confirmation
+                        const btn = document.activeElement as HTMLButtonElement;
+                        if (btn) {
+                          const original = btn.textContent;
+                          btn.textContent = "✓ Copied!";
+                          setTimeout(() => { btn.textContent = original; }, 2000);
+                        }
+                      });
+                    }}
+                  >
+                    ⧉ Copy Prompt
+                  </button>
+                </div>
+              )}
+
+              {contentStatus === "notfound" && tab === "design" && (
                 <div className="artifact-empty">
                   <div style={{ fontSize: 40 }}>📄</div>
-                  <h3>
-                    {tab === "design"
-                      ? "DESIGN.md Coming Soon"
-                      : tab === "prompt"
-                        ? "Copy Prompt Coming Soon"
-                        : "Content Coming Soon"}
-                  </h3>
-                  <p>
-                    {tab === "design" || tab === "prompt"
-                      ? "This artifact is being generated automatically. Check back soon."
-                      : ""}
+                  <h3>DESIGN.md</h3>
+                  <p style={{ marginBottom: 16, color: "#6B7280" }}>
+                    Auto-generated minimal spec. Full version coming soon via cron.
                   </p>
+                  <pre className="code-viewer" style={{ textAlign: "left", whiteSpace: "pre-wrap", background: "#F9FAFB", padding: 16, borderRadius: 8, margin: "16px 0", fontSize: 12 }}>{`---
+name: ${item.title}
+description: ${item.desc || ""}
+type: ${item.type}
+tags: ${(item.tags || []).join(", ")}
+author: ${item.username || "unknown"}
+---
+
+## Overview
+${item.desc || "Design system specification for " + item.title + "."}
+
+## Colors
+| Role | Value |
+| --- | --- |
+| Primary | #111827 |
+| Background | #FFFFFF |
+| Surface | #F9FAFB |
+| Text | #111827 |
+
+## Typography
+| Style | Family | Size | Weight |
+| --- | --- | --- | --- |
+| Display | Inter | 48px | 700 |
+| Body | Inter | 16px | 400 |
+| Label | JetBrains Mono | 11px | 600 |`}</pre>
+                  <button
+                    className="btn btn-primary btn-sm"
+                    onClick={() => {
+                      const md = `---\nname: ${item.title}\ndescription: ${item.desc || ""}\ntype: ${item.type}\ntags: ${(item.tags || []).join(", ")}\nauthor: ${item.username || "unknown"}\n---\n\n## Overview\n${item.desc || "Design system specification for " + item.title + "."}\n\n## Colors\n| Role | Value |\n| --- | --- |\n| Primary | #111827 |\n| Background | #FFFFFF |\n| Surface | #F9FAFB |\n| Text | #111827 |\n\n## Typography\n| Style | Family | Size | Weight |\n| --- | --- | --- | --- |\n| Display | Inter | 48px | 700 |\n| Body | Inter | 16px | 400 |\n| Label | JetBrains Mono | 11px | 600 |\n`;
+                      const blob = new Blob([md], { type: "text/markdown" });
+                      const url = URL.createObjectURL(blob);
+                      const a = document.createElement("a");
+                      a.href = url;
+                      a.download = `${item.slug || "design"}-design.md`;
+                      a.click();
+                      setTimeout(() => URL.revokeObjectURL(url), 5000);
+                    }}
+                  >
+                    ⬇ Download DESIGN.md
+                  </button>
+                </div>
+              )}
+
+              {contentStatus === "notfound" && tab !== "prompt" && tab !== "design" && (
+                <div className="artifact-empty">
+                  <div style={{ fontSize: 40 }}>📄</div>
+                  <h3>Content Coming Soon</h3>
+                  <p>This artifact is being generated automatically.</p>
                 </div>
               )}
 

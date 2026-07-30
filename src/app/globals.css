@@ -6165,3 +6165,50 @@ img { display: block; max-width: 100%; }
 .about-left {
   max-width: none !important;
 }
+
+/* === Card hover overlay — Mobile behavior === */
+/* On touch devices, always show DESIGN.md + Copy Prompt buttons (compact) */
+@media (max-width: 768px) {
+  .card-actions {
+    opacity: 1 !important;
+    top: 6px;
+    right: 6px;
+    gap: 4px;
+  }
+  .card-action-btn {
+    height: 26px;
+    padding: 0 8px;
+    font-size: 9px;
+  }
+  .card-action-btn::before {
+    /* Truncate text on mobile — show icon only */
+    content: attr(data-mobile-label);
+  }
+  .card-action-btn span {
+    display: none;
+  }
+  /* But for our labeled buttons, keep text but smaller */
+  .card-action-btn {
+    font-size: 10px;
+  }
+  .card-bookmark {
+    opacity: 1 !important;
+    width: 26px;
+    height: 26px;
+    font-size: 12px;
+  }
+}
+
+/* === Card action button label truncation === */
+.card-action-btn {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 140px;
+}
+@media (max-width: 480px) {
+  .card-action-btn {
+    max-width: 90px;
+    font-size: 9px;
+    padding: 0 6px;
+  }
+}
