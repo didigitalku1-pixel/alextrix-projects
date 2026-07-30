@@ -61,8 +61,10 @@
 
 html, body {
   background-color: #FDFBF7 !important;
-  background-image: radial-gradient(circle, rgba(230, 92, 0, 0.32) 2px, transparent 2px) !important;
-  background-size: 28px 28px !important;
+  background-image:
+    linear-gradient(to right, rgba(230, 92, 0, 0.08) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(230, 92, 0, 0.08) 1px, transparent 1px) !important;
+  background-size: 40px 40px !important;
   background-position: 0 0 !important;
   color: hsl(var(--foreground));
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
@@ -75,7 +77,9 @@ html, body {
 
 .dark, .dark body {
   background-color: #0A0A0A !important;
-  background-image: radial-gradient(circle, rgba(255, 179, 128, 0.22) 2px, transparent 2px) !important;
+  background-image:
+    linear-gradient(to right, rgba(255, 179, 128, 0.06) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 179, 128, 0.06) 1px, transparent 1px) !important;
 }
 
 html {
