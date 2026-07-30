@@ -126,14 +126,6 @@ function ActivateForm() {
 export default function ActivatePage() {
   return (
     <div className="activate-page">
-      <div className="activate-header">
-        <a href="/" className="header-logo alextrix-logo">
-          <div className="header-logo-icon">A</div>
-          <span className="alextrix-name">Alextrix</span>
-        </a>
-        <ThemeToggle />
-      </div>
-      
       <div className="activate-content">
         <h1 className="activate-title">Aktivasi License</h1>
         <p className="activate-subtitle">

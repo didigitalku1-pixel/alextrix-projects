@@ -132,14 +132,6 @@ function ManageContent() {
 export default function ManagePage() {
   return (
     <div className="manage-page">
-      <div className="activate-header">
-        <a href="/" className="header-logo alextrix-logo">
-          <div className="header-logo-icon">A</div>
-          <span className="alextrix-name">Alextrix</span>
-        </a>
-        <ThemeToggle />
-      </div>
-      
       <div className="activate-content">
         <h1 className="activate-title">Kelola Perangkat</h1>
         <p className="activate-subtitle">
