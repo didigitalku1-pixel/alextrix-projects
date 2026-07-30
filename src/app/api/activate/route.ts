@@ -46,8 +46,8 @@ export async function POST(req: NextRequest) {
       );
     }
     
-    // 5. Create signed cookie
-    const cookieValue = createSignedCookie(licenseKey, deviceId);
+    // 5. Create signed cookie (async — Web Crypto API)
+    const cookieValue = await createSignedCookie(licenseKey, deviceId);
     
     // 6. Set cookie + return device_id for client to store
     const response = NextResponse.json({

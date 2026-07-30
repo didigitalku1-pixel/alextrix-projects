@@ -73,8 +73,8 @@ export async function middleware(req: NextRequest) {
     return NextResponse.redirect(activateUrl);
   }
   
-  // Verify cookie
-  const decoded = verifySignedCookie(cookie);
+  // Verify cookie (async — Web Crypto API)
+  const decoded = await verifySignedCookie(cookie);
   
   if (!decoded) {
     // Invalid/expired cookie → redirect to activation
@@ -87,7 +87,7 @@ export async function middleware(req: NextRequest) {
   
   // Auto-renew cookie if close to expiry (sliding window)
   if (needsRenewal(decoded.exp)) {
-    const newCookie = createSignedCookie(decoded.licenseKey, decoded.deviceId);
+    const newCookie = await createSignedCookie(decoded.licenseKey, decoded.deviceId);
     const response = NextResponse.next();
     response.cookies.set(COOKIE_NAME, newCookie, {
       httpOnly: true,

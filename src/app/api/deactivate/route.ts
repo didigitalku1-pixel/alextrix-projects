@@ -19,7 +19,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: false, error: "Tidak ada sesi aktif" }, { status: 401 });
     }
     
-    const decoded = verifySignedCookie(cookie);
+    const decoded = await verifySignedCookie(cookie);
     if (!decoded) {
       return NextResponse.json({ success: false, error: "Sesi tidak valid" }, { status: 401 });
     }
