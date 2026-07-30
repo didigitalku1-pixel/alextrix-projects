@@ -43,6 +43,12 @@ export const NAV_TABS: NavTab[] = [
     activePaths: ["/design-systems"],
   },
   {
+    id: "prompt-ai",
+    label: "Prompt.AI",
+    href: "/prompt-ai",
+    activePaths: ["/prompt-ai"],
+  },
+  {
     id: "learn",
     label: "Pelajari",
     href: "/learn/introduction",
