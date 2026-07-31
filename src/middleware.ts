@@ -17,6 +17,7 @@ const DEMO_SLUGS = [
 const PUBLIC_PATHS = [
   "/activate",
   "/thank-you",
+  "/thank-you",
   "/api/activate",
   "/api/deactivate",
   "/api/create-payment",
@@ -49,6 +50,8 @@ function isPublicPath(pathname: string): boolean {
   if (PUBLIC_PATHS.some((p) => pathname.startsWith(p))) return true;
   // Thank you page is public (post-payment redirect)
   if (pathname === "/thank-you") return true;
+  // Thank you page is public (post-payment redirect)
+  if (pathname === "/thank-you") return true;
   // Root homepage is public (landing page preview)
   if (pathname === "/") return true;
   // Demo templates
@@ -71,7 +74,8 @@ export async function middleware(req: NextRequest) {
   
   if (!cookie) {
     // No cookie → redirect to activation page
-    const activateUrl = new URL("/activate", req.url);
+    const activateUrl = new URL("/activate",
+  "/thank-you", req.url);
     activateUrl.searchParams.set("redirect", pathname);
     return NextResponse.redirect(activateUrl);
   }
@@ -81,7 +85,8 @@ export async function middleware(req: NextRequest) {
   
   if (!decoded) {
     // Invalid/expired cookie → redirect to activation
-    const activateUrl = new URL("/activate", req.url);
+    const activateUrl = new URL("/activate",
+  "/thank-you", req.url);
     activateUrl.searchParams.set("redirect", pathname);
     const response = NextResponse.redirect(activateUrl);
     response.cookies.delete(COOKIE_NAME);

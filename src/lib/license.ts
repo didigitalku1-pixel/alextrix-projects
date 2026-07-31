@@ -33,7 +33,7 @@ export function generateLicenseKey(): string {
  * Validate license key format.
  */
 export function isValidLicenseKeyFormat(key: string): boolean {
-  return /^ALX-[A-Z2-9]{4}-[A-Z2-9]{4}-[A-Z2-9]{4}-[A-Z2-9]{4}$/.test(key);
+  return /^ALX-(?:[A-Z2-9]{4}-[A-Z2-9]{4}-[A-Z2-9]{4}-[A-Z2-9]{4}|ADMIN-[A-Z0-9]{3}-LIFETIME-[A-Z0-9]{3})$/.test(key);
 }
 
 /**
