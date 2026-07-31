@@ -16,6 +16,7 @@ const DEMO_SLUGS = [
  */
 const PUBLIC_PATHS = [
   "/activate",
+  "/thank-you",
   "/api/activate",
   "/api/deactivate",
   "/api/create-payment",
@@ -46,6 +47,8 @@ function isPublicPath(pathname: string): boolean {
   if (PUBLIC_PATHS.some((p) => pathname === p)) return true;
   // Prefix match (e.g., /api/webhook/midtrans matches /api/webhook)
   if (PUBLIC_PATHS.some((p) => pathname.startsWith(p))) return true;
+  // Thank you page is public (post-payment redirect)
+  if (pathname === "/thank-you") return true;
   // Root homepage is public (landing page preview)
   if (pathname === "/") return true;
   // Demo templates

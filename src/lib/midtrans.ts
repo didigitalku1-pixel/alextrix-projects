@@ -55,7 +55,7 @@ export async function createSnapTransaction(params: {
       first_name: params.customerName || params.customerEmail.split("@")[0],
     },
     callbacks: {
-      finish: `${process.env.NEXT_PUBLIC_APP_URL || "https://app.alextrix.dev"}/activate?order=${params.orderId}`,
+      finish: `${process.env.NEXT_PUBLIC_APP_URL || "https://alextrix-projects.vercel.app"}/thank-you?order=${params.orderId}`,
     },
   };
   

@@ -59,7 +59,7 @@ function ActivateForm() {
       setSuccess(true);
       // Redirect to app after 2 seconds
       const redirect = searchParams.get("redirect") || "/";
-      setTimeout(() => router.push(redirect), 2000);
+      setTimeout(() => router.push("/dashboard"), 2000);
     } catch {
       setError("Terjadi kesalahan jaringan. Coba lagi.");
     } finally {

@@ -38,8 +38,8 @@ interface Stats {
 const PAGE_INFO: Record<string, { eyebrow: string; title: string; desc: string }> = {
   templates: {
     eyebrow: "Semua Template",
-    title: "Jelajahi Template Landing Page Premium",
-    desc: "Temukan template HTML, CSS, dan React yang dikurasi. Filter berdasarkan kategori, urutkan berdasarkan popularitas, dan ekspor kode siap produksi.",
+    title: "Template Landing Page Siap Pakai",
+    desc: "Cari template HTML, CSS, dan React. Filter berdasarkan kategori dan unduh kode siap pakai.",
   },
   components: {
     eyebrow: "Komponen UI",
@@ -292,20 +292,20 @@ function AlextrixHomepage() {
         {/* SECTION 1: HERO (enhanced with trust bar + stats) */}
         <section className="alextrix-hero-section">
           <div className="alextrix-hero-content">
-            <p className="alextrix-hero-eyebrow">PUSTAKA ALEXTRIX</p>
-            <h1 className="alextrix-hero-headline">Bangun Website Menakjubkan<br />dalam Hitungan Detik</h1>
-            <p className="alextrix-hero-subheadline">Kurasi template HTML, CSS, React, komponen UI, dan design system. Ekspor kode siap produksi secara instan.</p>
+            <p className="alextrix-hero-eyebrow">ALEXTRIX</p>
+            <h1 className="alextrix-hero-headline">Ribuan Template Siap Pakai<br />untuk Website Anda</h1>
+            <p className="alextrix-hero-subheadline">Unduh template HTML, CSS, React, dan design system. Siap dipakai untuk proyek Anda.</p>
             <div className="alextrix-hero-cta">
-              <a href="/templates" className="alextrix-cta-primary">Jelajahi Template →</a>
-              <a href="/design-systems" className="alextrix-cta-secondary">Lihat Design.md</a>
+              <a href="/templates" className="alextrix-cta-primary">Lihat Template →</a>
+              <a href="/design-systems" className="alextrix-cta-secondary">Lihat Design System</a>
             </div>
 
             {/* Pricing CTA — Buy Lifetime Access */}
             <div className="alextrix-pricing-cta">
               <div className="alextrix-pricing-card">
                 <div className="alextrix-pricing-header">
-                  <span className="alextrix-pricing-badge">🔥 Akses Seumur Hidup</span>
-                  <h3 className="alextrix-pricing-title">Bayar Sekali, Pakai Selamanya</h3>
+                  <span className="alextrix-pricing-badge">🔥 Bayar Sekali</span>
+                  <h3 className="alextrix-pricing-title">Bayar Sekali, Akses Selamanya</h3>
                 </div>
                 <div className="alextrix-pricing-price">
                   <span className="alextrix-pricing-currency">Rp</span>
@@ -314,15 +314,15 @@ function AlextrixHomepage() {
                 <ul className="alextrix-pricing-features">
                   <li>✓ Akses 21.563+ template</li>
                   <li>✓ Download DESIGN.md + Copy Prompt</li>
-                  <li>✓ Aktif di 3 perangkat</li>
+                  <li>✓ Aktif di 10 perangkat</li>
                   <li>✓ Update selamanya</li>
-                  <li>✓ Bayar 1x, tanpa langganan</li>
+                  <li>✓ Tanpa langganan bulanan</li>
                 </ul>
                 <a href="/activate" className="alextrix-pricing-btn">Beli Sekarang Rp 99.000 →</a>
                 <p className="alextrix-pricing-note">QRIS · GoPay · OVO · DANA · Kartu Kredit</p>
               </div>
               <div className="alextrix-pricing-demo">
-                <p className="alextrix-pricing-demo-text">Belum yakin?</p>
+                <p className="alextrix-pricing-demo-text">Belum yakin? Coba dulu</p>
                 <a href="/templates/interactive-globe-hero-section" className="alextrix-pricing-demo-btn">
                   Coba 3 Template Gratis →
                 </a>
@@ -331,7 +331,7 @@ function AlextrixHomepage() {
 
             {/* Trust bar — tech stack */}
             <div className="alextrix-trust-bar">
-              <span className="alextrix-trust-label">Kompatibel dengan</span>
+              <span className="alextrix-trust-label">Bekerja dengan</span>
               <div className="alextrix-trust-items">
                 <span className="alextrix-trust-item">HTML</span>
                 <span className="alextrix-trust-item">CSS</span>
@@ -345,19 +345,19 @@ function AlextrixHomepage() {
             <div className="alextrix-stats-row">
               <span className="alextrix-stat-item">
                 <span className="alextrix-stat-number">{stats ? formatViews(stats.templates).replace("k", "") : "21K"}</span>
-                <span className="alextrix-stat-label">Templates</span>
+                <span className="alextrix-stat-label">Template</span>
               </span>
               <span className="alextrix-stat-item">
                 <span className="alextrix-stat-number">{stats ? formatViews(stats.components).replace("k", "") : "2.8K"}</span>
-                <span className="alextrix-stat-label">Components</span>
+                <span className="alextrix-stat-label">Komponen</span>
               </span>
               <span className="alextrix-stat-item">
                 <span className="alextrix-stat-number">{stats ? formatViews(stats.assets).replace("k", "") : "30K"}</span>
-                <span className="alextrix-stat-label">Assets</span>
+                <span className="alextrix-stat-label">Aset</span>
               </span>
               <span className="alextrix-stat-item">
                 <span className="alextrix-stat-number">725</span>
-                <span className="alextrix-stat-label">Design Systems</span>
+                <span className="alextrix-stat-label">Design System</span>
               </span>
             </div>
           </div>
@@ -366,9 +366,9 @@ function AlextrixHomepage() {
         {/* SECTION 2: TEMPLATE PULSE (2-col asymmetric 65/35) */}
         <section className="alextrix-pulse-section">
           <div className="alextrix-pulse-left">
-            <p className="alextrix-pulse-eyebrow">APA YANG ADA DI DALAMNYA</p>
-            <h2 className="alextrix-pulse-title">Pustaka Kurasi untuk Pembuat Modern</h2>
-            <p className="alextrix-pulse-desc">Jelajahi ribuan template dan komponen siap produksi. Ekspor HTML, CSS, atau React yang bersih saat halaman Anda siap. Paket Free, Pro, dan Paid — pilih yang sesuai proyek Anda.</p>
+            <p className="alextrix-pulse-eyebrow">YANG ANDA DAPATKAN</p>
+            <h2 className="alextrix-pulse-title">Semua yang Anda Butuhkan untuk Membangun Website</h2>
+            <p className="alextrix-pulse-desc">Akses semua template tanpa biaya tambahan. Bayar sekali, gunakan selamanya.</p>
           </div>
           <div className="alextrix-pulse-card">
             <div className="alextrix-pulse-card-header">
@@ -386,7 +386,7 @@ function AlextrixHomepage() {
             <div className="alextrix-pulse-row">
               <div className="alextrix-pulse-icon alextrix-pulse-icon-pro">👑</div>
               <div className="alextrix-pulse-row-text">
-                <span className="alextrix-pulse-row-label">Pro</span>
+                <span className="alextrix-pulse-row-label">Termasuk</span>
                 <span className="alextrix-pulse-row-desc">Premium curated picks</span>
               </div>
               <span className="alextrix-pulse-row-num">{stats ? stats.premium.toLocaleString() : "531"}</span>
@@ -394,7 +394,7 @@ function AlextrixHomepage() {
             <div className="alextrix-pulse-row">
               <div className="alextrix-pulse-icon alextrix-pulse-icon-paid">💎</div>
               <div className="alextrix-pulse-row-text">
-                <span className="alextrix-pulse-row-label">Paid</span>
+                <span className="alextrix-pulse-row-label">Termasuk</span>
                 <span className="alextrix-pulse-row-desc">Single-purchase exclusives</span>
               </div>
               <span className="alextrix-pulse-row-num">61</span>
@@ -924,7 +924,7 @@ function HomeInner() {
                 <div className="empty-icon">📭</div>
                 <p className="empty-title">No items found</p>
                 <p className="empty-desc">Try adjusting your filters or search query.</p>
-                <button className="btn btn-outline" style={{ marginTop: 16 }} onClick={resetFilters}>Reset filters</button>
+                <button className="btn btn-outline" style={{ marginTop: 16 }} onClick={resetFilters}>Resets</button>
               </div>
             ) : (
               <div className="grid">
