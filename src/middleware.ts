@@ -65,49 +65,59 @@ function isPublicPath(pathname: string): boolean {
 
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
-  
+
   // Skip middleware for public paths
   if (isPublicPath(pathname)) {
     return NextResponse.next();
   }
-  
-  // Check for license cookie
-  const cookie = req.cookies.get(COOKIE_NAME)?.value;
 
-  if (!cookie) {
-    // No cookie → redirect to activation page
-    const activateUrl = new URL("/activate", req.url);
-    activateUrl.searchParams.set("redirect", pathname);
-    return NextResponse.redirect(activateUrl);
-  }
+  try {
+    // Check for license cookie
+    const cookie = req.cookies.get(COOKIE_NAME)?.value;
 
-  // Verify cookie (async — Web Crypto API)
-  const decoded = await verifySignedCookie(cookie);
+    if (!cookie) {
+      // No cookie → redirect to activation page
+      const activateUrl = new URL("/activate", req.url);
+      activateUrl.searchParams.set("redirect", pathname);
+      return NextResponse.redirect(activateUrl);
+    }
 
-  if (!decoded) {
-    // Invalid/expired cookie → redirect to activation
+    // Verify cookie (async — Web Crypto API)
+    const decoded = await verifySignedCookie(cookie);
+
+    if (!decoded) {
+      // Invalid/expired cookie → redirect to activation
+      const activateUrl = new URL("/activate", req.url);
+      activateUrl.searchParams.set("redirect", pathname);
+      const response = NextResponse.redirect(activateUrl);
+      response.cookies.delete(COOKIE_NAME);
+      return response;
+    }
+
+    // Auto-renew cookie if close to expiry (sliding window)
+    if (needsRenewal(decoded.exp)) {
+      const newCookie = await createSignedCookie(decoded.licenseKey, decoded.deviceId);
+      const response = NextResponse.next();
+      response.cookies.set(COOKIE_NAME, newCookie, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+        maxAge: COOKIE_MAX_AGE,
+        path: "/",
+      });
+      return response;
+    }
+
+    return NextResponse.next();
+  } catch (err) {
+    console.error("Middleware error:", err);
+    // On any middleware error, redirect to activation page (safer than 500)
     const activateUrl = new URL("/activate", req.url);
     activateUrl.searchParams.set("redirect", pathname);
     const response = NextResponse.redirect(activateUrl);
     response.cookies.delete(COOKIE_NAME);
     return response;
   }
-  
-  // Auto-renew cookie if close to expiry (sliding window)
-  if (needsRenewal(decoded.exp)) {
-    const newCookie = await createSignedCookie(decoded.licenseKey, decoded.deviceId);
-    const response = NextResponse.next();
-    response.cookies.set(COOKIE_NAME, newCookie, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-      maxAge: COOKIE_MAX_AGE,
-      path: "/",
-    });
-    return response;
-  }
-  
-  return NextResponse.next();
 }
 
 /**
