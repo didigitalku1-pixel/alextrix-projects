@@ -31,9 +31,55 @@ export function generateLicenseKey(): string {
 
 /**
  * Validate license key format.
+ *
+ * Supported formats:
+ *   1. Regular buyer:  ALX-XXXX-XXXX-XXXX-XXXX  (4 segments × 4 chars, no O/0/I/1)
+ *   2. Admin license:  ALX-ADMIN-XXX-LIFETIME-XX (3-digit admin id + 1-4 char suffix)
+ *                      e.g. ALX-ADMIN-001-LIFETIME-01
+ *                           ALX-ADMIN-001-LIFETIME-1
+ *                           ALX-ADMIN-001-LIFETIME-9999
+ *   3. Test license:   ALX-TEST-TEST-TEST-TEST
+ *   4. Promo/custom:   ALX-PROMO-XXXX-XXXX-XXXX  (manual codes for marketing)
+ *                      ALX-XXXX-XXXX-XXXX-XXXXX  (5-char last segment for promos)
+ *
+ * The format is intentionally flexible so admins can hand-craft license keys
+ * (e.g. ALX-ADMIN-001-LIFETIME-01, ALX-VIP-2025-DEC-0001) without touching code.
+ * The DB lookup (`getLicenseByKey`) is the source of truth — format check is just
+ * a sanity guard to reject obviously-malformed input.
  */
 export function isValidLicenseKeyFormat(key: string): boolean {
-  return /^ALX-(?:[A-Z2-9]{4}-[A-Z2-9]{4}-[A-Z2-9]{4}-[A-Z2-9]{4}|ADMIN-[A-Z0-9]{3}-LIFETIME-[A-Z0-9]{3})$/.test(key);
+  if (!key || typeof key !== "string") return false;
+  const k = key.trim().toUpperCase();
+
+  // Must start with ALX- prefix and contain only uppercase letters, digits, and dashes
+  if (!/^ALX-[A-Z0-9]+(?:-[A-Z0-9]+)+$/.test(k)) return false;
+
+  // Length guard: 12 chars minimum (ALX-XX-XX) to 40 chars maximum
+  if (k.length < 12 || k.length > 40) return false;
+
+  // Each segment must be 1-8 chars of uppercase alphanumeric
+  const segments = k.split("-");
+  if (segments.length < 3 || segments.length > 6) return false;
+  for (const seg of segments.slice(1)) {
+    if (!/^[A-Z0-9]{1,8}$/.test(seg)) return false;
+  }
+
+  return true;
+}
+
+/**
+ * Detect special license key types (for analytics / UI).
+ */
+export type LicenseKeyType = "regular" | "admin" | "test" | "promo" | "custom";
+
+export function detectLicenseKeyType(key: string): LicenseKeyType {
+  const k = key.trim().toUpperCase();
+  if (k.startsWith("ALX-ADMIN-")) return "admin";
+  if (k.startsWith("ALX-TEST-")) return "test";
+  if (k.startsWith("ALX-PROMO-")) return "promo";
+  // Regular buyer format: ALX-XXXX-XXXX-XXXX-XXXX (4 segments of 4 chars from safe alphabet)
+  if (/^ALX-[A-Z2-9]{4}-[A-Z2-9]{4}-[A-Z2-9]{4}-[A-Z2-9]{4}$/.test(k)) return "regular";
+  return "custom";
 }
 
 /**

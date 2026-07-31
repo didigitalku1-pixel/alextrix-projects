@@ -94,10 +94,10 @@ function ActivateForm() {
           id="license-key"
           type="text"
           className="activate-input"
-          placeholder="ALX-XXXX-XXXX-XXXX-XXXX"
+          placeholder="ALX-XXXX-XXXX-XXXX-XXXX atau ALX-ADMIN-001-LIFETIME-01"
           value={licenseKey}
           onChange={(e) => setLicenseKey(e.target.value.toUpperCase())}
-          maxLength={24}
+          maxLength={40}
           autoCapitalize="characters"
           autoComplete="off"
           spellCheck={false}

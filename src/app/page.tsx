@@ -344,15 +344,15 @@ function AlextrixHomepage() {
             {/* Social proof — real numbers */}
             <div className="alextrix-stats-row">
               <span className="alextrix-stat-item">
-                <span className="alextrix-stat-number">{stats ? formatViews(stats.templates).replace("k", "") : "21K"}</span>
+                <span className="alextrix-stat-number">{stats ? stats.templates.toLocaleString("id-ID") : "21.563"}</span>
                 <span className="alextrix-stat-label">Template</span>
               </span>
               <span className="alextrix-stat-item">
-                <span className="alextrix-stat-number">{stats ? formatViews(stats.components).replace("k", "") : "2.8K"}</span>
+                <span className="alextrix-stat-number">{stats ? stats.components.toLocaleString("id-ID") : "2.829"}</span>
                 <span className="alextrix-stat-label">Komponen</span>
               </span>
               <span className="alextrix-stat-item">
-                <span className="alextrix-stat-number">{stats ? formatViews(stats.assets).replace("k", "") : "30K"}</span>
+                <span className="alextrix-stat-number">{stats ? stats.assets.toLocaleString("id-ID") : "30.682"}</span>
                 <span className="alextrix-stat-label">Aset</span>
               </span>
               <span className="alextrix-stat-item">

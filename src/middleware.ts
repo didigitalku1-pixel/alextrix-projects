@@ -17,7 +17,6 @@ const DEMO_SLUGS = [
 const PUBLIC_PATHS = [
   "/activate",
   "/thank-you",
-  "/thank-you",
   "/api/activate",
   "/api/deactivate",
   "/api/create-payment",
@@ -28,6 +27,13 @@ const PUBLIC_PATHS = [
   "/api/skill-thumb",
   "/api/learn",
   "/api/design-systems", // design systems list is public
+  "/api/admin/licenses", // admin panel uses its own token auth (ADMIN_TOKEN env var)
+  "/api/admin/logout", // admin logout endpoint (clears cookie)
+  "/api/admin/bootstrap", // one-time DB migration endpoint (auth via ADMIN_TOKEN)
+  "/admin/licenses", // admin UI page (auth via token in URL ?token=XXX)
+  "/admin/guide", // admin documentation page (public, no secrets shown)
+  "/manage", // device management page (uses license key input, no cookie required)
+  "/api/cron/cleanup-devices", // cron job endpoint (auth via CRON_SECRET env var)
 ];
 
 /**
@@ -48,10 +54,6 @@ function isPublicPath(pathname: string): boolean {
   if (PUBLIC_PATHS.some((p) => pathname === p)) return true;
   // Prefix match (e.g., /api/webhook/midtrans matches /api/webhook)
   if (PUBLIC_PATHS.some((p) => pathname.startsWith(p))) return true;
-  // Thank you page is public (post-payment redirect)
-  if (pathname === "/thank-you") return true;
-  // Thank you page is public (post-payment redirect)
-  if (pathname === "/thank-you") return true;
   // Root homepage is public (landing page preview)
   if (pathname === "/") return true;
   // Demo templates
@@ -71,22 +73,20 @@ export async function middleware(req: NextRequest) {
   
   // Check for license cookie
   const cookie = req.cookies.get(COOKIE_NAME)?.value;
-  
+
   if (!cookie) {
     // No cookie → redirect to activation page
-    const activateUrl = new URL("/activate",
-  "/thank-you", req.url);
+    const activateUrl = new URL("/activate", req.url);
     activateUrl.searchParams.set("redirect", pathname);
     return NextResponse.redirect(activateUrl);
   }
-  
+
   // Verify cookie (async — Web Crypto API)
   const decoded = await verifySignedCookie(cookie);
-  
+
   if (!decoded) {
     // Invalid/expired cookie → redirect to activation
-    const activateUrl = new URL("/activate",
-  "/thank-you", req.url);
+    const activateUrl = new URL("/activate", req.url);
     activateUrl.searchParams.set("redirect", pathname);
     const response = NextResponse.redirect(activateUrl);
     response.cookies.delete(COOKIE_NAME);
