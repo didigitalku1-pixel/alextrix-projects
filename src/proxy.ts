@@ -51,12 +51,16 @@ function isPublicPath(pathname: string): boolean {
 }
 
 /**
- * Middleware — verifies license cookie for protected paths.
+ * Proxy (Next.js 16 — formerly "middleware") — verifies license cookie for protected paths.
+ *
+ * Note: In Next.js 16, the `middleware.ts` file convention was renamed to `proxy.ts`.
+ * The export is now `proxy` (instead of `middleware`), and the config is `proxyMatcher`
+ * (instead of `matcher`). See: https://nextjs.org/docs/messages/middleware-to-proxy
  *
  * Lazy-imports the license module so that if the module has any init error
  * (e.g., env var missing), it only affects protected paths, not public ones.
  */
-export async function middleware(req: NextRequest) {
+export async function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
   // Skip middleware for public paths (no license required)
@@ -102,7 +106,7 @@ export async function middleware(req: NextRequest) {
 
     return NextResponse.next();
   } catch (err) {
-    console.error("Middleware error:", err);
+    console.error("Proxy error:", err);
     // On any error, redirect to activation page
     const activateUrl = new URL("/activate", req.url);
     activateUrl.searchParams.set("redirect", pathname);
@@ -113,7 +117,7 @@ export async function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: [
+  proxyMatcher: [
     "/((?!_next/static|_next/image|favicon.ico|logo.svg|robots.txt|sitemap.xml).*)",
   ],
 };

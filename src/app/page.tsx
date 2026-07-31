@@ -82,6 +82,7 @@ function HomeRouter() {
 // === Homepage Landing Page ===
 function AlextrixHomepage() {
   const [featuredTemplates, setFeaturedTemplates] = useState<Item[]>([]);
+  const [trendingTemplates, setTrendingTemplates] = useState<Item[]>([]);
   const [featuredComponents, setFeaturedComponents] = useState<Item[]>([]);
   const [stats, setStats] = useState<Stats | null>(null);
   const [loading, setLoading] = useState(true);
@@ -91,12 +92,35 @@ function AlextrixHomepage() {
   const { isDark, toggle: toggleTheme } = useTheme();
 
   useEffect(() => {
+    // Fetch curated templates (by slug) + components (by views) + stats in parallel.
+    // Curated slugs are in src/lib/curated-templates.ts.
+    // If a slug 404s, the API returns no item for it and we filter undefined out.
     Promise.all([
-      fetch("/api/items?type=template&sort=views&limit=5").then(r => r.json()),
-      fetch("/api/items?type=component&sort=views&limit=5").then(r => r.json()),
-      fetch("/api/stats").then(r => r.json()),
-    ]).then(([t, c, s]) => {
-      setFeaturedTemplates(t.items || []);
+      import("@/lib/curated-templates").then(({ FEATURED_TEMPLATE_SLUGS }) =>
+        Promise.all(
+          FEATURED_TEMPLATE_SLUGS.map((slug) =>
+            fetch(`/api/items?type=template&limit=1&q=${encodeURIComponent(slug)}`)
+              .then((r) => r.json())
+              .then((d) => (d.items && d.items[0] ? d.items[0] : null))
+              .catch(() => null),
+          ),
+        ).then((items) => items.filter(Boolean) as Item[]),
+      ),
+      import("@/lib/curated-templates").then(({ TRENDING_TEMPLATE_SLUGS }) =>
+        Promise.all(
+          TRENDING_TEMPLATE_SLUGS.map((slug) =>
+            fetch(`/api/items?type=template&limit=1&q=${encodeURIComponent(slug)}`)
+              .then((r) => r.json())
+              .then((d) => (d.items && d.items[0] ? d.items[0] : null))
+              .catch(() => null),
+          ),
+        ).then((items) => items.filter(Boolean) as Item[]),
+      ),
+      fetch("/api/items?type=component&sort=views&limit=5").then((r) => r.json()),
+      fetch("/api/stats").then((r) => r.json()),
+    ]).then(([feat, trend, c, s]) => {
+      setFeaturedTemplates(feat);
+      setTrendingTemplates(trend);
       setFeaturedComponents(c.items || []);
       setStats(s);
       setLoading(false);
@@ -367,8 +391,8 @@ function AlextrixHomepage() {
         <section className="alextrix-pulse-section">
           <div className="alextrix-pulse-left">
             <p className="alextrix-pulse-eyebrow">YANG ANDA DAPATKAN</p>
-            <h2 className="alextrix-pulse-title">Semua yang Anda Butuhkan untuk Membangun Website</h2>
-            <p className="alextrix-pulse-desc">Akses semua template tanpa biaya tambahan. Bayar sekali, gunakan selamanya.</p>
+            <h2 className="alextrix-pulse-title">Ribuan Desain Website Siap Pakai untuk Inspirasi dan Referensi Anda</h2>
+            <p className="alextrix-pulse-desc">Akses semua template, komponen, dan design system tanpa biaya tambahan. Bayar sekali, gunakan selamanya sebagai sumber referensi desain.</p>
           </div>
           <div className="alextrix-pulse-card">
             <div className="alextrix-pulse-card-header">
@@ -415,7 +439,7 @@ function AlextrixHomepage() {
           </div>
         </section>
 
-        {/* SECTION 4: TRENDING TEMPLATES (enhanced cards) */}
+        {/* SECTION 4: TRENDING TEMPLATES (curated SaaS / platform / agency templates) */}
         <section className="alextrix-featured-section">
           <div className="alextrix-section-header">
             <h2 className="alextrix-section-title">Trending Templates</h2>
@@ -423,7 +447,64 @@ function AlextrixHomepage() {
           </div>
           <div className="alextrix-featured-grid">
             {loading ? (
-              Array.from({ length: 5 }).map((_, i) => <div key={i} className="skeleton" />)
+              Array.from({ length: 8 }).map((_, i) => <div key={i} className="skeleton" />)
+            ) : (
+              trendingTemplates.map(item => (
+                <a key={item.id} className="card alextrix-card" href={`/templates/${item.slug || item.id}`}>
+                  <div className="card-image-wrap">
+                    <div className="card-actions">
+                      <button
+                        type="button"
+                        className="card-action-btn"
+                        aria-label={`Download DESIGN.md for ${item.title}`}
+                        onClick={(e) => downloadDesignMd(item, e)}
+                      >
+                        📄 DESIGN.md
+                      </button>
+                      <button
+                        type="button"
+                        className="card-action-btn"
+                        aria-label={`Copy prompt for ${item.title}`}
+                        onClick={(e) => copyPromptToClipboard(item, e)}
+                      >
+                        ✨ Copy Prompt
+                      </button>
+                    </div>
+                    <button
+                      className={`card-bookmark${bookmarks.has(item.id) ? " saved" : ""}`}
+                      onClick={(e) => toggleBookmark(item.id, e)}
+                      aria-label="Simpan template"
+                    >
+                      {bookmarks.has(item.id) ? "★" : "☆"}
+                    </button>
+                    {item.image ? (
+                      <img src={`/api/image?url=${encodeURIComponent(item.image)}`} alt={item.title} className="card-image" loading="lazy" />
+                    ) : (
+                      <img src={`/api/skill-thumb?title=${encodeURIComponent(item.title)}`} alt={item.title} className="card-image" loading="lazy" />
+                    )}
+                  </div>
+                  <div className="card-footer">
+                    <h3 className="card-title" title={item.title}>{item.title}</h3>
+                    <div className="card-meta">
+                      {item.username && <span className="card-author">@{item.username.slice(0, 12)}</span>}
+                      <span className="card-views">{formatViews(item.views)}</span>
+                    </div>
+                  </div>
+                </a>
+              ))
+            )}
+          </div>
+        </section>
+
+        {/* SECTION 4.5: FEATURED TEMPLATES (curated portfolio / studio / creative templates) */}
+        <section className="alextrix-featured-section">
+          <div className="alextrix-section-header">
+            <h2 className="alextrix-section-title">★ Featured</h2>
+            <a href="/templates?sort=featured" className="alextrix-section-link">Browse all →</a>
+          </div>
+          <div className="alextrix-featured-grid">
+            {loading ? (
+              Array.from({ length: 8 }).map((_, i) => <div key={i} className="skeleton" />)
             ) : (
               featuredTemplates.map(item => (
                 <a key={item.id} className="card alextrix-card" href={`/templates/${item.slug || item.id}`}>
