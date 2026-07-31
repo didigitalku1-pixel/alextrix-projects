@@ -1,0 +1,85 @@
+name: Deploy to Vercel
+
+# Triggered manually via GitHub Actions UI (workflow_dispatch)
+# or automatically when VERCEL_TOKEN secret is set + push to main
+on:
+  workflow_dispatch:
+    inputs:
+      force_redeploy:
+        description: "Force redeploy even if no code changes"
+        required: false
+        default: "true"
+  push:
+    branches: [main]
+    paths:
+      - "src/**"
+      - "public/**"
+      - "package.json"
+      - "bun.lock"
+      - "next.config.ts"
+      - "tsconfig.json"
+      - "tailwind.config.ts"
+      - "postcss.config.mjs"
+      - "vercel.json"
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Trigger Vercel Production Deploy
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+        run: |
+          if [ -z "$VERCEL_TOKEN" ]; then
+            echo "❌ VERCEL_TOKEN secret is not set"
+            echo "   Set it via: GitHub → Settings → Secrets → Actions → New secret"
+            exit 1
+          fi
+          if [ -z "$VERCEL_PROJECT_ID" ]; then
+            echo "❌ VERCEL_PROJECT_ID secret is not set"
+            exit 1
+          fi
+
+          echo "🚀 Triggering Vercel production deploy..."
+          echo "   Project ID: $VERCEL_PROJECT_ID"
+          echo "   Ref: ${{ github.ref_name }}"
+          echo "   SHA: ${{ github.sha }}"
+          echo ""
+
+          RESPONSE=$(curl -sS -X POST "https://api.vercel.com/v13/deployments" \
+            -H "Authorization: Bearer $VERCEL_TOKEN" \
+            -H "Content-Type: application/json" \
+            -d "{
+              \"projectId\": \"$VERCEL_PROJECT_ID\",
+              \"target\": \"production\",
+              \"gitSource\": {
+                \"repo\": \"${{ github.repository }}\",
+                \"ref\": \"${{ github.ref_name }}\",
+                \"sha\": \"${{ github.sha }}\"
+              }
+            }")
+
+          echo "Vercel API response:"
+          echo "$RESPONSE" | python3 -m json.tool 2>/dev/null || echo "$RESPONSE"
+
+          # Extract deployment URL + ID
+          DEPLOY_ID=$(echo "$RESPONSE" | python3 -c "import sys, json; print(json.load(sys.stdin).get('id', ''))" 2>/dev/null)
+          DEPLOY_URL=$(echo "$RESPONSE" | python3 -c "import sys, json; print(json.load(sys.stdin).get('url', ''))" 2>/dev/null)
+
+          if [ -n "$DEPLOY_URL" ]; then
+            echo ""
+            echo "✅ Deploy triggered!"
+            echo "   Deploy ID: $DEPLOY_ID"
+            echo "   URL: https://$DEPLOY_URL"
+            echo ""
+            echo "Wait 2-5 minutes for build to complete."
+            echo "Production URL: https://alextrix-projects.vercel.app"
+          else
+            echo "❌ Failed to trigger deploy"
+            exit 1
+          fi
