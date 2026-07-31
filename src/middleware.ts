@@ -1,9 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { verifySignedCookie, COOKIE_NAME, needsRenewal, createSignedCookie, COOKIE_MAX_AGE } from "@/lib/license";
 
 /**
  * Demo template slugs — accessible WITHOUT license.
- * User can preview these 3 templates before buying.
  */
 const DEMO_SLUGS = [
   "interactive-globe-hero-section",
@@ -26,67 +24,61 @@ const PUBLIC_PATHS = [
   "/api/image",
   "/api/skill-thumb",
   "/api/learn",
-  "/api/design-systems", // design systems list is public
-  "/api/admin/licenses", // admin panel uses its own token auth (ADMIN_TOKEN env var)
-  "/api/admin/logout", // admin logout endpoint (clears cookie)
-  "/api/admin/bootstrap", // one-time DB migration endpoint (auth via ADMIN_TOKEN)
-  "/admin/licenses", // admin UI page (auth via token in URL ?token=XXX)
-  "/admin/guide", // admin documentation page (public, no secrets shown)
-  "/manage", // device management page (uses license key input, no cookie required)
-  "/api/cron/cleanup-devices", // cron job endpoint (auth via CRON_SECRET env var)
+  "/api/design-systems",
+  "/api/admin/licenses",
+  "/api/admin/logout",
+  "/api/admin/bootstrap",
+  "/admin/licenses",
+  "/admin/guide",
+  "/manage",
+  "/api/cron/cleanup-devices",
 ];
 
-/**
- * Check if a path is a demo template detail page.
- * Demo templates: /templates/interactive-globe-hero-section, etc.
- */
 function isDemoTemplate(pathname: string): boolean {
   if (!pathname.startsWith("/templates/")) return false;
   const slug = pathname.replace("/templates/", "");
   return DEMO_SLUGS.includes(slug);
 }
 
-/**
- * Check if a path is public (no license required).
- */
 function isPublicPath(pathname: string): boolean {
-  // Exact match
   if (PUBLIC_PATHS.some((p) => pathname === p)) return true;
-  // Prefix match (e.g., /api/webhook/midtrans matches /api/webhook)
   if (PUBLIC_PATHS.some((p) => pathname.startsWith(p))) return true;
-  // Root homepage is public (landing page preview)
   if (pathname === "/") return true;
-  // Demo templates
   if (isDemoTemplate(pathname)) return true;
-  // Static assets
   if (pathname.startsWith("/_next/") || pathname.startsWith("/favicon") || pathname.startsWith("/logo")) return true;
   return false;
 }
 
+/**
+ * Middleware — verifies license cookie for protected paths.
+ *
+ * Lazy-imports the license module so that if the module has any init error
+ * (e.g., env var missing), it only affects protected paths, not public ones.
+ */
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
-  // Skip middleware for public paths
+  // Skip middleware for public paths (no license required)
   if (isPublicPath(pathname)) {
     return NextResponse.next();
   }
 
   try {
-    // Check for license cookie
+    // Lazy import to avoid edge runtime init issues
+    const { verifySignedCookie, COOKIE_NAME, needsRenewal, createSignedCookie, COOKIE_MAX_AGE } =
+      await import("@/lib/license");
+
     const cookie = req.cookies.get(COOKIE_NAME)?.value;
 
     if (!cookie) {
-      // No cookie → redirect to activation page
       const activateUrl = new URL("/activate", req.url);
       activateUrl.searchParams.set("redirect", pathname);
       return NextResponse.redirect(activateUrl);
     }
 
-    // Verify cookie (async — Web Crypto API)
     const decoded = await verifySignedCookie(cookie);
 
     if (!decoded) {
-      // Invalid/expired cookie → redirect to activation
       const activateUrl = new URL("/activate", req.url);
       activateUrl.searchParams.set("redirect", pathname);
       const response = NextResponse.redirect(activateUrl);
@@ -94,7 +86,6 @@ export async function middleware(req: NextRequest) {
       return response;
     }
 
-    // Auto-renew cookie if close to expiry (sliding window)
     if (needsRenewal(decoded.exp)) {
       const newCookie = await createSignedCookie(decoded.licenseKey, decoded.deviceId);
       const response = NextResponse.next();
@@ -111,28 +102,17 @@ export async function middleware(req: NextRequest) {
     return NextResponse.next();
   } catch (err) {
     console.error("Middleware error:", err);
-    // On any middleware error, redirect to activation page (safer than 500)
+    // On any error, redirect to activation page
     const activateUrl = new URL("/activate", req.url);
     activateUrl.searchParams.set("redirect", pathname);
     const response = NextResponse.redirect(activateUrl);
-    response.cookies.delete(COOKIE_NAME);
+    response.cookies.delete("alextrix_license");
     return response;
   }
 }
 
-/**
- * Configure which paths the middleware runs on.
- * Runs on all paths EXCEPT static assets and Next.js internals.
- */
 export const config = {
   matcher: [
-    /*
-     * Match all paths except:
-     * - _next/static, _next/image (static assets)
-     * - favicon.ico, logo.svg
-     * - public folder assets
-     */
     "/((?!_next/static|_next/image|favicon.ico|logo.svg|robots.txt|sitemap.xml).*)",
   ],
 };
-// Force rebuild 1785494273
