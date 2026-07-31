@@ -18,11 +18,7 @@ interface License {
   updated_at: string;
 }
 
-interface AdminPanelContentProps {
-  token: string;
-}
-
-function AdminPanelContent({ token }: AdminPanelContentProps) {
+function AdminPanelContent() {
   const [licenses, setLicenses] = useState<License[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -55,14 +51,15 @@ function AdminPanelContent({ token }: AdminPanelContentProps) {
     setError("");
     try {
       const params = new URLSearchParams({
-        token,
         limit: String(limit),
         offset: String(offset),
       });
       if (search) params.set("search", search);
       if (statusFilter) params.set("status", statusFilter);
 
-      const res = await fetch(`/api/admin/licenses?${params.toString()}`);
+      const res = await fetch(`/api/admin/licenses?${params.toString()}`, {
+        credentials: "include", // send HttpOnly cookie
+      });
       const data = await res.json();
       if (data.success) {
         setLicenses(data.licenses || []);
@@ -99,7 +96,8 @@ function AdminPanelContent({ token }: AdminPanelContentProps) {
       const res = await fetch("/api/admin/licenses", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action, license_key: licenseKey, token }),
+        credentials: "include",
+        body: JSON.stringify({ action, license_key: licenseKey }),
       });
       const data = await res.json();
       if (data.success) {
@@ -125,7 +123,8 @@ function AdminPanelContent({ token }: AdminPanelContentProps) {
       const res = await fetch("/api/admin/licenses", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "update_max_devices", license_key: licenseKey, max_devices: max, token }),
+        credentials: "include",
+        body: JSON.stringify({ action: "update_max_devices", license_key: licenseKey, max_devices: max }),
       });
       const data = await res.json();
       if (data.success) {
@@ -146,13 +145,13 @@ function AdminPanelContent({ token }: AdminPanelContentProps) {
       const res = await fetch("/api/admin/licenses", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({
           action: "create_manual",
           email: createForm.email,
           max_devices: createForm.max_devices,
           license_key: createForm.license_key || undefined,
           note: createForm.note,
-          token,
         }),
       });
       const data = await res.json();
@@ -522,31 +521,58 @@ function AdminPanelContent({ token }: AdminPanelContentProps) {
 }
 
 function AdminPageContent() {
-  const searchParams = useSearchParams();
-  const token = searchParams.get("token") || "";
+  const [authed, setAuthed] = useState(false);
   const [tokenInput, setTokenInput] = useState("");
-  const [verifiedToken, setVerifiedToken] = useState(token);
+  const [authenticating, setAuthenticating] = useState(false);
+  const [authError, setAuthError] = useState("");
   const [loggingOut, setLoggingOut] = useState(false);
+
+  // On mount, check if already authed (cookie set)
+  useEffect(() => {
+    fetch("/api/admin/licenses", { credentials: "include" })
+      .then((r) => setAuthed(r.ok))
+      .catch(() => setAuthed(false));
+  }, []);
+
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setAuthenticating(true);
+    setAuthError("");
+    try {
+      const res = await fetch("/api/admin/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token: tokenInput.trim() }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setAuthed(true);
+        setTokenInput(""); // clear from memory
+      } else {
+        setAuthError(data.error || "Login gagal");
+      }
+    } catch {
+      setAuthError("Terjadi kesalahan jaringan");
+    } finally {
+      setAuthenticating(false);
+    }
+  };
 
   const handleLogout = async () => {
     if (!confirm("Logout dari admin panel? Anda perlu memasukkan token lagi untuk masuk.")) return;
     setLoggingOut(true);
     try {
       await fetch("/api/admin/logout", { method: "POST" });
-      // Clear local state + redirect to landing
-      setVerifiedToken("");
+      setAuthed(false);
       setTokenInput("");
-      window.location.href = "/";
     } catch {
-      // Even if logout API fails, clear local state
-      setVerifiedToken("");
-      window.location.href = "/";
+      setAuthed(false);
     } finally {
       setLoggingOut(false);
     }
   };
 
-  if (!verifiedToken) {
+  if (!authed) {
     return (
       <div style={{ maxWidth: 480, margin: "80px auto", padding: 32 }}>
         <h1 style={{ fontSize: 24, fontWeight: 700, color: "#0A0A0A", marginBottom: 8 }}>
@@ -554,24 +580,27 @@ function AdminPageContent() {
         </h1>
         <p style={{ fontSize: 14, color: "#6B7280", marginBottom: 24 }}>
           Masukkan admin token untuk mengakses halaman kelola license.
+          Token akan disimpan di cookie HttpOnly (tidak terlihat di URL atau JS).
         </p>
-        <form
-          onSubmit={(e) => { e.preventDefault(); setVerifiedToken(tokenInput); }}
-          style={{ display: "flex", flexDirection: "column", gap: 12 }}
-        >
+        <form onSubmit={handleLogin} style={{ display: "flex", flexDirection: "column", gap: 12 }}>
           <input
             type="password"
             value={tokenInput}
             onChange={(e) => setTokenInput(e.target.value)}
-            placeholder="Admin token (32-char random string)..."
+            placeholder="Admin token (32-char hex string)..."
             style={{ padding: "12px 14px", border: "1px solid #D1D5DB", borderRadius: 8, fontSize: 14, outline: "none", fontFamily: "ui-monospace, monospace" }}
             required
+            autoFocus
           />
+          {authError && (
+            <p style={{ margin: 0, fontSize: 13, color: "#DC2626" }}>{authError}</p>
+          )}
           <button
             type="submit"
-            style={{ padding: "12px 20px", background: "#0A0A0A", color: "#fff", border: "none", borderRadius: 8, cursor: "pointer", fontWeight: 600, fontSize: 14 }}
+            disabled={authenticating}
+            style={{ padding: "12px 20px", background: "#0A0A0A", color: "#fff", border: "none", borderRadius: 8, cursor: authenticating ? "not-allowed" : "pointer", fontWeight: 600, fontSize: 14, opacity: authenticating ? 0.7 : 1 }}
           >
-            Masuk →
+            {authenticating ? "Memverifikasi..." : "Masuk →"}
           </button>
         </form>
         <div style={{ marginTop: 24, padding: "12px 16px", background: "#FFFBEB", border: "1px solid #FCD34D", borderRadius: 8, fontSize: 12, color: "#92400E", lineHeight: 1.6 }}>
@@ -630,7 +659,7 @@ function AdminPageContent() {
         </div>
       </div>
 
-      <AdminPanelContent token={verifiedToken} />
+      <AdminPanelContent />
     </div>
   );
 }

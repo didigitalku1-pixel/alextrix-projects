@@ -68,30 +68,37 @@ export async function POST(req: NextRequest) {
     });
     
     if (!license) {
-      console.error("Midtrans webhook: failed to create license");
+      console.error("Midtrans webhook: failed to create license for order " + orderId);
       return NextResponse.json({ error: "Failed to create license" }, { status: 500 });
     }
-    
-    console.log(`✅ License created: ${licenseKey} for ${customerEmail}`);
-    
+
+    // SECURITY: Do NOT log license key or customer email (PII leak to Vercel logs / observability tools)
+    // Only log order ID + status (order IDs are already in Midtrans logs)
+    console.log(`[webhook] License created for order ${orderId}`);
+
     // 7. Send email with license key
     const emailSent = await sendLicenseEmail({
       email: customerEmail,
       licenseKey,
       orderId,
     });
-    
+
     if (!emailSent) {
-      console.warn(`⚠️ Email not sent to ${customerEmail} (license still created)`);
+      // SECURITY: Don't log email address. Just log order ID + failure reason.
+      console.warn(`[webhook] Email send failed for order ${orderId} (license still created)`);
     }
-    
+
+    // SECURITY: Don't return license_key in response body.
+    // Midtrans doesn't need it (they only need 200 OK), and the response goes through
+    // Vercel's edge network where it could be logged.
     return NextResponse.json({
       status: "success",
-      license_key: licenseKey,
+      order_id: orderId,
       email_sent: emailSent,
     });
   } catch (e) {
-    console.error("Midtrans webhook exception:", e);
+    // SECURITY: Don't log full error object (may contain email/key in stack trace)
+    console.error("[webhook] Midtrans webhook exception:", e instanceof Error ? e.message : "Unknown error");
     return NextResponse.json({ error: "Internal error" }, { status: 500 });
   }
 }

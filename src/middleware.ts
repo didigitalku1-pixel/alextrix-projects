@@ -26,6 +26,7 @@ const PUBLIC_PATHS = [
   "/api/learn",
   "/api/design-systems",
   "/api/admin/licenses",
+  "/api/admin/login",
   "/api/admin/logout",
   "/api/admin/bootstrap",
   "/admin/licenses",

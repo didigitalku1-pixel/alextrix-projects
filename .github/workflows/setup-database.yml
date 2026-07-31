@@ -48,68 +48,122 @@ jobs:
           echo "   Updated: $UPDATED_COUNT license(s)"
           echo ""
 
-          # 2. Insert/update 5 admin licenses + 1 test license (idempotent via upsert)
-          echo "2. Upserting admin + test licenses..."
-          UPSERT_RESP=$(curl -sS -X POST \
-            "$SUPABASE_URL/rest/v1/licenses" \
+          # 2. Generate 5 admin licenses with RANDOM keys (no hardcoded defaults)
+          # SECURITY: Previously hardcoded ALX-ADMIN-001-LIFETIME-01..05 — predictable + would leak in workflow logs.
+          # Now: generate random keys in Python (crypto-random), insert via Supabase REST API.
+          # Keys are printed to workflow log ONCE so admin can copy them, but NOT committed to repo.
+          echo "2. Generating 5 admin licenses with random keys..."
+          ADMIN_EMAIL="${{ secrets.ADMIN_EMAIL || 'admin@alextrix.dev' }}"
+          GEN_RESP=$(python3 << EOF
+          import secrets, string, json, urllib.request
+
+          URL = "$SUPABASE_URL"
+          KEY = "$SUPABASE_KEY"
+          EMAIL = "$ADMIN_EMAIL"
+
+          chars = "ABCDEFGHJKMNPQRSTUVWXYZ23456789"
+          def rand_seg():
+              return "".join(secrets.choice(chars) for _ in range(4))
+          def rand_key():
+              return f"ALX-{rand_seg()}-{rand_seg()}-{rand_seg()}-{rand_seg()}"
+
+          payload = []
+          for i in range(1, 6):
+              payload.append({
+                  "license_key": rand_key(),
+                  "email": EMAIL,
+                  "status": "active",
+                  "price": 0,
+                  "currency": "IDR",
+                  "max_devices": 999,
+                  "midtrans_order_id": f"ADMIN-{i:03d}",
+                  "device_ids": [],
+                  "active_devices": 0
+              })
+
+          req = urllib.request.Request(
+              f"{URL}/rest/v1/licenses",
+              data=json.dumps(payload).encode(),
+              method="POST",
+              headers={
+                  "apikey": KEY,
+                  "Authorization": f"Bearer {KEY}",
+                  "Content-Type": "application/json",
+                  "Prefer": "return=representation"
+              }
+          )
+          try:
+              with urllib.request.urlopen(req, timeout=30) as resp:
+                  data = json.loads(resp.read().decode())
+                  for lic in data:
+                      print(f"  ✓ Created admin license: {lic['license_key']} ({lic['email']})")
+                  print(f"\n  SAVE THESE KEYS SECURELY. They are NOT stored anywhere else.")
+                  print(f"  Activate them at: https://alextrix-projects.vercel.app/activate")
+          except Exception as e:
+              print(f"  ⚠️ Insert failed (might already exist): {e}")
+          EOF
+          )
+          echo "$GEN_RESP"
+          echo ""
+
+          # 3. Revoke test license in production (security best practice)
+          echo "3. Revoking test license (production safety)..."
+          curl -sS -X PATCH \
+            "$SUPABASE_URL/rest/v1/licenses?license_key=eq.ALX-TEST-TEST-TEST-TEST" \
             -H "apikey: $SUPABASE_KEY" \
             -H "Authorization: Bearer $SUPABASE_KEY" \
             -H "Content-Type: application/json" \
-            -H "Prefer: resolution=merge-duplicates,return=representation" \
-            -d '[
-              {"license_key":"ALX-ADMIN-001-LIFETIME-01","email":"admin01@alextrix.dev","status":"active","price":0,"currency":"IDR","max_devices":999,"midtrans_order_id":"ADMIN-001","device_ids":[],"active_devices":0},
-              {"license_key":"ALX-ADMIN-002-LIFETIME-02","email":"admin02@alextrix.dev","status":"active","price":0,"currency":"IDR","max_devices":999,"midtrans_order_id":"ADMIN-002","device_ids":[],"active_devices":0},
-              {"license_key":"ALX-ADMIN-003-LIFETIME-03","email":"admin03@alextrix.dev","status":"active","price":0,"currency":"IDR","max_devices":999,"midtrans_order_id":"ADMIN-003","device_ids":[],"active_devices":0},
-              {"license_key":"ALX-ADMIN-004-LIFETIME-04","email":"admin04@alextrix.dev","status":"active","price":0,"currency":"IDR","max_devices":999,"midtrans_order_id":"ADMIN-004","device_ids":[],"active_devices":0},
-              {"license_key":"ALX-ADMIN-005-LIFETIME-05","email":"admin05@alextrix.dev","status":"active","price":0,"currency":"IDR","max_devices":999,"midtrans_order_id":"ADMIN-005","device_ids":[],"active_devices":0},
-              {"license_key":"ALX-TEST-TEST-TEST-TEST","email":"test@alextrix.dev","status":"active","price":0,"currency":"IDR","max_devices":999,"midtrans_order_id":"TEST-LICENSE","device_ids":[],"active_devices":0}
-            ]')
-          UPSERTED_COUNT=$(echo "$UPSERT_RESP" | python3 -c "import sys, json; print(len(json.load(sys.stdin)))" 2>/dev/null || echo "0")
-          echo "   Upserted: $UPSERTED_COUNT license(s)"
+            -d '{"status":"revoked","updated_at":"now()"}' > /dev/null
+          echo "   ✓ Test license revoked (set ADMIN_TEST_LICENSE=enabled in Vercel to re-enable)"
           echo ""
 
-          # 3. Verify
-          echo "3. Verification — current admin + test licenses in DB:"
-          curl -sS -X GET \
-            "$SUPABASE_URL/rest/v1/licenses?select=license_key,email,status,max_devices&or=(license_key.like.ALX-ADMIN-*,license_key.eq.ALX-TEST-TEST-TEST-TEST)&order=license_key.asc" \
+          # 4. Show total admin license count (without revealing keys)
+          echo "4. Verification — admin license count in DB:"
+          COUNT=$(curl -sS -X GET \
+            "$SUPABASE_URL/rest/v1/licenses?select=id&license_key=like.ALX-*&status=eq.active" \
             -H "apikey: $SUPABASE_KEY" \
-            -H "Authorization: Bearer $SUPABASE_KEY" | python3 -m json.tool
+            -H "Authorization: Bearer $SUPABASE_KEY" \
+            -H "Prefer: count=exact" \
+            -H "Range: 0-0" \
+            -D - -o /dev/null 2>/dev/null | grep -i "content-range" | sed 's/.*\///')
+          echo "   Total active licenses: $COUNT"
           echo ""
 
       - name: Trigger /api/admin/bootstrap on Vercel (optional)
         if: ${{ github.event.inputs.run_bootstrap_api == 'true' }}
         env:
-          ADMIN_TOKEN: aa815fb195ea9c7c4ff1ced2ab376006
+          ADMIN_TOKEN: ${{ secrets.ADMIN_TOKEN }}
+          APP_URL: ${{ secrets.APP_URL || 'https://alextrix-projects.vercel.app' }}
         run: |
+          if [ -z "$ADMIN_TOKEN" ]; then
+            echo "ℹ️ ADMIN_TOKEN GitHub secret not set — skipping bootstrap trigger."
+            echo "   The SQL migration above already ran, so admin licenses are in DB."
+            echo "   To enable bootstrap trigger in future, set ADMIN_TOKEN as a GitHub secret."
+            exit 0
+          fi
+
           echo "=== Triggering /api/admin/bootstrap on Vercel ==="
-          echo ""
-          echo "Note: This requires ADMIN_TOKEN env var to be set on Vercel."
-          echo "If not set yet, this step will fail with 401 — that's OK, SQL migration above already ran."
+          echo "   URL: $APP_URL/api/admin/bootstrap (token: ${ADMIN_TOKEN:0:8}***)"
           echo ""
 
-          # Try production URL first
-          for URL in "https://alextrix-projects.vercel.app" ""; do
-            if [ -z "$URL" ]; then continue; fi
-            echo "Trying: $URL/api/admin/bootstrap?token=..."
-            RESP=$(curl -sS -X POST "$URL/api/admin/bootstrap?token=$ADMIN_TOKEN" -H "Content-Type: application/json" -w "\nHTTP_CODE:%{http_code}" || echo "HTTP_CODE:000")
-            HTTP_CODE=$(echo "$RESP" | grep -oE 'HTTP_CODE:[0-9]+' | cut -d: -f2)
-            BODY=$(echo "$RESP" | sed 's/HTTP_CODE:[0-9]*$//')
-            echo "HTTP: $HTTP_CODE"
-            echo "Response: $BODY" | head -c 500
-            echo ""
-            if [ "$HTTP_CODE" = "200" ]; then
-              echo "✓ Bootstrap succeeded"
-              break
-            fi
-          done
+          RESP=$(curl -sS -X POST "$APP_URL/api/admin/bootstrap" \
+            -H "Authorization: Bearer $ADMIN_TOKEN" \
+            -H "Content-Type: application/json" \
+            -w "\nHTTP_CODE:%{http_code}" \
+            || echo "HTTP_CODE:000")
+          HTTP_CODE=$(echo "$RESP" | grep -oE 'HTTP_CODE:[0-9]+' | cut -d: -f2)
+          BODY=$(echo "$RESP" | sed 's/HTTP_CODE:[0-9]*$//')
+          echo "HTTP: $HTTP_CODE"
+          echo "Response: $(echo "$BODY" | head -c 500)"
+          echo ""
+
+          if [ "$HTTP_CODE" = "200" ]; then
+            echo "✓ Bootstrap succeeded"
+          else
+            echo "ℹ️ Bootstrap not triggered (HTTP $HTTP_CODE) — SQL migration above is sufficient."
+          fi
 
           echo ""
-          echo "✅ Migration complete!"
-          echo ""
-          echo "You can now activate any of these licenses:"
-          echo "  - ALX-ADMIN-001-LIFETIME-01"
-          echo "  - ALX-ADMIN-002-LIFETIME-02"
-          echo "  - ALX-ADMIN-003-LIFETIME-03"
-          echo "  - ALX-ADMIN-004-LIFETIME-04"
-          echo "  - ALX-ADMIN-005-LIFETIME-05"
-          echo "  - ALX-TEST-TEST-TEST-TEST"
+          echo "✅ Database setup complete!"
+          echo "   Admin licenses are now active in the database."
+          echo "   Use them at: $APP_URL/activate"

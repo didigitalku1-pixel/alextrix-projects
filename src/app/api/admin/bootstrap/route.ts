@@ -80,53 +80,62 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    // === STEP 2: Insert 5 admin licenses ===
-    const adminLicenses = [
-      { license_key: "ALX-ADMIN-001-LIFETIME-01", email: "admin01@alextrix.dev", midtrans_order_id: "ADMIN-001" },
-      { license_key: "ALX-ADMIN-002-LIFETIME-02", email: "admin02@alextrix.dev", midtrans_order_id: "ADMIN-002" },
-      { license_key: "ALX-ADMIN-003-LIFETIME-03", email: "admin03@alextrix.dev", midtrans_order_id: "ADMIN-003" },
-      { license_key: "ALX-ADMIN-004-LIFETIME-04", email: "admin04@alextrix.dev", midtrans_order_id: "ADMIN-004" },
-      { license_key: "ALX-ADMIN-005-LIFETIME-05", email: "admin05@alextrix.dev", midtrans_order_id: "ADMIN-005" },
-    ];
+    // === STEP 2: Insert 5 admin licenses with RANDOM keys (not hardcoded) ===
+    // SECURITY: Previously used ALX-ADMIN-001-LIFETIME-01..05 which were predictable defaults.
+    // Now: generate random keys using same format as buyer licenses (ALX-XXXX-XXXX-XXXX-XXXX)
+    // but tagged with email pattern admin-XX@alextrix.dev so admin can identify them in panel.
+    const adminEmail = process.env.ADMIN_EMAIL || "admin@alextrix.dev";
+    const chars = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
+    const randomSeg = () => {
+      let s = "";
+      for (let i = 0; i < 4; i++) {
+        const arr = new Uint8Array(1);
+        crypto.getRandomValues(arr);
+        s += chars[arr[0] % chars.length];
+      }
+      return s;
+    };
+    const randomKey = () => `ALX-${randomSeg()}-${randomSeg()}-${randomSeg()}-${randomSeg()}`;
 
+    const adminLicensesToCreate = 5;
+    const createdAdminKeys: string[] = [];
     try {
-      for (const admin of adminLicenses) {
-        const { data: existing } = await client
-          .from("licenses")
-          .select("id, license_key")
-          .eq("license_key", admin.license_key)
-          .maybeSingle();
-
-        if (existing) {
-          await client
+      for (let i = 1; i <= adminLicensesToCreate; i++) {
+        // Generate unique random key (retry on collision)
+        let licenseKey: string | undefined;
+        for (let attempt = 0; attempt < 5; attempt++) {
+          const candidate = randomKey();
+          const { data: existing } = await client
             .from("licenses")
-            .update({
-              max_devices: 999,
-              status: "active",
-              updated_at: new Date().toISOString(),
-              email: admin.email,
-            })
-            .eq("id", existing.id);
-        } else {
-          await client.from("licenses").insert({
-            license_key: admin.license_key,
-            email: admin.email,
-            status: "active",
-            price: 0,
-            currency: "IDR",
-            max_devices: 999,
-            midtrans_order_id: admin.midtrans_order_id,
-            device_ids: [],
-            active_devices: 0,
-          });
+            .select("id")
+            .eq("license_key", candidate)
+            .maybeSingle();
+          if (!existing) {
+            licenseKey = candidate;
+            break;
+          }
         }
+        if (!licenseKey) continue;
+
+        const { error: insertErr } = await client.from("licenses").insert({
+          license_key: licenseKey,
+          email: adminEmail,
+          status: "active",
+          price: 0,
+          currency: "IDR",
+          max_devices: 999,
+          midtrans_order_id: `ADMIN-${i.toString().padStart(3, "0")}`,
+          device_ids: [],
+          active_devices: 0,
+        });
+        if (!insertErr) createdAdminKeys.push(licenseKey);
       }
 
       results.push({
         step: "insert_admin_licenses",
-        status: "ok",
-        message: `Inserted/updated 5 admin licenses (ALX-ADMIN-001-LIFETIME-01 through -05)`,
-        data: { keys: adminLicenses.map((a) => a.license_key) },
+        status: createdAdminKeys.length > 0 ? "ok" : "error",
+        message: `Created ${createdAdminKeys.length} admin license(s) with random keys (visible only in admin panel).`,
+        data: { count: createdAdminKeys.length, keys: createdAdminKeys }, // returned to authenticated admin only
       });
     } catch (e: any) {
       results.push({
@@ -136,49 +145,72 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    // === STEP 3: Insert/update test license ===
-    try {
-      const testKey = "ALX-TEST-TEST-TEST-TEST";
-      const { data: existing } = await client
-        .from("licenses")
-        .select("id, license_key")
-        .eq("license_key", testKey)
-        .maybeSingle();
-
-      if (existing) {
-        await client
+    // === STEP 3: Insert/update test license (only in non-production) ===
+    // SECURITY: Test license removed from production deployment.
+    // For local dev, set ADMIN_TEST_LICENSE env var to enable.
+    if (process.env.NODE_ENV !== "production" || process.env.ADMIN_TEST_LICENSE === "enabled") {
+      try {
+        const testKey = "ALX-TEST-TEST-TEST-TEST";
+        const { data: existing } = await client
           .from("licenses")
-          .update({
-            max_devices: 999,
+          .select("id, license_key")
+          .eq("license_key", testKey)
+          .maybeSingle();
+
+        if (existing) {
+          await client
+            .from("licenses")
+            .update({
+              max_devices: 999,
+              status: "active",
+              updated_at: new Date().toISOString(),
+            })
+            .eq("id", existing.id);
+        } else {
+          await client.from("licenses").insert({
+            license_key: testKey,
+            email: "test@alextrix.dev",
             status: "active",
-            updated_at: new Date().toISOString(),
-          })
-          .eq("id", existing.id);
-      } else {
-        await client.from("licenses").insert({
-          license_key: testKey,
-          email: "test@alextrix.dev",
-          status: "active",
-          price: 0,
-          currency: "IDR",
-          max_devices: 999,
-          midtrans_order_id: "TEST-LICENSE",
-          device_ids: [],
-          active_devices: 0,
+            price: 0,
+            currency: "IDR",
+            max_devices: 999,
+            midtrans_order_id: "TEST-LICENSE",
+            device_ids: [],
+            active_devices: 0,
+          });
+        }
+
+        results.push({
+          step: "insert_test_license",
+          status: "ok",
+          message: "Test license ALX-TEST-TEST-TEST-TEST ready (dev only, max_devices=999)",
+        });
+      } catch (e: any) {
+        results.push({
+          step: "insert_test_license",
+          status: "error",
+          message: e.message,
         });
       }
-
-      results.push({
-        step: "insert_test_license",
-        status: "ok",
-        message: "Test license ALX-TEST-TEST-TEST-TEST ready (max_devices=999)",
-      });
-    } catch (e: any) {
-      results.push({
-        step: "insert_test_license",
-        status: "error",
-        message: e.message,
-      });
+    } else {
+      // Production: revoke test license if it exists (in case it was created in dev)
+      try {
+        await client
+          .from("licenses")
+          .update({ status: "revoked", updated_at: new Date().toISOString() })
+          .eq("license_key", "ALX-TEST-TEST-TEST-TEST");
+        results.push({
+          step: "insert_test_license",
+          status: "ok",
+          message: "Test license revoked in production (set ADMIN_TEST_LICENSE=enabled to keep)",
+        });
+      } catch (e: any) {
+        results.push({
+          step: "insert_test_license",
+          status: "error",
+          message: e.message,
+        });
+      }
     }
 
     // === STEP 4: Verify admin + test licenses ===

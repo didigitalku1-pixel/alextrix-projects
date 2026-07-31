@@ -17,22 +17,20 @@ function checkAdminAuth(req: NextRequest): boolean {
   const expected = process.env.ADMIN_TOKEN;
   if (!expected) return false; // admin disabled if no token set
 
-  // 1. Check Authorization: Bearer XXX
+  // 1. Check Authorization: Bearer XXX (preferred, secure)
   const auth = req.headers.get("authorization") || "";
   if (auth.startsWith("Bearer ")) {
     const token = auth.slice(7).trim();
     if (token === expected) return true;
   }
 
-  // 2. Check ?token=XXX query param (for browser URL access)
-  const url = new URL(req.url);
-  const queryToken = url.searchParams.get("token");
-  if (queryToken && queryToken === expected) return true;
-
-  // 3. Check cookie (set after first URL access)
+  // 2. Check HttpOnly cookie (set after first auth via /admin/login)
+  //    Cookie is HttpOnly so JS can't read it (XSS-safe)
+  //    Token in cookie never appears in URL/logs (unlike ?token= query param)
   const cookie = req.cookies.get("alextrix_admin")?.value;
   if (cookie && cookie === expected) return true;
 
+  // NOTE: ?token=XXX query param REMOVED for security (token leak via browser history, CDN logs, Referer header)
   return false;
 }
 
@@ -90,20 +88,12 @@ export async function GET(req: NextRequest) {
       offset,
     });
 
-    // Set admin cookie if accessed via ?token= URL (so subsequent requests work without re-sending token)
-    if (url.searchParams.get("token")) {
-      response.cookies.set("alextrix_admin", url.searchParams.get("token")!, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "lax",
-        maxAge: 24 * 60 * 60, // 24 hours
-        path: "/",
-      });
-    }
+    // NOTE: cookie is set ONLY via /api/admin/login (POST form).
+    // Not via URL ?token= (that was a security risk — token in browser history, CDN logs, Referer header).
 
     return response;
   } catch (e) {
-    console.error("Admin licenses GET exception:", e);
+    console.error("Admin licenses GET error");
     return NextResponse.json({ success: false, error: "Internal error" }, { status: 500 });
   }
 }

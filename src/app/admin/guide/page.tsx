@@ -343,7 +343,7 @@ python3 -c "import secrets; print(secrets.token_hex(16))"`}</CodeBlock>
 
       <Card title="PENTING: Jangan Pakai License Key Format Sebagai Token" type="danger">
         <p style={{ margin: 0 }}>
-          Token admin BUKAN format <Code>ALX-ADMIN-001-LIFETIME-001</Code>. Token adalah string hex acak 32-karakter.
+          Token admin BUKAN format <Code>ALX-XXXX-XXXX-XXXX-XXXX</Code> (itu format license key). Token admin adalah string hex acak 32-karakter yang Anda generate dengan <Code>openssl rand -hex 16</Code>.
           License key format dipakai untuk login user biasa, bukan untuk admin.
         </p>
       </Card>
@@ -457,16 +457,18 @@ WHERE license_key NOT LIKE 'ALX-ADMIN-%'
   AND license_key NOT LIKE 'ALX-TEST-%'
   AND max_devices < 10;
 
--- 3. Insert 5 admin licenses (ALX-ADMIN-001-LIFETIME-01 sampai -05)
+-- 3. Generate 5 admin licenses dengan random keys (JANGAN hardcoded)
+-- Pakai /api/admin/bootstrap (POST dengan Authorization: Bearer ADMIN_TOKEN)
+-- atau jalankan workflow GitHub Actions: Setup Database
+-- Keys akan dicetak sekali di log workflow — copy dan simpan aman.
 INSERT INTO public.licenses (
   license_key, email, status, price, currency,
   max_devices, midtrans_order_id, device_ids, active_devices
 ) VALUES
-  ('ALX-ADMIN-001-LIFETIME-01', 'admin01@alextrix.dev', 'active', 0, 'IDR', 999, 'ADMIN-001', '{}', 0),
-  ('ALX-ADMIN-002-LIFETIME-02', 'admin02@alextrix.dev', 'active', 0, 'IDR', 999, 'ADMIN-002', '{}', 0),
-  ('ALX-ADMIN-003-LIFETIME-03', 'admin03@alextrix.dev', 'active', 0, 'IDR', 999, 'ADMIN-003', '{}', 0),
-  ('ALX-ADMIN-004-LIFETIME-04', 'admin04@alextrix.dev', 'active', 0, 'IDR', 999, 'ADMIN-004', '{}', 0),
-  ('ALX-ADMIN-005-LIFETIME-05', 'admin05@alextrix.dev', 'active', 0, 'IDR', 999, 'ADMIN-005', '{}', 0)
+-- Admin licenses TIDAK di-hardcode di SQL.
+-- Generate via /api/admin/bootstrap (pakai ADMIN_TOKEN di Authorization header).
+-- Setelah generate, license keys akan tampil di response API (hanya untuk admin yang sudah auth).
+-- SIMPAN KEMBALI KE email / password manager Anda — tidak ada cara lain untuk recover.
 ON CONFLICT (license_key) DO UPDATE
 SET max_devices = 999,
     status = 'active',
@@ -477,7 +479,8 @@ INSERT INTO public.licenses (
   license_key, email, status, price, currency,
   max_devices, midtrans_order_id, device_ids, active_devices
 ) VALUES
-  ('ALX-TEST-TEST-TEST-TEST', 'test@alextrix.dev', 'active', 0, 'IDR', 999, 'TEST-LICENSE', '{}', 0)
+-- Test license di-revoke di production (security best practice).
+-- Untuk development, set env var ADMIN_TEST_LICENSE=enabled lalu jalankan /api/admin/bootstrap.
 ON CONFLICT (license_key) DO UPDATE
 SET max_devices = 999,
     status = 'active',
@@ -682,14 +685,14 @@ function SetupVerifySection() {
           <li>✅ Halaman <Code>/manage</Code> menampilkan form input license key (bukan error)</li>
           <li>✅ Stats di homepage menampilkan angka penuh: 21.563 / 2.829 / 30.682 (bukan 21.6 / 2.8 / 30.7)</li>
           <li>✅ Cron cleanup jalan: test dengan <Code>/api/cron/cleanup-devices?token=XXX</Code></li>
-          <li>✅ License admin bisa diaktivasi: test dengan <Code>ALX-ADMIN-001-LIFETIME-01</Code></li>
+          <li>✅ License admin bisa diaktivasi: gunakan salah satu license yang di-generate oleh <Code>/api/admin/bootstrap</Code></li>
         </ol>
       </Card>
 
       <Card title="Cara Test Aktivasi License Admin" type="success">
         <ol style={{ margin: 0, paddingLeft: 20 }}>
           <li>Buka <Code>https://alextrix-projects.vercel.app/activate</Code></li>
-          <li>Masukkan: <Code>ALX-ADMIN-001-LIFETIME-01</Code></li>
+          <li>Masukkan: salah satu license yang di-generate oleh bootstrap (lihat di response API atau admin panel)</li>
           <li>Klik <Code>Aktivasi Sekarang →</Code></li>
           <li>Harusnya muncul &quot;Aktivasi Berhasil!&quot; dan redirect ke <Code>/dashboard</Code></li>
           <li>Setelah masuk dashboard, Anda bisa akses semua template, komponen, dll.</li>
@@ -700,7 +703,7 @@ function SetupVerifySection() {
         <ol style={{ margin: 0, paddingLeft: 20 }}>
           <li>Buka <Code>https://alextrix-projects.vercel.app/manage</Code> (tanpa parameter apa pun)</li>
           <li>Harusnya muncul form input license key (bukan error)</li>
-          <li>Masukkan: <Code>ALX-ADMIN-001-LIFETIME-01</Code></li>
+          <li>Masukkan: salah satu license yang di-generate oleh bootstrap (lihat di response API atau admin panel)</li>
           <li>Klik <Code>Lihat Perangkat →</Code></li>
           <li>Harusnya muncul daftar device yang teraktivasi (atau &quot;Belum ada perangkat&quot; jika baru pertama kali)</li>
         </ol>
@@ -829,14 +832,12 @@ function VerifyTestActivationSection() {
 
       <Step num={2} title="Masukkan License Key">
         <p>Pakai salah satu dari 5 license admin yang sudah dibuat SQL migration:</p>
-        <CodeBlock lang="license key">{`ALX-ADMIN-001-LIFETIME-01
-ALX-ADMIN-002-LIFETIME-02
-ALX-ADMIN-003-LIFETIME-03
-ALX-ADMIN-004-LIFETIME-04
-ALX-ADMIN-005-LIFETIME-05
+        <CodeBlock lang="license key">{`License key format yang valid:
+ALX-XXXX-XXXX-XXXX-XXXX  (auto-generated by bootstrap)
+ALX-XXXX-XXXX-XXXX-XXXX  (random, generated saat bootstrap)
 
-Atau license test:
-ALX-TEST-TEST-TEST-TEST`}</CodeBlock>
+Untuk lihat admin licenses yang sudah di-generate,
+login ke /admin/licenses dan filter by email admin.`}</CodeBlock>
       </Step>
 
       <Step num={3} title="Klik Aktivasi Sekarang">
@@ -991,7 +992,7 @@ function Troubleshooting404Section() {
       <Card title="Penyebab" type="warning">
         <ol style={{ margin: 0, paddingLeft: 20 }}>
           <li>Deploy belum selesai atau belum push code terbaru</li>
-          <li>Token di URL salah (pakai license key format, contoh: <Code>ALX-ADMIN-001-LIFETIME-001</Code>)</li>
+          <li>Token di URL salah (pakai license key format, contoh: <Code>ALX-XXXX-XXXX-XXXX-XXXX</Code> — itu BUKAN admin token)</li>
           <li>Browser cache masih versi lama</li>
         </ol>
       </Card>
@@ -1012,13 +1013,18 @@ git log --oneline -5
         </Step>
         <Step num={5} title="Pakai Token yang Benar">
           <p>
-            <strong>JANGAN</strong> pakai <Code>ALX-ADMIN-001-LIFETIME-001</Code> sebagai token!
+            <strong>JANGAN</strong> pakai format <Code>ALX-XXXX-XXXX-XXXX-XXXX</Code> sebagai token! Itu adalah format license key.
             Token admin adalah string hex acak 32-karakter yang Anda set di env var <Code>ADMIN_TOKEN</Code>.
           </p>
           <p>URL yang benar:</p>
-          <CodeBlock lang="url">https://alextrix-projects.vercel.app/admin/licenses?token=a8f3k2l9m4n7p1q6r5s8t0u3v2w9x1y4</CodeBlock>
-          <p>Bukan:</p>
-          <CodeBlock lang="url">https://alextrix-projects.vercel.app/admin/licenses?token=ALX-ADMIN-001-LIFETIME-001</CodeBlock>
+          <CodeBlock lang="url">{`# Buka halaman admin (TANPA token di URL):
+https://alextrix-projects.vercel.app/admin/licenses
+
+# Lalu login via form (masukkan ADMIN_TOKEN di input password).
+# Token akan disimpan di HttpOnly cookie (tidak muncul di URL/JS/logs).`}</CodeBlock>
+          <p>Bukan (JANGAN pakai ?token= di URL — bocor ke browser history, CDN logs, Referer):</p>
+          <CodeBlock lang="url">{`# JANGAN LAKUKAN INI:
+https://alextrix-projects.vercel.app/admin/licenses?token=TOKEN_ANDA`}</CodeBlock>
         </Step>
       </Card>
     </div>
@@ -1213,9 +1219,9 @@ function ReferenceLicenseFormatsSection() {
       <Card title="Contoh License Key Valid" type="success">
         <ul style={{ margin: 0, paddingLeft: 20, lineHeight: 1.8 }}>
           <li><Code>ALX-ABCD-EFGH-JKMN-PQRS</Code> — format reguler buyer (auto-generated)</li>
-          <li><Code>ALX-ADMIN-001-LIFETIME-01</Code> — admin license</li>
+          <li>Format: <Code>ALX-XXXX-XXXX-XXXX-XXXX</Code> (auto-generated untuk admin licenses)</li>
           <li><Code>ALX-ADMIN-005-LIFETIME-05</Code> — admin license ke-5</li>
-          <li><Code>ALX-TEST-TEST-TEST-TEST</Code> — license test</li>
+          <li>License test di-revoke di production (lihat <Code>/api/admin/bootstrap</Code> untuk re-enable)</li>
           <li><Code>ALX-PROMO-2025-DEC-0001</Code> — promo code Desember 2025</li>
           <li><Code>ALX-VIP-2025</Code> — short code untuk VIP</li>
         </ul>
