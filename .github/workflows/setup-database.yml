@@ -1,0 +1,115 @@
+name: Setup Database (One-Time)
+
+# Manual trigger — runs SQL migrations against Supabase
+# Uses SUPABASE_SERVICE_ROLE_KEY + VERCEL_PROJECT_ID secrets
+# Idempotent: safe to run multiple times
+
+on:
+  workflow_dispatch:
+    inputs:
+      run_bootstrap_api:
+        description: "Also trigger /api/admin/bootstrap after SQL runs"
+        required: false
+        default: "true"
+
+permissions:
+  contents: read
+
+jobs:
+  migrate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Run SQL Migration 0001 (License Improvements)
+        env:
+          SUPABASE_URL: https://kvkwiekfdlaeeabkwmhp.supabase.co
+          SUPABASE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          set -e
+          echo "=== Running Migration 0001: License Improvements ==="
+          echo ""
+
+          # Migration 0001: Update max_devices + insert admin licenses + test license
+          # Use Supabase REST API to upsert via service_role key (bypasses RLS)
+
+          # 1. Update existing non-admin/non-test licenses to max_devices=10
+          echo "1. Updating existing licenses to max_devices=10..."
+          PATCH_RESP=$(curl -sS -X PATCH \
+            "$SUPABASE_URL/rest/v1/licenses?license_key=not.like.ALX-ADMIN-*&license_key=not.like.ALX-TEST-&max_devices=lt.10" \
+            -H "apikey: $SUPABASE_KEY" \
+            -H "Authorization: Bearer $SUPABASE_KEY" \
+            -H "Content-Type: application/json" \
+            -H "Prefer: return=representation" \
+            -d '{"max_devices": 10, "updated_at": "now()"}')
+          UPDATED_COUNT=$(echo "$PATCH_RESP" | python3 -c "import sys, json; print(len(json.load(sys.stdin)))" 2>/dev/null || echo "0")
+          echo "   Updated: $UPDATED_COUNT license(s)"
+          echo ""
+
+          # 2. Insert/update 5 admin licenses + 1 test license (idempotent via upsert)
+          echo "2. Upserting admin + test licenses..."
+          UPSERT_RESP=$(curl -sS -X POST \
+            "$SUPABASE_URL/rest/v1/licenses" \
+            -H "apikey: $SUPABASE_KEY" \
+            -H "Authorization: Bearer $SUPABASE_KEY" \
+            -H "Content-Type: application/json" \
+            -H "Prefer: resolution=merge-duplicates,return=representation" \
+            -d '[
+              {"license_key":"ALX-ADMIN-001-LIFETIME-01","email":"admin01@alextrix.dev","status":"active","price":0,"currency":"IDR","max_devices":999,"midtrans_order_id":"ADMIN-001","device_ids":[],"active_devices":0},
+              {"license_key":"ALX-ADMIN-002-LIFETIME-02","email":"admin02@alextrix.dev","status":"active","price":0,"currency":"IDR","max_devices":999,"midtrans_order_id":"ADMIN-002","device_ids":[],"active_devices":0},
+              {"license_key":"ALX-ADMIN-003-LIFETIME-03","email":"admin03@alextrix.dev","status":"active","price":0,"currency":"IDR","max_devices":999,"midtrans_order_id":"ADMIN-003","device_ids":[],"active_devices":0},
+              {"license_key":"ALX-ADMIN-004-LIFETIME-04","email":"admin04@alextrix.dev","status":"active","price":0,"currency":"IDR","max_devices":999,"midtrans_order_id":"ADMIN-004","device_ids":[],"active_devices":0},
+              {"license_key":"ALX-ADMIN-005-LIFETIME-05","email":"admin05@alextrix.dev","status":"active","price":0,"currency":"IDR","max_devices":999,"midtrans_order_id":"ADMIN-005","device_ids":[],"active_devices":0},
+              {"license_key":"ALX-TEST-TEST-TEST-TEST","email":"test@alextrix.dev","status":"active","price":0,"currency":"IDR","max_devices":999,"midtrans_order_id":"TEST-LICENSE","device_ids":[],"active_devices":0}
+            ]')
+          UPSERTED_COUNT=$(echo "$UPSERT_RESP" | python3 -c "import sys, json; print(len(json.load(sys.stdin)))" 2>/dev/null || echo "0")
+          echo "   Upserted: $UPSERTED_COUNT license(s)"
+          echo ""
+
+          # 3. Verify
+          echo "3. Verification — current admin + test licenses in DB:"
+          curl -sS -X GET \
+            "$SUPABASE_URL/rest/v1/licenses?select=license_key,email,status,max_devices&or=(license_key.like.ALX-ADMIN-*,license_key.eq.ALX-TEST-TEST-TEST-TEST)&order=license_key.asc" \
+            -H "apikey: $SUPABASE_KEY" \
+            -H "Authorization: Bearer $SUPABASE_KEY" | python3 -m json.tool
+          echo ""
+
+      - name: Trigger /api/admin/bootstrap on Vercel (optional)
+        if: ${{ github.event.inputs.run_bootstrap_api == 'true' }}
+        env:
+          ADMIN_TOKEN: aa815fb195ea9c7c4ff1ced2ab376006
+        run: |
+          echo "=== Triggering /api/admin/bootstrap on Vercel ==="
+          echo ""
+          echo "Note: This requires ADMIN_TOKEN env var to be set on Vercel."
+          echo "If not set yet, this step will fail with 401 — that's OK, SQL migration above already ran."
+          echo ""
+
+          # Try production URL first
+          for URL in "https://alextrix-projects.vercel.app" ""; do
+            if [ -z "$URL" ]; then continue; fi
+            echo "Trying: $URL/api/admin/bootstrap?token=..."
+            RESP=$(curl -sS -X POST "$URL/api/admin/bootstrap?token=$ADMIN_TOKEN" -H "Content-Type: application/json" -w "\nHTTP_CODE:%{http_code}" || echo "HTTP_CODE:000")
+            HTTP_CODE=$(echo "$RESP" | grep -oE 'HTTP_CODE:[0-9]+' | cut -d: -f2)
+            BODY=$(echo "$RESP" | sed 's/HTTP_CODE:[0-9]*$//')
+            echo "HTTP: $HTTP_CODE"
+            echo "Response: $BODY" | head -c 500
+            echo ""
+            if [ "$HTTP_CODE" = "200" ]; then
+              echo "✓ Bootstrap succeeded"
+              break
+            fi
+          done
+
+          echo ""
+          echo "✅ Migration complete!"
+          echo ""
+          echo "You can now activate any of these licenses:"
+          echo "  - ALX-ADMIN-001-LIFETIME-01"
+          echo "  - ALX-ADMIN-002-LIFETIME-02"
+          echo "  - ALX-ADMIN-003-LIFETIME-03"
+          echo "  - ALX-ADMIN-004-LIFETIME-04"
+          echo "  - ALX-ADMIN-005-LIFETIME-05"
+          echo "  - ALX-TEST-TEST-TEST-TEST"
