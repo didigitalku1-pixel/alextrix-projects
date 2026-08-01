@@ -1,68 +1,68 @@
 {
-  "generated_at": "2026-07-04T18:01:49.881894Z",
-  "total_items": 24284,
+  "generated_at": "2026-08-01T06:07:35.324786Z",
+  "total_items": 24408,
   "components": 2829,
-  "templates": 21455,
-  "with_code": 24284,
-  "premium": 851,
-  "featured": 7771,
-  "with_image": 24260,
+  "templates": 21579,
+  "with_code": 24408,
+  "premium": 880,
+  "featured": 7807,
+  "with_image": 24383,
   "top_tags": [
     [
       "Landing Page",
-      15776
+      15893
     ],
     [
       "Minimal",
-      13064
+      13172
     ],
     [
       "Clean",
-      12455
+      12624
     ],
     [
       "Brand",
-      11912
+      11932
     ],
     [
       "Technology",
-      11127
+      11277
     ],
     [
       "Large Type",
-      9793
+      9797
     ],
     [
       "Services",
-      8978
+      9098
     ],
     [
       "Dark",
-      8303
+      8435
     ],
     [
       "Gradient",
-      7509
+      7504
     ],
     [
       "Portfolio",
-      3042
+      3123
     ],
     [
       "Futuristic",
-      2466
+      2522
+    ],
+    [
+      "Animated",
+      2004
     ],
     [
       "tailwind",
       1918
     ],
     [
-      "Animated",
-      1881
-    ],
-    [
       "Health",
-      1813
+      1833
     ],
     [
       "responsive",
@@ -70,15 +70,15 @@
     ],
     [
       "Dashboard",
-      1631
+      1621
     ],
     [
       "Business",
-      1506
+      1512
     ],
     [
       "SaaS",
-      1407
+      1404
     ],
     [
       "Tailwind CSS",
@@ -86,19 +86,19 @@
     ],
     [
       "Grid",
-      1264
+      1291
     ],
     [
       "Art & Design",
-      1243
+      1276
     ],
     [
       "E-commerce",
-      1228
+      1235
     ],
     [
       "Education",
-      1003
+      1016
     ],
     [
       "animated",
@@ -113,24 +113,24 @@
       749
     ],
     [
-      "Food",
-      706
-    ],
-    [
       "Colorful",
-      704
+      707
     ],
     [
       "AI",
-      701
+      700
+    ],
+    [
+      "Food",
+      700
     ],
     [
       "Real Estate",
-      633
+      643
     ],
     [
       "Entertainment",
-      621
+      632
     ],
     [
       "Responsive Design",
@@ -146,11 +146,11 @@
     ],
     [
       "Travel",
-      496
+      498
     ],
     [
       "3D",
-      471
+      490
     ],
     [
       "Features",
@@ -174,7 +174,7 @@
     ],
     [
       "Fashion",
-      384
+      393
     ],
     [
       "hero",
@@ -198,7 +198,7 @@
     ],
     [
       "Analytics",
-      329
+      328
     ],
     [
       "dark",
@@ -209,5 +209,5 @@
       285
     ]
   ],
-  "total_code_chars": 926859582
+  "total_code_chars": 954172972
 }
