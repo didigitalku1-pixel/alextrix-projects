@@ -1,60 +1,60 @@
 {
-  "generated_at": "2026-08-10T04:47:16.741707Z",
-  "total_items": 24467,
+  "generated_at": "2026-08-11T04:26:49.280135Z",
+  "total_items": 24485,
   "components": 2829,
-  "templates": 21638,
-  "with_code": 24467,
-  "premium": 886,
-  "featured": 7813,
-  "with_image": 24442,
+  "templates": 21656,
+  "with_code": 24485,
+  "premium": 892,
+  "featured": 7822,
+  "with_image": 24460,
   "top_tags": [
     [
       "Landing Page",
-      15929
+      15945
     ],
     [
       "Minimal",
-      13208
+      13221
     ],
     [
       "Clean",
-      12678
+      12691
     ],
     [
       "Brand",
-      11940
+      11943
     ],
     [
       "Technology",
-      11321
+      11336
     ],
     [
       "Large Type",
-      9804
+      9810
     ],
     [
       "Services",
-      9142
+      9153
     ],
     [
       "Dark",
-      8475
+      8489
     ],
     [
       "Gradient",
-      7509
+      7512
     ],
     [
       "Portfolio",
-      3141
+      3144
     ],
     [
       "Futuristic",
-      2537
+      2546
     ],
     [
       "Animated",
-      2040
+      2051
     ],
     [
       "tailwind",
@@ -62,7 +62,7 @@
     ],
     [
       "Health",
-      1838
+      1839
     ],
     [
       "responsive",
@@ -78,7 +78,7 @@
     ],
     [
       "SaaS",
-      1405
+      1406
     ],
     [
       "Tailwind CSS",
@@ -86,7 +86,7 @@
     ],
     [
       "Grid",
-      1295
+      1296
     ],
     [
       "Art & Design",
@@ -94,11 +94,11 @@
     ],
     [
       "E-commerce",
-      1235
+      1238
     ],
     [
       "Education",
-      1019
+      1020
     ],
     [
       "animated",
@@ -114,15 +114,15 @@
     ],
     [
       "Colorful",
-      712
+      713
     ],
     [
       "Food",
-      701
+      702
     ],
     [
       "AI",
-      700
+      701
     ],
     [
       "Real Estate",
@@ -130,7 +130,7 @@
     ],
     [
       "Entertainment",
-      632
+      634
     ],
     [
       "Responsive Design",
@@ -150,7 +150,7 @@
     ],
     [
       "3D",
-      493
+      498
     ],
     [
       "Features",
@@ -174,7 +174,7 @@
     ],
     [
       "Fashion",
-      394
+      395
     ],
     [
       "hero",
@@ -206,8 +206,8 @@
     ],
     [
       "Style",
-      287
+      291
     ]
   ],
-  "total_code_chars": 958462822
+  "total_code_chars": 960406773
 }
