@@ -1,24 +1,24 @@
 {
-  "generated_at": "2026-08-16T03:55:20.294086Z",
-  "total_items": 24521,
+  "generated_at": "2026-08-17T03:57:43.791182Z",
+  "total_items": 24530,
   "components": 2831,
-  "templates": 21690,
-  "with_code": 24521,
+  "templates": 21699,
+  "with_code": 24530,
   "premium": 892,
   "featured": 7821,
-  "with_image": 24496,
+  "with_image": 24505,
   "top_tags": [
     [
       "Landing Page",
-      15963
+      15970
     ],
     [
       "Minimal",
-      13244
+      13250
     ],
     [
       "Clean",
-      12724
+      12731
     ],
     [
       "Brand",
@@ -26,35 +26,35 @@
     ],
     [
       "Technology",
-      11361
+      11368
     ],
     [
       "Large Type",
-      9811
+      9812
     ],
     [
       "Services",
-      9173
+      9181
     ],
     [
       "Dark",
-      8511
+      8516
     ],
     [
       "Gradient",
-      7514
+      7513
     ],
     [
       "Portfolio",
-      3161
+      3167
     ],
     [
       "Futuristic",
-      2555
+      2556
     ],
     [
       "Animated",
-      2070
+      2076
     ],
     [
       "tailwind",
@@ -70,7 +70,7 @@
     ],
     [
       "Dashboard",
-      1621
+      1620
     ],
     [
       "Business",
@@ -98,7 +98,7 @@
     ],
     [
       "Education",
-      1021
+      1020
     ],
     [
       "animated",
@@ -114,7 +114,7 @@
     ],
     [
       "Colorful",
-      713
+      714
     ],
     [
       "Food",
@@ -126,7 +126,7 @@
     ],
     [
       "Real Estate",
-      653
+      654
     ],
     [
       "Entertainment",
@@ -150,7 +150,7 @@
     ],
     [
       "3D",
-      498
+      497
     ],
     [
       "Features",
@@ -206,8 +206,8 @@
     ],
     [
       "Style",
-      298
+      299
     ]
   ],
-  "total_code_chars": 963172037
+  "total_code_chars": 963575688
 }
