@@ -1,12 +1,12 @@
 {
-  "generated_at": "2026-08-28T15:16:34.648092Z",
-  "total_items": 24635,
+  "generated_at": "2026-08-29T09:57:06.281796Z",
+  "total_items": 24637,
   "components": 2831,
-  "templates": 21804,
-  "with_code": 24635,
+  "templates": 21806,
+  "with_code": 24637,
   "premium": 904,
-  "featured": 7833,
-  "with_image": 24610,
+  "featured": 7834,
+  "with_image": 24612,
   "top_tags": [
     [
       "Landing Page",
@@ -14,15 +14,15 @@
     ],
     [
       "Minimal",
-      13319
+      13320
     ],
     [
       "Clean",
-      12817
+      12818
     ],
     [
       "Brand",
-      11967
+      11968
     ],
     [
       "Technology",
@@ -34,11 +34,11 @@
     ],
     [
       "Services",
-      9250
+      9251
     ],
     [
       "Dark",
-      8594
+      8595
     ],
     [
       "Gradient",
@@ -62,7 +62,7 @@
     ],
     [
       "Health",
-      1857
+      1858
     ],
     [
       "responsive",
@@ -126,7 +126,7 @@
     ],
     [
       "Real Estate",
-      667
+      668
     ],
     [
       "Entertainment",
@@ -209,5 +209,5 @@
       303
     ]
   ],
-  "total_code_chars": 979455838
+  "total_code_chars": 979645679
 }
