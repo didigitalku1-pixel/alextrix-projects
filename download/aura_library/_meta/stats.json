@@ -1,24 +1,24 @@
 {
-  "generated_at": "2026-09-05T07:36:42.992756Z",
-  "total_items": 24672,
+  "generated_at": "2026-09-06T07:49:57.501768Z",
+  "total_items": 24673,
   "components": 2831,
-  "templates": 21841,
-  "with_code": 24672,
+  "templates": 21842,
+  "with_code": 24673,
   "premium": 907,
-  "featured": 7840,
-  "with_image": 24647,
+  "featured": 7839,
+  "with_image": 24648,
   "top_tags": [
     [
       "Landing Page",
-      16050
+      16051
     ],
     [
       "Minimal",
-      13339
+      13340
     ],
     [
       "Clean",
-      12844
+      12845
     ],
     [
       "Brand",
@@ -30,7 +30,7 @@
     ],
     [
       "Large Type",
-      9823
+      9824
     ],
     [
       "Services",
@@ -38,7 +38,7 @@
     ],
     [
       "Dark",
-      8617
+      8618
     ],
     [
       "Gradient",
@@ -54,7 +54,7 @@
     ],
     [
       "Animated",
-      2149
+      2150
     ],
     [
       "tailwind",
@@ -62,7 +62,7 @@
     ],
     [
       "Health",
-      1859
+      1860
     ],
     [
       "responsive",
@@ -70,7 +70,7 @@
     ],
     [
       "Dashboard",
-      1621
+      1620
     ],
     [
       "Business",
@@ -98,7 +98,7 @@
     ],
     [
       "Education",
-      1026
+      1025
     ],
     [
       "animated",
@@ -114,7 +114,7 @@
     ],
     [
       "Colorful",
-      717
+      718
     ],
     [
       "Food",
@@ -130,7 +130,7 @@
     ],
     [
       "Entertainment",
-      636
+      637
     ],
     [
       "Responsive Design",
@@ -198,7 +198,7 @@
     ],
     [
       "Analytics",
-      328
+      327
     ],
     [
       "dark",
@@ -209,5 +209,5 @@
       305
     ]
   ],
-  "total_code_chars": 983185969
+  "total_code_chars": 983741951
 }
