@@ -1,12 +1,12 @@
 {
-  "generated_at": "2026-09-17T08:35:48.653873Z",
-  "total_items": 24748,
+  "generated_at": "2026-09-18T08:10:14.118489Z",
+  "total_items": 24749,
   "components": 2831,
-  "templates": 21917,
-  "with_code": 24748,
+  "templates": 21918,
+  "with_code": 24749,
   "premium": 916,
   "featured": 7854,
-  "with_image": 24723,
+  "with_image": 24724,
   "top_tags": [
     [
       "Landing Page",
@@ -22,7 +22,7 @@
     ],
     [
       "Brand",
-      11990
+      11989
     ],
     [
       "Technology",
@@ -30,11 +30,11 @@
     ],
     [
       "Large Type",
-      9829
+      9828
     ],
     [
       "Services",
-      9317
+      9318
     ],
     [
       "Dark",
@@ -42,7 +42,7 @@
     ],
     [
       "Gradient",
-      7518
+      7517
     ],
     [
       "Portfolio",
@@ -62,7 +62,7 @@
     ],
     [
       "Health",
-      1878
+      1879
     ],
     [
       "responsive",
@@ -78,7 +78,7 @@
     ],
     [
       "SaaS",
-      1410
+      1409
     ],
     [
       "Tailwind CSS",
@@ -209,5 +209,5 @@
       310
     ]
   ],
-  "total_code_chars": 1006712592
+  "total_code_chars": 1006762906
 }
