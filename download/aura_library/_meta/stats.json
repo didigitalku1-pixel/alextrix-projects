@@ -1,12 +1,12 @@
 {
-  "generated_at": "2026-09-21T08:50:22.165535Z",
-  "total_items": 24759,
+  "generated_at": "2026-09-22T08:26:57.953257Z",
+  "total_items": 24763,
   "components": 2831,
-  "templates": 21928,
-  "with_code": 24759,
-  "premium": 916,
-  "featured": 7853,
-  "with_image": 24733,
+  "templates": 21932,
+  "with_code": 24763,
+  "premium": 922,
+  "featured": 7858,
+  "with_image": 24737,
   "top_tags": [
     [
       "Landing Page",
@@ -14,27 +14,27 @@
     ],
     [
       "Minimal",
-      13402
+      13406
     ],
     [
       "Clean",
-      12914
+      12918
     ],
     [
       "Brand",
-      11989
+      11991
     ],
     [
       "Technology",
-      11519
+      11520
     ],
     [
       "Large Type",
-      9829
+      9830
     ],
     [
       "Services",
-      9325
+      9328
     ],
     [
       "Dark",
@@ -42,11 +42,11 @@
     ],
     [
       "Gradient",
-      7517
+      7516
     ],
     [
       "Portfolio",
-      3235
+      3239
     ],
     [
       "Futuristic",
@@ -54,7 +54,7 @@
     ],
     [
       "Animated",
-      2190
+      2194
     ],
     [
       "tailwind",
@@ -62,7 +62,7 @@
     ],
     [
       "Health",
-      1881
+      1883
     ],
     [
       "responsive",
@@ -70,7 +70,7 @@
     ],
     [
       "Dashboard",
-      1620
+      1618
     ],
     [
       "Business",
@@ -86,11 +86,11 @@
     ],
     [
       "Grid",
-      1330
+      1331
     ],
     [
       "Art & Design",
-      1303
+      1304
     ],
     [
       "E-commerce",
@@ -130,7 +130,7 @@
     ],
     [
       "Entertainment",
-      640
+      641
     ],
     [
       "Responsive Design",
@@ -146,7 +146,7 @@
     ],
     [
       "3D",
-      523
+      522
     ],
     [
       "Travel",
@@ -198,7 +198,7 @@
     ],
     [
       "Analytics",
-      328
+      327
     ],
     [
       "dark",
@@ -206,8 +206,8 @@
     ],
     [
       "Style",
-      310
+      311
     ]
   ],
-  "total_code_chars": 1014234001
+  "total_code_chars": 1017379203
 }
