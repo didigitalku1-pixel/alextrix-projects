@@ -1,60 +1,60 @@
 {
-  "generated_at": "2026-10-02T09:37:15.979874Z",
-  "total_items": 24810,
+  "generated_at": "2026-10-03T09:03:47.066203Z",
+  "total_items": 24819,
   "components": 2831,
-  "templates": 21979,
-  "with_code": 24810,
-  "premium": 929,
-  "featured": 7864,
-  "with_image": 24784,
+  "templates": 21988,
+  "with_code": 24819,
+  "premium": 930,
+  "featured": 7866,
+  "with_image": 24793,
   "top_tags": [
     [
       "Landing Page",
-      16124
+      16130
     ],
     [
       "Minimal",
-      13434
+      13441
     ],
     [
       "Clean",
-      12957
+      12964
     ],
     [
       "Brand",
-      12001
+      12003
     ],
     [
       "Technology",
-      11544
+      11554
     ],
     [
       "Large Type",
-      9833
+      9832
     ],
     [
       "Services",
-      9357
+      9365
     ],
     [
       "Dark",
-      8678
+      8683
     ],
     [
       "Gradient",
-      7516
+      7518
     ],
     [
       "Portfolio",
-      3258
+      3259
     ],
     [
       "Futuristic",
-      2609
+      2612
     ],
     [
       "Animated",
-      2209
+      2214
     ],
     [
       "tailwind",
@@ -62,7 +62,7 @@
     ],
     [
       "Health",
-      1894
+      1895
     ],
     [
       "responsive",
@@ -78,7 +78,7 @@
     ],
     [
       "SaaS",
-      1409
+      1410
     ],
     [
       "Tailwind CSS",
@@ -86,7 +86,7 @@
     ],
     [
       "Grid",
-      1339
+      1341
     ],
     [
       "Art & Design",
@@ -94,7 +94,7 @@
     ],
     [
       "E-commerce",
-      1249
+      1250
     ],
     [
       "Education",
@@ -118,19 +118,19 @@
     ],
     [
       "Food",
-      710
+      711
     ],
     [
       "AI",
-      699
+      700
     ],
     [
       "Real Estate",
-      684
+      685
     ],
     [
       "Entertainment",
-      643
+      644
     ],
     [
       "Responsive Design",
@@ -142,7 +142,7 @@
     ],
     [
       "3D",
-      528
+      529
     ],
     [
       "cta",
@@ -150,7 +150,7 @@
     ],
     [
       "Travel",
-      508
+      507
     ],
     [
       "Features",
@@ -209,5 +209,5 @@
       311
     ]
   ],
-  "total_code_chars": 1024990386
+  "total_code_chars": 1026043527
 }
