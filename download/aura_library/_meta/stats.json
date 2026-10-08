@@ -1,11 +1,11 @@
 {
-  "generated_at": "2026-10-07T10:08:13.744094Z",
+  "generated_at": "2026-10-08T10:22:28.291849Z",
   "total_items": 24832,
   "components": 2831,
   "templates": 22001,
   "with_code": 24832,
   "premium": 936,
-  "featured": 7870,
+  "featured": 7868,
   "with_image": 24806,
   "top_tags": [
     [
@@ -22,15 +22,15 @@
     ],
     [
       "Brand",
-      12005
+      12004
     ],
     [
       "Technology",
-      11565
+      11564
     ],
     [
       "Large Type",
-      9832
+      9831
     ],
     [
       "Services",
@@ -38,7 +38,7 @@
     ],
     [
       "Dark",
-      8689
+      8688
     ],
     [
       "Gradient",
@@ -46,15 +46,15 @@
     ],
     [
       "Portfolio",
-      3263
+      3262
     ],
     [
       "Futuristic",
-      2617
+      2616
     ],
     [
       "Animated",
-      2220
+      2219
     ],
     [
       "tailwind",
@@ -62,7 +62,7 @@
     ],
     [
       "Health",
-      1896
+      1897
     ],
     [
       "responsive",
@@ -74,7 +74,7 @@
     ],
     [
       "Business",
-      1532
+      1531
     ],
     [
       "SaaS",
@@ -86,7 +86,7 @@
     ],
     [
       "Grid",
-      1342
+      1343
     ],
     [
       "Art & Design",
@@ -209,5 +209,5 @@
       311
     ]
   ],
-  "total_code_chars": 1033130628
+  "total_code_chars": 1033177234
 }
