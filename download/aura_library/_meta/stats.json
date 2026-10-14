@@ -1,44 +1,44 @@
 {
-  "generated_at": "2026-10-13T10:24:21.638854Z",
-  "total_items": 24858,
+  "generated_at": "2026-10-14T08:37:13.959642Z",
+  "total_items": 24865,
   "components": 2831,
-  "templates": 22027,
-  "with_code": 24858,
+  "templates": 22034,
+  "with_code": 24865,
   "premium": 936,
   "featured": 7870,
-  "with_image": 24832,
+  "with_image": 24839,
   "top_tags": [
     [
       "Landing Page",
-      16149
+      16155
     ],
     [
       "Minimal",
-      13458
+      13461
     ],
     [
       "Clean",
-      12992
+      12999
     ],
     [
       "Brand",
-      12008
+      12009
     ],
     [
       "Technology",
-      11577
+      11584
     ],
     [
       "Large Type",
-      9834
+      9835
     ],
     [
       "Services",
-      9388
+      9393
     ],
     [
       "Dark",
-      8696
+      8702
     ],
     [
       "Gradient",
@@ -46,15 +46,15 @@
     ],
     [
       "Portfolio",
-      3270
+      3274
     ],
     [
       "Futuristic",
-      2624
+      2630
     ],
     [
       "Animated",
-      2227
+      2233
     ],
     [
       "tailwind",
@@ -78,7 +78,7 @@
     ],
     [
       "SaaS",
-      1410
+      1411
     ],
     [
       "Tailwind CSS",
@@ -86,7 +86,7 @@
     ],
     [
       "Grid",
-      1347
+      1348
     ],
     [
       "Art & Design",
@@ -126,7 +126,7 @@
     ],
     [
       "Real Estate",
-      687
+      688
     ],
     [
       "Entertainment",
@@ -142,7 +142,7 @@
     ],
     [
       "3D",
-      534
+      535
     ],
     [
       "cta",
@@ -209,5 +209,5 @@
       311
     ]
   ],
-  "total_code_chars": 1039004143
+  "total_code_chars": 1040458190
 }
