@@ -1,11 +1,11 @@
 {
-  "generated_at": "2026-10-14T08:37:13.959642Z",
+  "generated_at": "2026-10-15T08:12:48.706228Z",
   "total_items": 24865,
   "components": 2831,
   "templates": 22034,
   "with_code": 24865,
-  "premium": 936,
-  "featured": 7870,
+  "premium": 941,
+  "featured": 7875,
   "with_image": 24839,
   "top_tags": [
     [
@@ -14,11 +14,11 @@
     ],
     [
       "Minimal",
-      13461
+      13462
     ],
     [
       "Clean",
-      12999
+      13000
     ],
     [
       "Brand",
@@ -26,7 +26,7 @@
     ],
     [
       "Technology",
-      11584
+      11585
     ],
     [
       "Large Type",
@@ -34,7 +34,7 @@
     ],
     [
       "Services",
-      9393
+      9394
     ],
     [
       "Dark",
@@ -46,7 +46,7 @@
     ],
     [
       "Portfolio",
-      3274
+      3275
     ],
     [
       "Futuristic",
@@ -62,7 +62,7 @@
     ],
     [
       "Health",
-      1898
+      1899
     ],
     [
       "responsive",
@@ -209,5 +209,5 @@
       311
     ]
   ],
-  "total_code_chars": 1040458190
+  "total_code_chars": 1040554905
 }
