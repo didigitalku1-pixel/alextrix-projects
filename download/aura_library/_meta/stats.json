@@ -1,11 +1,11 @@
 {
-  "generated_at": "2026-10-18T07:57:30.582741Z",
+  "generated_at": "2026-10-19T08:44:23.816608Z",
   "total_items": 24856,
   "components": 2831,
   "templates": 22025,
   "with_code": 24856,
   "premium": 941,
-  "featured": 7873,
+  "featured": 7872,
   "with_image": 24830,
   "top_tags": [
     [
@@ -18,11 +18,11 @@
     ],
     [
       "Clean",
-      13003
+      13004
     ],
     [
       "Brand",
-      12007
+      12006
     ],
     [
       "Technology",
@@ -30,11 +30,11 @@
     ],
     [
       "Large Type",
-      9832
+      9831
     ],
     [
       "Services",
-      9395
+      9396
     ],
     [
       "Dark",
@@ -42,11 +42,11 @@
     ],
     [
       "Gradient",
-      7521
+      7520
     ],
     [
       "Portfolio",
-      3283
+      3284
     ],
     [
       "Futuristic",
@@ -209,5 +209,5 @@
       311
     ]
   ],
-  "total_code_chars": 1018070782
+  "total_code_chars": 1018120300
 }
