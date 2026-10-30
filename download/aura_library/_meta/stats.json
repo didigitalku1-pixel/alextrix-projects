@@ -1,40 +1,40 @@
 {
-  "generated_at": "2026-10-29T09:46:14.662912Z",
-  "total_items": 24892,
+  "generated_at": "2026-10-30T09:52:22.881048Z",
+  "total_items": 24896,
   "components": 2831,
-  "templates": 22061,
-  "with_code": 24892,
-  "premium": 950,
+  "templates": 22065,
+  "with_code": 24896,
+  "premium": 951,
   "featured": 7882,
-  "with_image": 24866,
+  "with_image": 24870,
   "top_tags": [
     [
       "Landing Page",
-      16184
+      16187
     ],
     [
       "Minimal",
-      13472
+      13475
     ],
     [
       "Clean",
-      13036
+      13040
     ],
     [
       "Brand",
-      12008
+      12010
     ],
     [
       "Technology",
-      11619
+      11620
     ],
     [
       "Large Type",
-      9830
+      9832
     ],
     [
       "Services",
-      9421
+      9425
     ],
     [
       "Dark",
@@ -46,11 +46,11 @@
     ],
     [
       "Portfolio",
-      3293
+      3294
     ],
     [
       "Futuristic",
-      2649
+      2648
     ],
     [
       "Animated",
@@ -62,7 +62,7 @@
     ],
     [
       "Health",
-      1898
+      1899
     ],
     [
       "responsive",
@@ -86,7 +86,7 @@
     ],
     [
       "Grid",
-      1349
+      1350
     ],
     [
       "Art & Design",
@@ -94,7 +94,7 @@
     ],
     [
       "E-commerce",
-      1255
+      1254
     ],
     [
       "Education",
@@ -150,7 +150,7 @@
     ],
     [
       "Travel",
-      508
+      509
     ],
     [
       "Features",
@@ -209,5 +209,5 @@
       311
     ]
   ],
-  "total_code_chars": 1022406101
+  "total_code_chars": 1023405197
 }
