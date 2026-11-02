@@ -1,108 +1,24 @@
 {
-  "generated_at": "2026-11-01T10:20:21.203443Z",
-  "total_items": 24898,
+  "generated_at": "2026-11-02T10:51:20.880909Z",
+  "total_items": 4831,
   "components": 2831,
-  "templates": 22067,
-  "with_code": 24898,
-  "premium": 951,
-  "featured": 7882,
-  "with_image": 24872,
+  "templates": 2000,
+  "with_code": 4831,
+  "premium": 344,
+  "featured": 311,
+  "with_image": 4819,
   "top_tags": [
     [
-      "Landing Page",
-      16188
-    ],
-    [
-      "Minimal",
-      13476
-    ],
-    [
-      "Clean",
-      13041
-    ],
-    [
-      "Brand",
-      12010
-    ],
-    [
-      "Technology",
-      11623
-    ],
-    [
-      "Large Type",
-      9832
-    ],
-    [
-      "Services",
-      9425
-    ],
-    [
-      "Dark",
-      8738
-    ],
-    [
-      "Gradient",
-      7524
-    ],
-    [
-      "Portfolio",
-      3295
-    ],
-    [
-      "Futuristic",
-      2649
-    ],
-    [
-      "Animated",
-      2270
-    ],
-    [
       "tailwind",
-      1920
-    ],
-    [
-      "Health",
-      1899
+      1919
     ],
     [
       "responsive",
       1672
     ],
     [
-      "Dashboard",
-      1621
-    ],
-    [
-      "Business",
-      1535
-    ],
-    [
-      "SaaS",
-      1411
-    ],
-    [
-      "Tailwind CSS",
-      1396
-    ],
-    [
-      "Grid",
-      1350
-    ],
-    [
-      "Art & Design",
-      1310
-    ],
-    [
-      "E-commerce",
-      1255
-    ],
-    [
-      "Education",
-      1033
-    ],
-    [
       "animated",
-      981
+      980
     ],
     [
       "section",
@@ -110,82 +26,22 @@
     ],
     [
       "interactive",
-      749
-    ],
-    [
-      "Colorful",
-      725
-    ],
-    [
-      "Food",
-      713
-    ],
-    [
-      "AI",
-      700
-    ],
-    [
-      "Real Estate",
-      689
-    ],
-    [
-      "Entertainment",
-      646
-    ],
-    [
-      "Responsive Design",
-      593
+      745
     ],
     [
       "card",
       552
     ],
     [
-      "3D",
-      541
-    ],
-    [
       "cta",
       525
-    ],
-    [
-      "Travel",
-      509
-    ],
-    [
-      "Features",
-      470
-    ],
-    [
-      "Responsive",
-      461
-    ],
-    [
-      "Animation",
-      427
-    ],
-    [
-      "Hero",
-      426
-    ],
-    [
-      "dashboard",
-      413
-    ],
-    [
-      "Fashion",
-      412
     ],
     [
       "hero",
       372
     ],
     [
-      "Testimonials",
-      365
-    ],
-    [
-      "Pricing",
+      "dashboard",
       354
     ],
     [
@@ -197,17 +53,161 @@
       334
     ],
     [
-      "Analytics",
-      327
-    ],
-    [
-      "Style",
-      321
+      "Landing Page",
+      313
     ],
     [
       "dark",
       311
+    ],
+    [
+      "grid",
+      285
+    ],
+    [
+      "button",
+      283
+    ],
+    [
+      "ui",
+      277
+    ],
+    [
+      "hover",
+      271
+    ],
+    [
+      "saas",
+      239
+    ],
+    [
+      "Minimal",
+      234
+    ],
+    [
+      "Brand",
+      222
+    ],
+    [
+      "landing",
+      216
+    ],
+    [
+      "marketing",
+      208
+    ],
+    [
+      "Technology",
+      207
+    ],
+    [
+      "Clean",
+      201
+    ],
+    [
+      "background",
+      190
+    ],
+    [
+      "icon",
+      186
+    ],
+    [
+      "glassmorphism",
+      185
+    ],
+    [
+      "navigation",
+      184
+    ],
+    [
+      "Large Type",
+      184
+    ],
+    [
+      "modern",
+      173
+    ],
+    [
+      "Tailwind CSS",
+      173
+    ],
+    [
+      "Dark",
+      167
+    ],
+    [
+      "Services",
+      149
+    ],
+    [
+      "logo",
+      144
+    ],
+    [
+      "Gradient",
+      143
+    ],
+    [
+      "image",
+      140
+    ],
+    [
+      "pricing",
+      140
+    ],
+    [
+      "svg",
+      128
+    ],
+    [
+      "portfolio",
+      118
+    ],
+    [
+      "landing page",
+      115
+    ],
+    [
+      "css",
+      112
+    ],
+    [
+      "landing-page",
+      103
+    ],
+    [
+      "testimonial",
+      100
+    ],
+    [
+      "stats",
+      95
+    ],
+    [
+      "animation",
+      95
+    ],
+    [
+      "Responsive Design",
+      89
+    ],
+    [
+      "analytics",
+      88
+    ],
+    [
+      "header",
+      84
+    ],
+    [
+      "footer",
+      82
+    ],
+    [
+      "embed",
+      81
     ]
   ],
-  "total_code_chars": 1023838421
+  "total_code_chars": 96660514
 }
