@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-11-03T10:43:23.204290Z",
+  "generated_at": "2026-11-05T10:41:34.554413Z",
   "total_items": 24911,
   "components": 2831,
   "templates": 22080,
@@ -10,27 +10,27 @@
   "top_tags": [
     [
       "Landing Page",
-      16197
+      16195
     ],
     [
       "Minimal",
-      13480
+      13479
     ],
     [
       "Clean",
-      13050
+      13049
     ],
     [
       "Brand",
-      12014
+      12012
     ],
     [
       "Technology",
-      11632
+      11630
     ],
     [
       "Large Type",
-      9833
+      9831
     ],
     [
       "Services",
@@ -38,11 +38,11 @@
     ],
     [
       "Dark",
-      8745
+      8744
     ],
     [
       "Gradient",
-      7524
+      7522
     ],
     [
       "Portfolio",
@@ -50,7 +50,7 @@
     ],
     [
       "Futuristic",
-      2653
+      2652
     ],
     [
       "Animated",
@@ -74,7 +74,7 @@
     ],
     [
       "Business",
-      1538
+      1539
     ],
     [
       "SaaS",
@@ -209,5 +209,5 @@
       311
     ]
   ],
-  "total_code_chars": 1026241082
+  "total_code_chars": 1026229856
 }
