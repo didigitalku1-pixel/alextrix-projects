@@ -1,56 +1,56 @@
 {
-  "generated_at": "2026-11-06T10:42:11.941076Z",
-  "total_items": 24916,
+  "generated_at": "2026-11-07T09:53:29.523104Z",
+  "total_items": 24912,
   "components": 2831,
-  "templates": 22085,
-  "with_code": 24916,
-  "premium": 953,
-  "featured": 7888,
-  "with_image": 24890,
+  "templates": 22081,
+  "with_code": 24912,
+  "premium": 952,
+  "featured": 7885,
+  "with_image": 24886,
   "top_tags": [
     [
       "Landing Page",
-      16199
+      16195
     ],
     [
       "Minimal",
-      13483
+      13478
     ],
     [
       "Clean",
-      13053
+      13048
     ],
     [
       "Brand",
-      12013
+      12009
     ],
     [
       "Technology",
-      11634
+      11631
     ],
     [
       "Large Type",
-      9832
+      9829
     ],
     [
       "Services",
-      9435
+      9432
     ],
     [
       "Dark",
-      8747
+      8746
     ],
     [
       "Gradient",
-      7523
+      7521
     ],
     [
       "Portfolio",
-      3299
+      3297
     ],
     [
       "Futuristic",
-      2652
+      2651
     ],
     [
       "Animated",
@@ -62,7 +62,7 @@
     ],
     [
       "Health",
-      1901
+      1899
     ],
     [
       "responsive",
@@ -74,11 +74,11 @@
     ],
     [
       "Business",
-      1540
+      1539
     ],
     [
       "SaaS",
-      1411
+      1410
     ],
     [
       "Tailwind CSS",
@@ -86,11 +86,11 @@
     ],
     [
       "Grid",
-      1351
+      1352
     ],
     [
       "Art & Design",
-      1312
+      1311
     ],
     [
       "E-commerce",
@@ -98,7 +98,7 @@
     ],
     [
       "Education",
-      1033
+      1032
     ],
     [
       "animated",
@@ -114,7 +114,7 @@
     ],
     [
       "Colorful",
-      727
+      726
     ],
     [
       "Food",
@@ -142,7 +142,7 @@
     ],
     [
       "3D",
-      545
+      544
     ],
     [
       "cta",
@@ -209,5 +209,5 @@
       311
     ]
   ],
-  "total_code_chars": 1026581428
+  "total_code_chars": 1026097325
 }
