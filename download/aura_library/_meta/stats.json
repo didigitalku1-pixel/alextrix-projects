@@ -1,12 +1,12 @@
 {
-  "generated_at": "2026-11-10T10:58:19.965633Z",
-  "total_items": 24927,
+  "generated_at": "2026-11-11T10:40:20.874289Z",
+  "total_items": 24928,
   "components": 2831,
-  "templates": 22096,
-  "with_code": 24927,
+  "templates": 22097,
+  "with_code": 24928,
   "premium": 956,
-  "featured": 7892,
-  "with_image": 24901,
+  "featured": 7891,
+  "with_image": 24902,
   "top_tags": [
     [
       "Landing Page",
@@ -26,19 +26,19 @@
     ],
     [
       "Technology",
-      11639
+      11640
     ],
     [
       "Large Type",
-      9832
+      9831
     ],
     [
       "Services",
-      9442
+      9443
     ],
     [
       "Dark",
-      8753
+      8755
     ],
     [
       "Gradient",
@@ -54,7 +54,7 @@
     ],
     [
       "Animated",
-      2280
+      2281
     ],
     [
       "tailwind",
@@ -62,7 +62,7 @@
     ],
     [
       "Health",
-      1900
+      1901
     ],
     [
       "responsive",
@@ -98,7 +98,7 @@
     ],
     [
       "Education",
-      1033
+      1032
     ],
     [
       "animated",
@@ -209,5 +209,5 @@
       311
     ]
   ],
-  "total_code_chars": 1029290739
+  "total_code_chars": 1029419935
 }
