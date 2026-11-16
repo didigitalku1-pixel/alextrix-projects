@@ -1,60 +1,60 @@
 {
-  "generated_at": "2026-11-15T10:39:50.016263Z",
-  "total_items": 24899,
+  "generated_at": "2026-11-16T10:55:55.101548Z",
+  "total_items": 24936,
   "components": 2831,
-  "templates": 22068,
-  "with_code": 24899,
-  "premium": 954,
-  "featured": 7890,
-  "with_image": 24873,
+  "templates": 22105,
+  "with_code": 24936,
+  "premium": 956,
+  "featured": 7892,
+  "with_image": 24910,
   "top_tags": [
     [
       "Landing Page",
-      16180
+      16208
     ],
     [
       "Minimal",
-      13465
+      13487
     ],
     [
       "Clean",
-      13031
+      13064
     ],
     [
       "Brand",
-      12009
+      12016
     ],
     [
       "Technology",
-      11612
+      11645
     ],
     [
       "Large Type",
-      9829
+      9832
     ],
     [
       "Services",
-      9421
+      9445
     ],
     [
       "Dark",
-      8732
+      8758
     ],
     [
       "Gradient",
-      7522
+      7524
     ],
     [
       "Portfolio",
-      3287
+      3301
     ],
     [
       "Futuristic",
-      2643
+      2657
     ],
     [
       "Animated",
-      2264
+      2284
     ],
     [
       "tailwind",
@@ -62,7 +62,7 @@
     ],
     [
       "Health",
-      1899
+      1900
     ],
     [
       "responsive",
@@ -70,11 +70,11 @@
     ],
     [
       "Dashboard",
-      1620
+      1621
     ],
     [
       "Business",
-      1539
+      1540
     ],
     [
       "SaaS",
@@ -86,19 +86,19 @@
     ],
     [
       "Grid",
-      1353
+      1357
     ],
     [
       "Art & Design",
-      1314
+      1315
     ],
     [
       "E-commerce",
-      1252
+      1255
     ],
     [
       "Education",
-      1031
+      1033
     ],
     [
       "animated",
@@ -110,7 +110,7 @@
     ],
     [
       "interactive",
-      750
+      751
     ],
     [
       "Colorful",
@@ -142,7 +142,7 @@
     ],
     [
       "3D",
-      543
+      546
     ],
     [
       "cta",
@@ -174,7 +174,7 @@
     ],
     [
       "Fashion",
-      411
+      413
     ],
     [
       "hero",
@@ -202,12 +202,12 @@
     ],
     [
       "Style",
-      320
+      321
     ],
     [
       "dark",
       311
     ]
   ],
-  "total_code_chars": 1026790575
+  "total_code_chars": 1029736081
 }
