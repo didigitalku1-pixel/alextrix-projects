@@ -1,16 +1,16 @@
 {
-  "generated_at": "2026-11-22T11:01:05.436628Z",
-  "total_items": 24954,
+  "generated_at": "2026-11-23T12:10:24.285242Z",
+  "total_items": 24955,
   "components": 2831,
-  "templates": 22123,
-  "with_code": 24954,
-  "premium": 961,
-  "featured": 7897,
-  "with_image": 24928,
+  "templates": 22124,
+  "with_code": 24955,
+  "premium": 962,
+  "featured": 7898,
+  "with_image": 24929,
   "top_tags": [
     [
       "Landing Page",
-      16222
+      16221
     ],
     [
       "Minimal",
@@ -18,19 +18,19 @@
     ],
     [
       "Clean",
-      13077
+      13076
     ],
     [
       "Brand",
-      12024
+      12023
     ],
     [
       "Technology",
-      11657
+      11656
     ],
     [
       "Large Type",
-      9833
+      9832
     ],
     [
       "Services",
@@ -38,15 +38,15 @@
     ],
     [
       "Dark",
-      8766
+      8767
     ],
     [
       "Gradient",
-      7524
+      7523
     ],
     [
       "Portfolio",
-      3302
+      3303
     ],
     [
       "Futuristic",
@@ -54,7 +54,7 @@
     ],
     [
       "Animated",
-      2295
+      2296
     ],
     [
       "tailwind",
@@ -74,11 +74,11 @@
     ],
     [
       "Business",
-      1542
+      1540
     ],
     [
       "SaaS",
-      1411
+      1410
     ],
     [
       "Tailwind CSS",
@@ -90,7 +90,7 @@
     ],
     [
       "Art & Design",
-      1315
+      1316
     ],
     [
       "E-commerce",
@@ -114,7 +114,7 @@
     ],
     [
       "Colorful",
-      728
+      727
     ],
     [
       "Food",
@@ -142,7 +142,7 @@
     ],
     [
       "3D",
-      548
+      549
     ],
     [
       "cta",
@@ -209,5 +209,5 @@
       311
     ]
   ],
-  "total_code_chars": 1032662079
+  "total_code_chars": 1033379271
 }
